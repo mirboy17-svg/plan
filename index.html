@@ -8,20 +8,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @media print {
-      @page { size: landscape; margin: 8mm; }
-      body { background-color: white !important; font-size: 9px !important; }
+      @page { size: landscape !important; margin: 5mm; }
+      body { background-color: white !important; font-size: 8px !important; }
       .print\:hidden { display: none !important; }
       .print\:block { display: block !important; }
       .print\:bg-transparent { background-color: transparent !important; }
       .print\:border-black { border-color: black !important; }
       .print\:border-none { border: none !important; }
       
-      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 9px !important; }
+      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 8px !important; }
       input::placeholder { color: transparent !important; }
       table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; }
       
-      th, td { font-size: 9px !important; padding: 2px 4px !important; }
-      .nowrap-col { white-space: nowrap !important; word-break: keep-all !important; }
+      th, td { font-size: 8px !important; padding: 1px 2px !important; height: auto !important; }
+      .nowrap-col { white-space: normal !important; word-break: break-all !important; }
       
       .page-break-before {
         page-break-before: always !important;
@@ -30,8 +30,8 @@
     }
     
     .nowrap-col {
-      white-space: nowrap !important;
-      word-break: keep-all !important;
+      white-space: normal !important;
+      word-break: break-all !important;
     }
 
     input::-webkit-outer-spin-button,
@@ -50,7 +50,7 @@
         <svg class="w-8 h-8 print:hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <h1 class="text-2xl font-bold">작업환경측정 계획서</h1>
+        <h1 id="mainTitle" class="text-2xl font-bold">작업환경측정 계획서</h1>
       </div>
       <!-- 상단 액션 버튼 그룹 -->
       <div class="flex flex-wrap items-center justify-end gap-2 print:hidden">
@@ -89,7 +89,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">사업장명</label>
-            <input type="text" id="companyName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="예) (주)한국산업" />
+            <input type="text" id="companyName" oninput="updateTitle(this.value)" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="예) (주)한국산업" />
           </div>
         </div>
       </section>
@@ -184,6 +184,13 @@
     let activeFocusId = null;
     let selectionStart = null;
     let selectionEnd = null;
+
+    function updateTitle(val) {
+      const companyName = val.trim();
+      const titleText = companyName ? `작업환경측정 계획서 - ${companyName}` : '작업환경측정 계획서';
+      document.getElementById('mainTitle').innerText = titleText;
+      document.title = titleText; // 브라우저 탭 이름 및 PDF 저장 시 기본 파일명으로 사용됨
+    }
 
     function saveFocus() {
       const active = document.activeElement;
@@ -544,23 +551,29 @@
                     }
                     
                     if (isGroupStart) {
-                        dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
-                                  <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value)" onchange="reRender()" value="${worker.department}" placeholder="부서" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                        dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value)" onchange="reRender()" value="${worker.department}" placeholder="부서" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:hidden" />
+                                  <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.department}</div>
                                  </td>`;
-                        dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
-                                  <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value)" onchange="reRender()" value="${worker.process}" placeholder="공정" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                        dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value)" onchange="reRender()" value="${worker.process}" placeholder="공정" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:hidden" />
+                                  <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.process}</div>
                                  </td>`;
-                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
-                                  <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value)" onchange="reRender()" value="${worker.shiftSystem}" placeholder="교대" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value)" onchange="reRender()" value="${worker.shiftSystem}" placeholder="교대" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:hidden" />
+                                  <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.shiftSystem}</div>
                                  </td>`;
-                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
-                                  <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value)" onchange="reRender()" value="${worker.workerCount}" placeholder="명" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value)" onchange="reRender()" value="${worker.workerCount}" placeholder="명" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:hidden" />
+                                  <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.workerCount}</div>
                                  </td>`;
-                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
-                                  <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value)" onchange="reRender()" value="${worker.exposureCycle}" placeholder="주기" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value)" onchange="reRender()" value="${worker.exposureCycle}" placeholder="주기" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:hidden" />
+                                  <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.exposureCycle}</div>
                                  </td>`;
-                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
-                                  <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value)" onchange="reRender()" value="${worker.measurementCount}" placeholder="건수" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value)" onchange="reRender()" value="${worker.measurementCount}" placeholder="건수" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:hidden" />
+                                  <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.measurementCount}</div>
                                  </td>`;
                     }
 
@@ -592,16 +605,20 @@
 
                     dayHtml += `
                       <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                        <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full h-full text-center bg-transparent outline-none uppercase print:p-0" />
+                        <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full h-full text-center bg-transparent outline-none uppercase print:hidden" />
+                        <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.a}</div>
                       </td>
                       <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                        <input type="text" data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'p', this.value)" value="${factor.p}" class="w-full h-full text-center bg-transparent outline-none uppercase print:p-0" />
+                        <input type="text" data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'p', this.value)" value="${factor.p}" class="w-full h-full text-center bg-transparent outline-none uppercase print:hidden" />
+                        <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.p}</div>
                       </td>
                       <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                        <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full h-full text-center bg-transparent outline-none uppercase print:p-0" />
+                        <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full h-full text-center bg-transparent outline-none uppercase print:hidden" />
+                        <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.l}</div>
                       </td>
                       <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                        <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${nValue}" class="w-full h-full text-center bg-transparent outline-none uppercase print:p-0" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 자동으로 V가 표시됩니다."' : ''} />
+                        <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${nValue}" class="w-full h-full text-center bg-transparent outline-none uppercase print:hidden" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 자동으로 V가 표시됩니다."' : ''} />
+                        <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${nValue}</div>
                       </td>
                       <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
                         <input type="text" data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value)" value="${factor.remark}" class="w-full h-full px-1 bg-transparent outline-none print:hidden text-center" placeholder="비고" />
@@ -794,6 +811,7 @@
             
             if (appData.companyName) {
               document.getElementById('companyName').value = appData.companyName;
+              updateTitle(appData.companyName);
             }
             
             const unitNames = Object.keys(appData.units);
