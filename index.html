@@ -8,30 +8,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @media print {
-      /* 세로 방향(portrait)으로 설정 및 여백 최적화 */
-      @page { size: portrait; margin: 6mm; }
-      body { background-color: white !important; font-size: 8px !important; }
+      @page { size: landscape; margin: 8mm; }
+      body { background-color: white !important; font-size: 9px !important; }
       .print\:hidden { display: none !important; }
       .print\:block { display: block !important; }
       .print\:bg-transparent { background-color: transparent !important; }
       .print\:border-black { border-color: black !important; }
       .print\:border-none { border: none !important; }
       
-      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 8px !important; }
+      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 9px !important; }
       input::placeholder { color: transparent !important; }
       table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; }
       
-      /* 세로 모드 맞춤 글자 크기 및 패딩 축소 */
-      th, td { font-size: 8px !important; padding: 2px 1.5px !important; }
-      
-      /* 세로 폭이 좁으므로 강제 한 줄 표시(nowrap)를 해제하여 자동 줄바꿈 허용 */
-      .nowrap-col { white-space: normal !important; word-break: keep-all !important; }
-      
-      /* 내부 고정 너비 요소들을 세로 모드에 맞게 유동적으로 덮어쓰기 */
-      .w-\[140px\] { width: auto !important; min-width: 45px !important; flex-grow: 1 !important; }
-      .w-\[80px\] { width: auto !important; min-width: 35px !important; }
-      .w-\[90px\] { width: auto !important; min-width: 35px !important; }
-      .w-\[30px\] { width: auto !important; min-width: 15px !important; }
+      th, td { font-size: 9px !important; padding: 2px 4px !important; }
+      .nowrap-col { white-space: nowrap !important; word-break: keep-all !important; }
       
       .page-break-before {
         page-break-before: always !important;
@@ -483,7 +473,6 @@
             const displayClass = isActive ? 'block' : 'hidden print:block';
             
             dayHtml += `<div class="unit-section ${displayClass} print:mb-8" id="unit-wrap-${day}-${uIndex}">`;
-            
             dayHtml += `<div class="print-unit-header flex justify-between items-end mb-2 border-b pb-1 print:border-black print:mb-1 print:mt-4">
                         <h2 class="text-lg font-semibold text-gray-800 print:text-[12px] print:m-0 print:p-0 print:font-bold">
                             <span class="text-amber-600 mr-2 print:text-black">[ ${day}일차 ]</span>
@@ -492,162 +481,157 @@
                      </div>`;
                      
             dayHtml += `<div class="overflow-x-auto border border-gray-200 rounded-lg print:border-black print:border-2 print:rounded-none print:shadow-none">
-                      <table class="w-full text-left text-sm whitespace-nowrap min-w-[1250px] print:min-w-0">
+                      <table class="w-full text-left text-sm whitespace-nowrap min-w-[1250px] print:min-w-0 border-collapse">
                         <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black print:text-[9px]">
                           <tr>
-                            <th class="px-2 py-2 w-10 text-center border-r print:border-black print:p-0.5 nowrap-col">No.</th>
-                            <th class="px-2 py-2 w-24 border-r print:border-black print:p-0.5 nowrap-col">부서명</th>
-                            <th class="px-2 py-2 w-28 border-r print:border-black print:p-0.5 nowrap-col">공정명</th>
-                            <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5 nowrap-col">교대제</th>
-                            <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5 nowrap-col">근로자수</th>
-                            <th class="px-1 py-2 w-14 border-r print:border-black text-center print:p-0.5 nowrap-col">노출주기</th>
-                            <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5 nowrap-col">측정건수</th>
-                            <!-- 유해인자/근로자명 분할 영역 -->
-                            <th class="p-0 border-r print:border-black" colspan="7">
-                              <div class="flex w-full">
-                                <div class="w-[140px] px-2 py-2 border-r border-gray-200 print:border-black text-center flex-grow print:p-0.5">유해인자 (발생물질 등)</div>
-                                <div class="w-[80px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">근로자명</div>
-                                <div class="w-[30px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">A</div>
-                                <div class="w-[30px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">P</div>
-                                <div class="w-[30px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">L</div>
-                                <div class="w-[30px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">N</div>
-                                <div class="w-[90px] px-2 py-2 text-center print:p-0.5">비고</div>
-                              </div>
-                            </th>
-                            <th class="px-2 py-2 w-16 text-center print:hidden">관리</th>
+                            <th class="px-2 py-2 w-10 text-center border-r border-b border-gray-200 print:border-black nowrap-col">No.</th>
+                            <th class="px-2 py-2 w-[80px] border-r border-b border-gray-200 print:border-black nowrap-col">부서명</th>
+                            <th class="px-2 py-2 w-[100px] border-r border-b border-gray-200 print:border-black nowrap-col">공정명</th>
+                            <th class="px-1 py-2 w-12 border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
+                            <th class="px-1 py-2 w-12 border-r border-b border-gray-200 print:border-black text-center nowrap-col">근로자수</th>
+                            <th class="px-1 py-2 w-14 border-r border-b border-gray-200 print:border-black text-center nowrap-col">노출주기</th>
+                            <th class="px-1 py-2 w-14 border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
+                            <th class="px-2 py-2 min-w-[140px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
+                            <th class="px-1 py-2 w-[70px] border-r border-b border-gray-200 print:border-black text-center">근로자명</th>
+                            <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">A</th>
+                            <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">P</th>
+                            <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">L</th>
+                            <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">N</th>
+                            <th class="px-2 py-2 w-[90px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
+                            <th class="px-2 py-2 w-[70px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 print:divide-black">`;
+                        <tbody class="print:border-black">`;
 
             const spans = calculateSpansForWorkers(currentWorkers);
+            const groupSpans = [];
+            for(let i=0; i<currentWorkers.length; i++) {
+                if (spans[i] > 0) {
+                    let tf = 0;
+                    for(let j=i; j<i+spans[i]; j++) tf += currentWorkers[j].harmfulFactors.length;
+                    groupSpans[i] = tf;
+                } else {
+                    groupSpans[i] = 0;
+                }
+            }
+
             currentWorkers.forEach((worker, index) => {
-                const rowSpan = spans[index];
+                const originalRowSpan = spans[index];
+                const gSpan = groupSpans[index]; 
+                const wSpan = worker.harmfulFactors.length;
 
                 if (worker.pageBreak && index > 0) {
                   dayHtml += `
                   <tr class="hidden print:table-row page-break-before">
-                    <td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-black border-dashed bg-white">
+                    <td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-b-2 border-black border-dashed bg-white">
                       ✂️ 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️
                     </td>
                   </tr>
                   `;
                 }
-
                 const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
-                dayHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${pageBreakClass}">`;
-                
-                dayHtml += `<td class="px-2 py-2 text-center text-gray-500 border-r print:border-black align-top print:p-0.5 print:pt-1 nowrap-col">${index + 1}</td>`;
-                
-                if (rowSpan > 0) {
-                  dayHtml += `<td class="px-2 py-2 border-r print:border-black align-top print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
-                            <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${rowSpan}, 'department', this.value)" onchange="reRender()" value="${worker.department}" placeholder="부서" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none print:p-0 nowrap-col" />
-                           </td>`;
-                  dayHtml += `<td class="px-2 py-2 border-r print:border-black align-top print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
-                            <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${rowSpan}, 'process', this.value)" onchange="reRender()" value="${worker.process}" placeholder="공정" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none print:p-0 nowrap-col" />
-                           </td>`;
-                  dayHtml += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
-                            <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${rowSpan}, 'shiftSystem', this.value)" onchange="reRender()" value="${worker.shiftSystem}" placeholder="교대" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
-                           </td>`;
-                  dayHtml += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
-                            <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${rowSpan}, 'workerCount', this.value)" onchange="reRender()" value="${worker.workerCount}" placeholder="명" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
-                           </td>`;
-                  dayHtml += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
-                            <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${rowSpan}, 'exposureCycle', this.value)" onchange="reRender()" value="${worker.exposureCycle}" placeholder="주기" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
-                           </td>`;
-                  dayHtml += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
-                            <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${rowSpan}, 'measurementCount', this.value)" onchange="reRender()" value="${worker.measurementCount}" placeholder="건수" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
-                           </td>`;
-                }
 
-                // 8~14. 유해인자 등 병합열
-                dayHtml += `<td class="p-0 border-r print:border-black align-top" colspan="7">
-                          <table class="w-full h-full border-collapse">
-                            <tbody>`;
-                
                 worker.harmfulFactors.forEach((factor, fIndex) => {
-                  const isLast = fIndex === worker.harmfulFactors.length - 1;
-                  const borderClass = !isLast ? 'border-b border-gray-200 print:border-black' : '';
-                  
-                  const adjustedClasses = factor.isAdjusted ? 'text-gray-400 line-through decoration-gray-400' : '';
-                  const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[10px] print:text-[8px] shrink-0 flex items-center">[조정]</span>` : '';
-                  
-                  const isNoiseFactor = factor.name.trim().includes('소음');
-                  const nValue = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                    const isGroupStart = (gSpan > 0 && fIndex === 0);
+                    const isWorkerStart = (fIndex === 0);
+                    
+                    const bClass = 'border-b border-gray-200 print:border-black';
 
-                  dayHtml += `<tr class="${borderClass}">
-                              <!-- 유해인자명 -->
-                              <td class="w-[140px] border-r border-gray-200 print:border-black p-1 relative flex-grow print:p-0.5 group/hazard align-middle">
-                                <div class="flex items-center w-full">
-                                    ${badgeHtml}
-                                    <input type="text" data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'name', this.value)" value="${factor.name}" class="w-full bg-transparent outline-none pr-[55px] print:hidden ${adjustedClasses}" placeholder="유해인자 입력" />
-                                    <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap ${adjustedClasses}">${factor.name}</div>
-                                </div>
-                                <div class="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center gap-1 print:hidden bg-white/90 pl-1 py-0.5 rounded z-10">
-                                   <button onclick="toggleAdjust(${worker.id}, ${fIndex})" class="text-[9px] font-semibold border border-gray-300 rounded px-1 py-0.5 transition-colors ${factor.isAdjusted ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' : 'bg-white text-gray-600 hover:bg-gray-100'}" title="횟수조정">조정</button>
-                                   <button onclick="removeFactor(${worker.id}, ${fIndex})" class="text-gray-400 hover:text-red-500 p-0.5 rounded transition-colors" title="삭제">
-                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                   </button>
-                                </div>
-                              </td>`;
+                    dayHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${isWorkerStart ? pageBreakClass : ''}">`;
+                    
+                    if (isWorkerStart) {
+                        dayHtml += `<td class="px-2 py-2 text-center text-gray-500 border-r ${bClass} align-middle print:p-0.5 print:pt-1 nowrap-col" rowspan="${wSpan}">${index + 1}</td>`;
+                    }
+                    
+                    if (isGroupStart) {
+                        dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value)" onchange="reRender()" value="${worker.department}" placeholder="부서" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                                 </td>`;
+                        dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value)" onchange="reRender()" value="${worker.process}" placeholder="공정" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                                 </td>`;
+                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value)" onchange="reRender()" value="${worker.shiftSystem}" placeholder="교대" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                                 </td>`;
+                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value)" onchange="reRender()" value="${worker.workerCount}" placeholder="명" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                                 </td>`;
+                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value)" onchange="reRender()" value="${worker.exposureCycle}" placeholder="주기" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                                 </td>`;
+                        dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${gSpan}">
+                                  <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value)" onchange="reRender()" value="${worker.measurementCount}" placeholder="건수" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
+                                 </td>`;
+                    }
 
-                  // 근로자명 세로 병합 적용
-                  if (fIndex === 0) {
-                      dayHtml += `
-                              <td class="w-[80px] border-r border-gray-200 print:border-black p-1 text-center align-middle print:p-0.5" rowspan="${worker.harmfulFactors.length}">
-                                <input type="text" data-focus-id="name-${worker.id}" oninput="updateWorker(${worker.id}, 'name', this.value)" value="${worker.name}" class="w-full text-center bg-transparent outline-none print:hidden" placeholder="이름" />
-                                <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.name}</div>
-                              </td>`;
-                  }
+                    const adjustedClasses = factor.isAdjusted ? 'text-gray-400 line-through decoration-gray-400' : '';
+                    const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[10px] print:text-[8px] shrink-0 flex items-center">[조정]</span>` : '';
+                    const isNoiseFactor = factor.name.trim().includes('소음');
+                    const nValue = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
 
-                  // A, P, L, N 
-                  dayHtml += `
-                              <td class="w-[30px] border-r border-gray-200 print:border-black p-1 text-center align-middle print:p-0.5">
-                                <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
-                              </td>
-                              <td class="w-[30px] border-r border-gray-200 print:border-black p-1 text-center align-middle print:p-0.5">
-                                <input type="text" data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'p', this.value)" value="${factor.p}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
-                              </td>
-                              <td class="w-[30px] border-r border-gray-200 print:border-black p-1 text-center align-middle print:p-0.5">
-                                <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
-                              </td>
-                              <td class="w-[30px] border-r border-gray-200 print:border-black p-1 text-center align-middle print:p-0.5">
-                                <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${nValue}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 자동으로 V가 표시됩니다."' : ''} />
-                              </td>
-                              <td class="w-[90px] p-1 text-center align-middle print:p-0.5">
-                                <input type="text" data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value)" value="${factor.remark}" class="w-full px-1 bg-transparent outline-none print:hidden text-center" placeholder="비고" />
-                                <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.remark}</div>
-                              </td>
-                           </tr>`;
-                });
+                    dayHtml += `<td class="border-r ${bClass} p-1 relative group/hazard align-middle">
+                      <div class="flex items-center w-full">
+                          ${badgeHtml}
+                          <input type="text" data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'name', this.value)" value="${factor.name}" class="w-full bg-transparent outline-none pr-[40px] print:hidden ${adjustedClasses}" placeholder="유해인자 입력" />
+                          <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap ${adjustedClasses}">${factor.name}</div>
+                      </div>
+                      <div class="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center gap-1 print:hidden bg-white/90 pl-1 py-0.5 rounded z-10 opacity-0 group-hover/hazard:opacity-100 transition-opacity">
+                         <button onclick="toggleAdjust(${worker.id}, ${fIndex})" class="text-[9px] font-semibold border border-gray-300 rounded px-1 py-0.5 transition-colors ${factor.isAdjusted ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' : 'bg-white text-gray-600 hover:bg-gray-100'}" title="횟수조정">조정</button>
+                         <button onclick="removeFactor(${worker.id}, ${fIndex})" class="text-gray-400 hover:text-red-500 p-0.5 rounded transition-colors" title="삭제">
+                           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                         </button>
+                      </div>
+                    </td>`;
 
-                dayHtml += `     </tbody>
-                                </table>
-                                <div class="p-1 border-t border-gray-100 print:hidden flex justify-center bg-gray-50/50">
-                                   <button onclick="addFactor(${worker.id})" class="text-[11px] flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium">
-                                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                                     유해인자 추가
-                                   </button>
-                                 </div>
-                               </td>`;
+                    if (isWorkerStart) {
+                        dayHtml += `<td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5" rowspan="${wSpan}">
+                          <input type="text" data-focus-id="name-${worker.id}" oninput="updateWorker(${worker.id}, 'name', this.value)" value="${worker.name}" class="w-full h-full text-center bg-transparent outline-none print:hidden" placeholder="이름" />
+                          <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.name}</div>
+                        </td>`;
+                    }
 
-                // 15. 관리 버튼
-                dayHtml += `<td class="px-1 py-2 text-center align-top print:hidden whitespace-nowrap">
-                          <div class="flex flex-col gap-1 items-center h-full">
+                    dayHtml += `
+                      <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
+                        <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full h-full text-center bg-transparent outline-none uppercase print:p-0" />
+                      </td>
+                      <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
+                        <input type="text" data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'p', this.value)" value="${factor.p}" class="w-full h-full text-center bg-transparent outline-none uppercase print:p-0" />
+                      </td>
+                      <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
+                        <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full h-full text-center bg-transparent outline-none uppercase print:p-0" />
+                      </td>
+                      <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
+                        <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${nValue}" class="w-full h-full text-center bg-transparent outline-none uppercase print:p-0" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 자동으로 V가 표시됩니다."' : ''} />
+                      </td>
+                      <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
+                        <input type="text" data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value)" value="${factor.remark}" class="w-full h-full px-1 bg-transparent outline-none print:hidden text-center" placeholder="비고" />
+                        <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.remark}</div>
+                      </td>
+                    `;
+
+                    if (isWorkerStart) {
+                        dayHtml += `<td class="px-1 py-2 text-center align-middle print:hidden whitespace-nowrap ${bClass}" rowspan="${wSpan}">
+                          <div class="flex flex-col gap-1 items-center justify-center h-full">
                             <div class="flex gap-1 justify-center mt-1">
-                              <button onclick="duplicateWorker(${worker.id})" class="text-gray-400 hover:text-blue-600 p-1.5 rounded-full hover:bg-blue-50 transition-colors" title="현재 행 복사">
+                              <button onclick="duplicateWorker(${worker.id})" class="text-gray-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition-colors" title="현재 행 복사">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9" /></svg>
                               </button>
-                              <button onclick="removeWorker(${worker.id})" class="text-gray-400 hover:text-red-600 p-1.5 rounded-full hover:bg-red-50 transition-colors" title="행 삭제">
+                              <button onclick="removeWorker(${worker.id})" class="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors" title="행 삭제">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                               </button>
                             </div>
-                            <button onclick="togglePageBreak(${worker.id})" class="text-[10px] font-semibold flex items-center justify-center gap-1 w-full px-1 py-1 rounded transition-colors ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '분할선 취소' : '이 행부터 다음 페이지에 인쇄'}">
+                            <button onclick="addFactor(${worker.id})" class="text-[10px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-1 py-0.5 rounded w-full flex items-center justify-center gap-0.5">
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg> 인자추가
+                            </button>
+                            <button onclick="togglePageBreak(${worker.id})" class="text-[10px] font-semibold flex items-center justify-center gap-1 w-full px-1 py-0.5 rounded transition-colors ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '분할선 취소' : '이 행부터 다음 페이지에 인쇄'}">
                               ✂️ ${worker.pageBreak ? '분할 취소' : '페이지 나눔'}
                             </button>
                           </div>
                          </td>`;
+                    }
 
-                dayHtml += `</tr>`;
+                    dayHtml += `</tr>`;
+                });
             });
             
             dayHtml += `   </tbody>
@@ -1055,40 +1039,45 @@
       e.preventDefault();
 
       const currentRect = current.getBoundingClientRect();
-      const inputs = Array.from(document.querySelectorAll('#tables-container .block input'));
+      const inputs = Array.from(document.querySelectorAll('#tables-container .block input:not([type="hidden"]):not([readonly])'));
 
       let bestMatch = null;
       let minDistance = Infinity;
 
+      const cx = currentRect.left + currentRect.width / 2;
+      const cy = currentRect.top + currentRect.height / 2;
+
       inputs.forEach(input => {
         if (input === current) return;
         const rect = input.getBoundingClientRect();
+        const ix = rect.left + rect.width / 2;
+        const iy = rect.top + rect.height / 2;
 
         let isEligible = false;
         let distance = Infinity;
 
+        const xOverlap = Math.max(0, Math.min(currentRect.right, rect.right) - Math.max(currentRect.left, rect.left));
         const yOverlap = Math.max(0, Math.min(currentRect.bottom, rect.bottom) - Math.max(currentRect.top, rect.top));
 
-        if (isUp) {
-          if (rect.bottom <= currentRect.top + 5) {
-            isEligible = true;
-            distance = (currentRect.top - rect.bottom) * 100 + Math.abs((rect.left + rect.width/2) - (currentRect.left + currentRect.width/2));
-          }
-        } else if (isDown) {
-          if (rect.top >= currentRect.bottom - 5) {
-            isEligible = true;
-            distance = (rect.top - currentRect.bottom) * 100 + Math.abs((rect.left + rect.width/2) - (currentRect.left + currentRect.width/2));
-          }
-        } else if (isLeft) {
-          if (rect.right <= currentRect.left + 5 && yOverlap > 0) {
-            isEligible = true;
-            distance = currentRect.left - rect.right;
-          }
-        } else if (isRight) {
-          if (rect.left >= currentRect.right - 5 && yOverlap > 0) {
-            isEligible = true;
-            distance = rect.left - currentRect.right;
-          }
+        if (isUp && iy < cy && xOverlap > 0) { isEligible = true; distance = cy - iy; }
+        else if (isDown && iy > cy && xOverlap > 0) { isEligible = true; distance = iy - cy; }
+        else if (isLeft && ix < cx && yOverlap > 0) { isEligible = true; distance = cx - ix; }
+        else if (isRight && ix > cx && yOverlap > 0) { isEligible = true; distance = ix - cx; }
+
+        if (!isEligible) {
+             if (isUp && rect.bottom <= currentRect.top + 5) {
+                 isEligible = true;
+                 distance = (currentRect.top - rect.bottom)*10 + Math.abs(cx - ix);
+             } else if (isDown && rect.top >= currentRect.bottom - 5) {
+                 isEligible = true;
+                 distance = (rect.top - currentRect.bottom)*10 + Math.abs(cx - ix);
+             } else if (isLeft && rect.right <= currentRect.left + 5) {
+                 isEligible = true;
+                 distance = (currentRect.left - rect.right)*10 + Math.abs(cy - iy);
+             } else if (isRight && rect.left >= currentRect.right - 5) {
+                 isEligible = true;
+                 distance = (rect.left - currentRect.right)*10 + Math.abs(cy - iy);
+             }
         }
 
         if (isEligible && distance < minDistance) {
