@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>작업환경측정 계획서</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 엑셀 추출 라이브러리 추가 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @media print {
       @page { size: landscape; margin: 8mm; }
-      body { background-color: white !important; font-size: 10px !important; }
+      body { background-color: white !important; font-size: 9px !important; }
       
       /* 인쇄 시 불필요한 요소 숨김 처리 */
       .print\:hidden { display: none !important; }
@@ -20,12 +22,13 @@
       .print\:border-none { border: none !important; }
       
       /* 입력창 텍스트 진하게 및 스크롤 고정 해제 */
-      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 10px !important; }
+      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 9px !important; }
       input::placeholder { color: transparent !important; }
       table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; }
       
-      /* 테이블 셀 촘촘하게 */
-      th, td { font-size: 10px !important; }
+      /* 테이블 셀 촘촘하게 및 글자 줄바꿈 방지 적용 컬럼 */
+      th, td { font-size: 9px !important; padding: 2px 4px !important; }
+      .nowrap-col { white-space: nowrap !important; word-break: keep-all !important; }
       
       /* 강제 페이지 넘김 CSS */
       .page-break-before {
@@ -34,6 +37,12 @@
       }
     }
     
+    /* 화면용 기본 스타일: 부서명 ~ 노출주기 줄바꿈 방지 및 전체 노출 */
+    .nowrap-col {
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+    }
+
     /* Chrome, Safari, Edge, Opera에서 input number 화살표 숨기기 */
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
@@ -53,8 +62,21 @@
         </svg>
         <h1 class="text-2xl font-bold">작업환경측정 계획서</h1>
       </div>
-      <div class="flex items-center gap-3 print:hidden">
-        <button id="copyBtn" onclick="copyTableToClipboard()" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+      <div class="flex flex-wrap items-center justify-end gap-2 print:hidden">
+        <button onclick="exportToExcel()" class="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          엑셀 저장
+        </button>
+        <button onclick="saveData()" class="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+          저장
+        </button>
+        <label class="flex items-center gap-1 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-sm cursor-pointer mb-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          불러오기
+          <input type="file" accept=".json" class="hidden" onchange="loadData(event)">
+        </label>
+        <button id="copyBtn" onclick="copyTableToClipboard()" class="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-sm">
           <svg id="copyIconDefault" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
@@ -63,7 +85,7 @@
           </svg>
           <span id="copyBtnText">현재 표 데이터 복사</span>
         </button>
-        <button onclick="window.print()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md border border-blue-800">
+        <button onclick="window.print()" class="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-md border border-blue-800">
           <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
@@ -74,7 +96,7 @@
 
     <div class="p-6 md:p-8 space-y-6 print:p-0 print:space-y-0">
       
-      <!-- 인쇄 시 숨겨지는 사업장 기본 정보 -->
+      <!-- 인쇄 시 숨겨지는 사업장 기본 정보 (사업장명만 표시) -->
       <section class="bg-gray-50 p-5 rounded-lg border border-gray-200 print:hidden">
         <h2 class="text-base font-semibold text-gray-800 mb-3 border-b pb-2">사업장 기본 정보</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -89,7 +111,7 @@
       <section class="bg-blue-50 p-5 rounded-lg border border-blue-100 print:hidden">
         <div class="flex items-center gap-2 mb-3">
           <h2 class="text-base font-semibold text-blue-800">구글 스프레드시트 데이터 연동</h2>
-          <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-medium">자동 병합 & 소음 조건부 적용</span>
+          <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-medium">자동 병합 & 소음 조건부 적용 (소음시트는 D열 근로자수 반영)</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
@@ -114,7 +136,7 @@
         <div class="flex items-center justify-between mb-2 border-b border-gray-300 pb-2">
             <h3 class="text-md font-bold text-gray-700 flex items-center gap-2">
                 <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                단위사업체 탭 선택 (인쇄 시 모두 자동 출력됨)
+                단위사업체 탭 선택 (인쇄 시 순서대로 모두 자동 출력됨)
             </h3>
         </div>
         <div id="unitTabs" class="flex flex-wrap gap-2 mb-2">
@@ -299,7 +321,7 @@
       reRender();
     }
 
-    // 화면 및 인쇄용 전체 테이블 렌더링 (단위사업체가 모두 순차적으로 인쇄되도록 구조화)
+    // 화면 및 인쇄용 전체 테이블 렌더링 (단위사업체가 순서대로 모두 인쇄되도록 구조화)
     function renderTables() {
       const container = document.getElementById('tables-container');
       let html = '';
@@ -310,30 +332,29 @@
         const currentWorkers = appData.units[unitName];
         const isActive = unitName === appData.currentUnit;
         
-        // 탭에 따라 활성화된 것만 보여주되, 인쇄 시에는 전부 보여주도록(print:block) 클래스 설정
         const displayClass = isActive ? 'block' : 'hidden print:block';
         
         html += `<div class="unit-section ${displayClass} print:mb-8" id="unit-wrap-${uIndex}">`;
         
-        // 단위사업체명 헤더
-        html += `<div class="flex justify-between items-end mb-2 border-b pb-1 print:border-black print:mb-1">
-                    <h2 class="text-lg font-semibold text-gray-800 print:text-[13px] print:m-0 print:p-0">
-                        <span class="text-indigo-600 mr-2 print:text-black">[${unitName}]</span> 측정 대상 및 유해인자 목록
+        // 단위사업체명 헤더 (인쇄 시 구분선 포함)
+        html += `<div class="print-unit-header flex justify-between items-end mb-2 border-b pb-1 print:border-black print:mb-1 print:mt-4">
+                    <h2 class="text-lg font-semibold text-gray-800 print:text-[12px] print:m-0 print:p-0 print:font-bold">
+                        <span class="text-indigo-600 mr-2 print:text-black">[단위사업체] : ${unitName}</span> 측정 대상 및 유해인자 목록
                     </h2>
                  </div>`;
                  
-        // 테이블 컨테이너
+        // 테이블 컨테이너 (부서명~노출주기 줄바꿈 방지 적용을 위한 nowrap-col 클래스 포함)
         html += `<div class="overflow-x-auto border border-gray-200 rounded-lg print:border-black print:border-2 print:rounded-none print:shadow-none">
                   <table class="w-full text-left text-sm whitespace-nowrap min-w-[1250px] print:min-w-0">
-                    <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black print:text-[10px]">
+                    <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black print:text-[9px]">
                       <tr>
-                        <th class="px-2 py-2 w-10 text-center border-r print:border-black print:p-0.5">No.</th>
-                        <th class="px-2 py-2 w-20 border-r print:border-black print:p-0.5">부서명</th>
-                        <th class="px-2 py-2 w-24 border-r print:border-black print:p-0.5">공정명</th>
-                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5">교대제</th>
-                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5">근로자수</th>
-                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5">노출주기</th>
-                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5">측정건수</th>
+                        <th class="px-2 py-2 w-10 text-center border-r print:border-black print:p-0.5 nowrap-col">No.</th>
+                        <th class="px-2 py-2 w-24 border-r print:border-black print:p-0.5 nowrap-col">부서명</th>
+                        <th class="px-2 py-2 w-28 border-r print:border-black print:p-0.5 nowrap-col">공정명</th>
+                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5 nowrap-col">교대제</th>
+                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5 nowrap-col">근로자수</th>
+                        <th class="px-1 py-2 w-14 border-r print:border-black text-center print:p-0.5 nowrap-col">노출주기</th>
+                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5 nowrap-col">측정건수</th>
                         <!-- 유해인자 통합 헤더 -->
                         <th class="p-0 border-r print:border-black" colspan="7">
                           <div class="flex w-full">
@@ -361,7 +382,7 @@
             if (worker.pageBreak && index > 0) {
               html += `
               <tr class="hidden print:table-row page-break-before">
-                <td colspan="15" class="text-center py-1 text-[10px] text-gray-500 font-medium border-t-2 border-black border-dashed bg-white">
+                <td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-black border-dashed bg-white">
                   ✂️ 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️
                 </td>
               </tr>
@@ -371,28 +392,28 @@
             const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
             html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${pageBreakClass}">`;
             
-            // 1. 번호
-            html += `<td class="px-2 py-2 text-center text-gray-500 border-r print:border-black align-top print:p-0.5 print:pt-1">${index + 1}</td>`;
+            // 1. 번호 (노출주기까지 줄바꿈 방지 적용)
+            html += `<td class="px-2 py-2 text-center text-gray-500 border-r print:border-black align-top print:p-0.5 print:pt-1 nowrap-col">${index + 1}</td>`;
             
-            // 2~7. 그룹 병합 필드들 (세로 병합)
+            // 2~7. 그룹 병합 필드들 (부서명 ~ 노출주기 전체가 한 줄로 나오도록 nowrap-col 적용)
             if (rowSpan > 0) {
-              html += `<td class="px-2 py-2 border-r print:border-black align-top print:p-0.5 print:pt-1" rowspan="${rowSpan}">
-                        <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'department', this.value)" onchange="reRender()" value="${worker.department}" placeholder="부서" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none print:p-0" />
+              html += `<td class="px-2 py-2 border-r print:border-black align-top print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'department', this.value)" onchange="reRender()" value="${worker.department}" placeholder="부서" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none print:p-0 nowrap-col" />
                        </td>`;
-              html += `<td class="px-2 py-2 border-r print:border-black align-top print:p-0.5 print:pt-1" rowspan="${rowSpan}">
-                        <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'process', this.value)" onchange="reRender()" value="${worker.process}" placeholder="공정" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none print:p-0" />
+              html += `<td class="px-2 py-2 border-r print:border-black align-top print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'process', this.value)" onchange="reRender()" value="${worker.process}" placeholder="공정" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none print:p-0 nowrap-col" />
                        </td>`;
-              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1" rowspan="${rowSpan}">
-                        <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'shiftSystem', this.value)" onchange="reRender()" value="${worker.shiftSystem}" placeholder="교대" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0" />
+              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'shiftSystem', this.value)" onchange="reRender()" value="${worker.shiftSystem}" placeholder="교대" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
                        </td>`;
-              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1" rowspan="${rowSpan}">
-                        <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'workerCount', this.value)" onchange="reRender()" value="${worker.workerCount}" placeholder="명" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0" />
+              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'workerCount', this.value)" onchange="reRender()" value="${worker.workerCount}" placeholder="명" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
                        </td>`;
-              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1" rowspan="${rowSpan}">
-                        <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'exposureCycle', this.value)" onchange="reRender()" value="${worker.exposureCycle}" placeholder="주기" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0" />
+              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'exposureCycle', this.value)" onchange="reRender()" value="${worker.exposureCycle}" placeholder="주기" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
                        </td>`;
-              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1" rowspan="${rowSpan}">
-                        <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'measurementCount', this.value)" onchange="reRender()" value="${worker.measurementCount}" placeholder="건수" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0" />
+              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1 nowrap-col" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'measurementCount', this.value)" onchange="reRender()" value="${worker.measurementCount}" placeholder="건수" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0 nowrap-col" />
                        </td>`;
             }
 
@@ -405,15 +426,19 @@
               const borderClass = !isLast ? 'border-b border-gray-200 print:border-black' : '';
               
               const adjustedClasses = factor.isAdjusted ? 'text-gray-400 line-through decoration-gray-400' : '';
-              const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[11px] print:text-[9px] shrink-0 flex items-center">[조정]</span>` : '';
+              const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[10px] print:text-[8px] shrink-0 flex items-center">[조정]</span>` : '';
               
+              // '소음' 유해인자 여부 판별 (조정 버튼이 눌리지 않았고 유해인자명에 '소음'이 포함될 때 N표에 'V' 부여)
+              const isNoiseFactor = factor.name.trim().includes('소음');
+              const nValue = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+
               html += `<div class="flex w-full ${borderClass} min-h-[40px] print:min-h-0">
                           
                           <!-- 유해인자명 -->
                           <div class="w-[140px] border-r border-gray-200 print:border-black px-1 py-1 flex-grow relative flex items-center print:items-start print:py-0.5 group/hazard">
                             ${badgeHtml}
                             <input type="text" data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'name', this.value)" value="${factor.name}" class="w-full bg-transparent outline-none pr-[55px] print:hidden ${adjustedClasses}" placeholder="유해인자 입력" />
-                            <div class="hidden print:block w-full text-[10px] leading-tight break-all whitespace-pre-wrap ${adjustedClasses}">${factor.name}</div>
+                            <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap ${adjustedClasses}">${factor.name}</div>
                             
                             <!-- 횟수조정 및 삭제 버튼 -->
                             <div class="absolute right-0.5 flex items-center gap-1 print:hidden bg-white/90 pl-1 py-0.5 rounded z-10">
@@ -428,11 +453,11 @@
                           <div class="w-[80px] border-r border-gray-200 print:border-black flex items-center justify-center p-1 relative print:items-start print:py-0.5 print:px-0.5">
                             ${fIndex === 0 ? `
                               <input type="text" data-focus-id="name-${worker.id}" oninput="updateWorker(${worker.id}, 'name', this.value)" value="${worker.name}" class="w-full text-center bg-transparent outline-none print:hidden" placeholder="이름" />
-                              <div class="hidden print:block w-full text-[10px] leading-tight break-all whitespace-pre-wrap text-center">${worker.name}</div>
+                              <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.name}</div>
                             ` : ``}
                           </div>
 
-                          <!-- A, P, L, N -->
+                          <!-- A, P, L, N (소음일 경우 N에 자동 V 표시, 조정 시 공란) -->
                           <div class="w-[30px] border-r border-gray-200 print:border-black flex items-center justify-center p-1 print:p-0.5">
                             <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
                           </div>
@@ -443,13 +468,13 @@
                             <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
                           </div>
                           <div class="w-[30px] border-r border-gray-200 print:border-black flex items-center justify-center p-1 print:p-0.5">
-                            <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${factor.n}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
+                            <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${nValue}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음 유해인자는 자동으로 N에 V가 표시됩니다."' : ''} />
                           </div>
 
                           <!-- 비고 -->
                           <div class="w-[90px] flex items-center justify-center px-1 py-1 relative print:items-start print:py-0.5 print:px-0.5">
                             <input type="text" data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value)" value="${factor.remark}" class="w-full px-1 bg-transparent outline-none print:hidden text-center" placeholder="비고" />
-                            <div class="hidden print:block w-full text-[10px] leading-tight break-all whitespace-pre-wrap text-center">${factor.remark}</div>
+                            <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.remark}</div>
                           </div>
                        </div>`;
             });
@@ -500,6 +525,7 @@
       });
 
       container.innerHTML = html;
+      renderUnitTabs();
     }
 
     function reRender() {
@@ -512,7 +538,6 @@
       try {
         let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t유해인자\t근로자명\tA\tP\tL\tN\t비고\n";
         
-        // 클립보드 복사는 화면에 보이는 '현재 탭(단위사업체)' 데이터만 복사합니다.
         const currentWorkers = appData.units[appData.currentUnit];
         if(currentWorkers) {
             currentWorkers.forEach((worker, index) => {
@@ -520,8 +545,10 @@
                 const isFirst = fIndex === 0;
                 let hazardText = factor.name || '';
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
+                const isNoiseFactor = factor.name.trim().includes('소음');
+                const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
                 
-                tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${isFirst ? worker.name || '' : ''}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${factor.n || ''}\t${factor.remark || ''}\n`;
+                tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${isFirst ? worker.name || '' : ''}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${nVal}\t${factor.remark || ''}\n`;
               });
             });
         }
@@ -580,6 +607,112 @@
       } catch (error) { throw error; }
     }
 
+    function exportToExcel() {
+      if (typeof XLSX === 'undefined') {
+        alert('엑셀 라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      
+      const wb = XLSX.utils.book_new();
+      const unitNames = Object.keys(appData.units);
+      
+      if (unitNames.length === 0) {
+        alert('저장할 데이터가 없습니다.');
+        return;
+      }
+
+      unitNames.forEach(unitName => {
+        const currentWorkers = appData.units[unitName];
+        let wsData = [];
+        
+        wsData.push(["No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "근로자명", "A", "P", "L", "N", "비고"]);
+        
+        currentWorkers.forEach((worker, index) => {
+          worker.harmfulFactors.forEach((factor, fIndex) => {
+            const isFirst = fIndex === 0;
+            let hazardText = factor.name || '';
+            if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
+            const isNoiseFactor = factor.name.trim().includes('소음');
+            const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+            
+            wsData.push([
+              isFirst ? index + 1 : '',
+              isFirst ? worker.department || '' : '',
+              isFirst ? worker.process || '' : '',
+              isFirst ? worker.shiftSystem || '' : '',
+              isFirst ? worker.workerCount || '' : '',
+              isFirst ? worker.exposureCycle || '' : '',
+              isFirst ? worker.measurementCount || '' : '',
+              hazardText,
+              isFirst ? worker.name || '' : '',
+              factor.a || '',
+              factor.p || '',
+              factor.l || '',
+              nVal,
+              factor.remark || ''
+            ]);
+          });
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        let safeSheetName = unitName.replace(/[\\/?*[\]]/g, '').substring(0, 31) || '기본 사업체';
+        XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+      });
+
+      const companyName = document.getElementById('companyName').value.trim() || '작업환경측정_계획서';
+      XLSX.writeFile(wb, `${companyName}.xlsx`);
+    }
+
+    function saveData() {
+      appData.companyName = document.getElementById('companyName').value;
+      const dataStr = JSON.stringify(appData, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      const companyName = appData.companyName.trim() || '작업환경측정_백업데이터';
+      a.download = `${companyName}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function loadData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const loadedData = JSON.parse(e.target.result);
+          if (loadedData && loadedData.units) {
+            appData = loadedData;
+            
+            if (appData.companyName) {
+              document.getElementById('companyName').value = appData.companyName;
+            }
+            
+            const unitNames = Object.keys(appData.units);
+            if (unitNames.length > 0) {
+              appData.currentUnit = unitNames[0];
+              document.getElementById('tabContainerSection').classList.remove('hidden');
+              renderUnitTabs();
+            }
+            reRender();
+            alert('데이터를 성공적으로 불러왔습니다.');
+          } else {
+            alert('올바른 형식의 백업 데이터 파일이 아닙니다.');
+          }
+        } catch (err) {
+          alert('파일을 읽는 중 오류가 발생했습니다.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
     async function handleSyncSheets() {
       const excludeUrl = document.getElementById('excludeNoiseUrl').value;
       const noiseUrl = document.getElementById('noiseUrl').value;
@@ -609,7 +742,6 @@
             const row = rows[i];
             if (!row || row.length < 2) continue;
             
-            // A열 단위사업체 추출 및 Fill-down
             let unitName = row[0]?.trim() || '';
             if (unitName !== '') {
                 lastKnownUnit = unitName;
@@ -617,7 +749,6 @@
                 unitName = lastKnownUnit;
             }
             
-            // 부서 및 공정 추출
             let dept = row[1]?.trim() || '';
             let process = row[2]?.trim() || '';
 
@@ -651,7 +782,6 @@
 
             if (!isNoiseSheet) {
               let factor = row[3]?.trim() || '';
-              // 일반 시트는 근로자수 E열(4)
               let workerCount = removeDecimal(row[4]?.trim());
               let shift = row[5]?.trim() || '';
               let cycle = row[6]?.trim() || '';
@@ -703,11 +833,10 @@
         let totalExtracted = 0;
         let newAppUnits = {};
 
-        // 사업체별로 객체화
         for (const unitName in mergedGroupsByUnit) {
             const newWorkers = Object.values(mergedGroupsByUnit[unitName])
               .filter(group => group.hasPValue)
-              .map((group, index) => {
+              .map((group) => {
                 let parsedFactors = group.factorGroups
                   .map(set => Array.from(set).join(', '))
                   .filter(str => str !== '');
@@ -740,7 +869,6 @@
         if (Object.keys(newAppUnits).length > 0) {
           appData.units = newAppUnits;
           
-          // 첫 번째 탭 활성화
           const firstUnit = Object.keys(newAppUnits)[0];
           switchTab(firstUnit);
           
@@ -761,7 +889,6 @@
       }
     }
     
-    // 탭 UI 렌더링 함수
     function renderUnitTabs() {
         const tabsContainer = document.getElementById('unitTabs');
         tabsContainer.innerHTML = '';
@@ -775,7 +902,6 @@
         });
     }
 
-    // 탭 전환(클릭) 처리 함수
     function switchTab(unitName) {
         if (!appData.units[unitName]) return;
         appData.currentUnit = unitName;
@@ -787,12 +913,10 @@
         reRender();
     }
 
-    // 인쇄 시 숨겨진 div에 데이터가 정상 반영되도록 강제 렌더링
     window.addEventListener('beforeprint', function() {
       reRender();
     });
 
-    // 엑셀 조작감 화살표 셀 이동
     document.addEventListener('keydown', function(e) {
       const current = e.target;
       if (current.tagName !== 'INPUT' || !current.hasAttribute('data-focus-id')) return;
@@ -804,14 +928,12 @@
 
       if (!isUp && !isDown && !isLeft && !isRight) return;
 
-      // 좌우 이동은 커서가 끝/처음에 있을 때만 작동하여 텍스트 수정 방해 방지
       if (isLeft && current.selectionStart > 0) return;
       if (isRight && current.selectionEnd < current.value.length) return;
 
       e.preventDefault();
 
       const currentRect = current.getBoundingClientRect();
-      // 화면에 활성화되어 보여지는(block) 테이블 내의 input만 탐색
       const inputs = Array.from(document.querySelectorAll('#tables-container .block input'));
 
       let bestMatch = null;
