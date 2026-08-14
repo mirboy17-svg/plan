@@ -8,21 +8,39 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @media print {
-      @page { size: landscape !important; margin: 5mm; }
-      body { background-color: white !important; font-size: 8px !important; }
+      @page { size: portrait !important; margin: 5mm; }
+      body { background-color: white !important; font-size: 7px !important; }
       .print\:hidden { display: none !important; }
       .print\:block { display: block !important; }
       .print\:bg-transparent { background-color: transparent !important; }
       .print\:border-black { border-color: black !important; }
       .print\:border-none { border: none !important; }
       
-      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 8px !important; }
+      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 7px !important; }
       input::placeholder { color: transparent !important; }
-      table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; }
+      table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; table-layout: fixed !important; }
       
-      th, td { font-size: 8px !important; padding: 1px 2px !important; height: auto !important; }
+      th, td { font-size: 7px !important; padding: 1px !important; height: auto !important; line-height: 1.1 !important; word-break: break-all !important; }
+      td .print\:block { font-size: 7px !important; line-height: 1.1 !important; padding: 0 !important; margin: 0 !important; }
       .nowrap-col { white-space: normal !important; word-break: break-all !important; }
       
+      /* 프린트 전용 열 너비 강제 최소화 (세로 모드 한 페이지 최대 압축 최적화) */
+      th:nth-child(1) { width: 15px !important; } /* No. */
+      th:nth-child(2) { width: 40px !important; } /* 부서명 */
+      th:nth-child(3) { width: 40px !important; } /* 공정명 */
+      th:nth-child(4) { width: 25px !important; } /* 교대제 */
+      th:nth-child(5) { width: 25px !important; } /* 근로자수 */
+      th:nth-child(6) { width: 25px !important; } /* 노출주기 */
+      th:nth-child(7) { width: 25px !important; } /* 측정건수 */
+      th:nth-child(8) { width: auto !important; } /* 유해인자 (나머지 폭 전체 차지) */
+      th:nth-child(9) { width: 35px !important; } /* 근로자명 */
+      th:nth-child(10), th:nth-child(11), th:nth-child(12), th:nth-child(13) { width: 15px !important; } /* A, P, L, N */
+      th:nth-child(14) { width: 25px !important; } /* 비고 */
+      
+      /* 인쇄 시 헤더 구분선 간격 최소화 */
+      .print-unit-header { margin-top: 10px !important; margin-bottom: 2px !important; padding-bottom: 1px !important; }
+      .print-unit-header h2 { font-size: 9px !important; margin: 0 !important; }
+
       .page-break-before {
         page-break-before: always !important;
         break-before: page !important;
