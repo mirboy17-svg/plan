@@ -7,8 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print {
-      @page { size: landscape; margin: 10mm; }
-      body { background-color: white !important; }
+      @page { size: landscape; margin: 8mm; }
+      body { background-color: white !important; font-size: 10px !important; }
       
       /* 인쇄 시 불필요한 요소 숨김 처리 */
       .print\:hidden { display: none !important; }
@@ -20,9 +20,12 @@
       .print\:border-none { border: none !important; }
       
       /* 입력창 텍스트 진하게 및 스크롤 고정 해제 */
-      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; }
+      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; height: auto !important; line-height: 1.1 !important; font-size: 10px !important; }
       input::placeholder { color: transparent !important; }
       table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; }
+      
+      /* 테이블 셀 촘촘하게 */
+      th, td { font-size: 10px !important; }
       
       /* 강제 페이지 넘김 CSS */
       .page-break-before {
@@ -58,50 +61,34 @@
           <svg id="copyIconCheck" class="w-4 h-4 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
-          <span id="copyBtnText">표 데이터 복사</span>
+          <span id="copyBtnText">현재 표 데이터 복사</span>
         </button>
         <button onclick="window.print()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md border border-blue-800">
           <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
-          <span>인쇄 / PDF 저장</span>
+          <span>전체 인쇄 / PDF 저장</span>
         </button>
       </div>
     </div>
 
-    <div class="p-6 md:p-8 space-y-8 print:p-0 print:space-y-0">
+    <div class="p-6 md:p-8 space-y-6 print:p-0 print:space-y-0">
       
       <!-- 인쇄 시 숨겨지는 사업장 기본 정보 -->
-      <section class="bg-gray-50 p-6 rounded-lg border border-gray-200 print:hidden">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">사업장 기본 정보</h2>
+      <section class="bg-gray-50 p-5 rounded-lg border border-gray-200 print:hidden">
+        <h2 class="text-base font-semibold text-gray-800 mb-3 border-b pb-2">사업장 기본 정보</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">사업장명</label>
             <input type="text" id="companyName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="예) (주)한국산업" />
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">대표자명</label>
-            <input type="text" id="representative" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">소재지 (주소)</label>
-            <input type="text" id="address" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">예정 측정일자</label>
-            <input type="date" id="measurementDate" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">측정 기관명</label>
-            <input type="text" id="institution" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
-          </div>
         </div>
       </section>
 
       <!-- 인쇄 시 숨겨지는 연동 메뉴 -->
-      <section class="bg-blue-50 p-6 rounded-lg border border-blue-100 print:hidden">
+      <section class="bg-blue-50 p-5 rounded-lg border border-blue-100 print:hidden">
         <div class="flex items-center gap-2 mb-3">
-          <h2 class="text-lg font-semibold text-blue-800">구글 스프레드시트 데이터 연동</h2>
+          <h2 class="text-base font-semibold text-blue-800">구글 스프레드시트 데이터 연동</h2>
           <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-medium">자동 병합 & 소음 조건부 적용</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -122,59 +109,40 @@
         </div>
       </section>
 
-      <section>
-        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 print:border-black print:mb-2">측정 대상 및 유해인자 목록</h2>
-        <div class="overflow-x-auto border border-gray-200 rounded-lg print:border-black">
-          <table class="w-full text-left text-sm whitespace-nowrap min-w-[1300px] print:min-w-0">
-            <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black">
-              <tr>
-                <th class="px-4 py-3 w-12 text-center border-r print:border-black">No.</th>
-                <th class="px-3 py-3 w-24 border-r print:border-black">부서명</th>
-                <th class="px-3 py-3 w-28 border-r print:border-black">공정명</th>
-                <th class="px-2 py-3 w-16 border-r print:border-black text-center">교대제</th>
-                <th class="px-2 py-3 w-16 border-r print:border-black text-center">근로자수</th>
-                <th class="px-2 py-3 w-16 border-r print:border-black text-center">노출주기</th>
-                <th class="px-2 py-3 w-16 border-r print:border-black text-center">측정건수</th>
-                <th class="px-3 py-3 w-24 border-r print:border-black">근로자명</th>
-                <!-- 유해인자 및 기타 컬럼 (가로 병합 처리된 내부 구조를 위한 헤더) -->
-                <th class="p-0 border-r print:border-black" colspan="6">
-                  <div class="flex w-full">
-                    <div class="w-[160px] px-2 py-3 border-r border-gray-200 print:border-black text-center flex-grow">유해인자 (발생물질 등)</div>
-                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">A</div>
-                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">P</div>
-                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">L</div>
-                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">N</div>
-                    <div class="w-[112px] px-2 py-3 text-center">비고</div>
-                  </div>
-                </th>
-                <th class="px-2 py-3 w-20 text-center print:hidden">관리</th>
-              </tr>
-            </thead>
-            <tbody id="table-body" class="divide-y divide-gray-200 print:divide-black">
-              <!-- JS 렌더링 영역 -->
-            </tbody>
-          </table>
-          <div class="p-3 bg-gray-50 border-t border-gray-200 print:hidden flex justify-center">
-            <button onclick="addWorker()" class="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 px-6 py-2 rounded-lg shadow-sm transition-all">
-              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              빈 행 (측정대상) 추가
-            </button>
-          </div>
+      <!-- 단위사업체 탭 UI 영역 -->
+      <section id="tabContainerSection" class="hidden print:hidden">
+        <div class="flex items-center justify-between mb-2 border-b border-gray-300 pb-2">
+            <h3 class="text-md font-bold text-gray-700 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                단위사업체 탭 선택 (인쇄 시 모두 자동 출력됨)
+            </h3>
+        </div>
+        <div id="unitTabs" class="flex flex-wrap gap-2 mb-2">
+            <!-- 탭 버튼들이 JS에 의해 동적으로 생성됩니다. -->
         </div>
       </section>
+
+      <!-- 통합된 전체 단위사업체 테이블 컨테이너 -->
+      <div id="tables-container" class="space-y-8 print:space-y-6">
+        <!-- JS 렌더링 영역 (단위사업체별로 테이블 생성) -->
+      </div>
     </div>
   </div>
 
   <script>
-    let workers = [
-      {
-        id: 1, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '',
-        pageBreak: false, // 페이지 분할 토글
-        harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
-      }
-    ];
+    // 상태 관리를 위한 전역 변수
+    let appData = {
+      units: {
+        '기본 사업체': [
+          {
+            id: 1, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '',
+            pageBreak: false, 
+            harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }]
+          }
+        ]
+      },
+      currentUnit: '기본 사업체'
+    };
 
     let activeFocusId = null;
     let selectionStart = null;
@@ -205,14 +173,17 @@
       }
     }
 
-    function calculateSpans() {
+    function calculateSpansForUnit(unitName) {
+      const currentWorkers = appData.units[unitName];
+      if (!currentWorkers) return [];
+      
       const groupFields = ['department', 'process', 'shiftSystem', 'workerCount', 'exposureCycle', 'measurementCount'];
-      const spans = new Array(workers.length).fill(1);
-      for (let i = 0; i < workers.length; i++) {
+      const spans = new Array(currentWorkers.length).fill(1);
+      for (let i = 0; i < currentWorkers.length; i++) {
         if (spans[i] === 0) continue;
         let count = 1;
-        for (let j = i + 1; j < workers.length; j++) {
-          const isSame = groupFields.every(field => workers[i][field] === workers[j][field]);
+        for (let j = i + 1; j < currentWorkers.length; j++) {
+          const isSame = groupFields.every(field => currentWorkers[i][field] === currentWorkers[j][field]);
           if (isSame) {
             count++;
             spans[j] = 0;
@@ -226,22 +197,35 @@
     }
 
     function updateWorker(id, field, value) {
-      workers = workers.map(w => w.id === id ? { ...w, [field]: value } : w);
-      reRender();
+      const currentWorkers = appData.units[appData.currentUnit];
+      appData.units[appData.currentUnit] = currentWorkers.map(w => w.id === id ? { ...w, [field]: value } : w);
     }
 
     function updateGroupField(workerIndex, rowSpan, field, value) {
+      const currentWorkers = appData.units[appData.currentUnit];
       for (let i = workerIndex; i < workerIndex + rowSpan; i++) {
-        workers[i][field] = value;
+        currentWorkers[i][field] = value;
       }
-      reRender();
     }
 
     function updateFactor(workerId, factorIndex, field, value) {
-      workers = workers.map(worker => {
+      const currentWorkers = appData.units[appData.currentUnit];
+      appData.units[appData.currentUnit] = currentWorkers.map(worker => {
         if (worker.id === workerId) {
           const newFactors = [...worker.harmfulFactors];
           newFactors[factorIndex][field] = value;
+          return { ...worker, harmfulFactors: newFactors };
+        }
+        return worker;
+      });
+    }
+    
+    function toggleAdjust(workerId, factorIndex) {
+      const currentWorkers = appData.units[appData.currentUnit];
+      appData.units[appData.currentUnit] = currentWorkers.map(worker => {
+        if (worker.id === workerId) {
+          const newFactors = [...worker.harmfulFactors];
+          newFactors[factorIndex].isAdjusted = !newFactors[factorIndex].isAdjusted;
           return { ...worker, harmfulFactors: newFactors };
         }
         return worker;
@@ -250,44 +234,50 @@
     }
 
     function addWorker() {
-      const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
-      workers.push({
+      const currentWorkers = appData.units[appData.currentUnit];
+      const newId = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => w.id)) + 1 : 1;
+      currentWorkers.push({
         id: newId, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
-        harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
+        harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }]
       });
       reRender();
     }
 
     function removeWorker(id) {
-      workers = workers.filter(w => w.id !== id);
-      if (workers.length === 0) addWorker();
+      let currentWorkers = appData.units[appData.currentUnit];
+      currentWorkers = currentWorkers.filter(w => w.id !== id);
+      appData.units[appData.currentUnit] = currentWorkers;
+      if (currentWorkers.length === 0) addWorker();
       else reRender();
     }
 
     function duplicateWorker(id) {
-      const index = workers.findIndex(w => w.id === id);
+      const currentWorkers = appData.units[appData.currentUnit];
+      const index = currentWorkers.findIndex(w => w.id === id);
       if (index === -1) return;
-      const workerToCopy = workers[index];
-      const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
+      const workerToCopy = currentWorkers[index];
+      const newId = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => w.id)) + 1 : 1;
       const clonedWorker = {
         ...workerToCopy,
         id: newId,
-        pageBreak: false, // 복사 시 페이지 분할은 해제상태로
+        pageBreak: false,
         harmfulFactors: workerToCopy.harmfulFactors.map(factor => ({ ...factor }))
       };
-      workers.splice(index + 1, 0, clonedWorker);
+      currentWorkers.splice(index + 1, 0, clonedWorker);
       reRender();
     }
 
     function togglePageBreak(id) {
-      workers = workers.map(w => w.id === id ? { ...w, pageBreak: !w.pageBreak } : w);
+      const currentWorkers = appData.units[appData.currentUnit];
+      appData.units[appData.currentUnit] = currentWorkers.map(w => w.id === id ? { ...w, pageBreak: !w.pageBreak } : w);
       reRender();
     }
 
     function addFactor(workerId) {
-      workers = workers.map(worker => {
+      const currentWorkers = appData.units[appData.currentUnit];
+      appData.units[appData.currentUnit] = currentWorkers.map(worker => {
         if (worker.id === workerId) {
-          return { ...worker, harmfulFactors: [...worker.harmfulFactors, { name: '', a: '', p: '', l: '', n: '', remark: '' }] };
+          return { ...worker, harmfulFactors: [...worker.harmfulFactors, { name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }] };
         }
         return worker;
       });
@@ -295,12 +285,13 @@
     }
 
     function removeFactor(workerId, factorIndex) {
-      workers = workers.map(worker => {
+      const currentWorkers = appData.units[appData.currentUnit];
+      appData.units[appData.currentUnit] = currentWorkers.map(worker => {
         if (worker.id === workerId) {
           const newFactors = worker.harmfulFactors.filter((_, idx) => idx !== factorIndex);
           return {
             ...worker,
-            harmfulFactors: newFactors.length ? newFactors : [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
+            harmfulFactors: newFactors.length ? newFactors : [{ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }]
           };
         }
         return worker;
@@ -308,151 +299,232 @@
       reRender();
     }
 
-    function renderTableBody() {
-      const tbody = document.getElementById('table-body');
-      const spans = calculateSpans();
+    // 화면 및 인쇄용 전체 테이블 렌더링 (단위사업체가 모두 순차적으로 인쇄되도록 구조화)
+    function renderTables() {
+      const container = document.getElementById('tables-container');
       let html = '';
-      let currentPage = 1;
 
-      workers.forEach((worker, index) => {
-        const rowSpan = spans[index];
+      const unitNames = Object.keys(appData.units);
+      
+      unitNames.forEach((unitName, uIndex) => {
+        const currentWorkers = appData.units[unitName];
+        const isActive = unitName === appData.currentUnit;
         
-        // 페이지 분할선 UI 랜더링
-        if (worker.pageBreak) {
-          currentPage++;
-          html += `
-          <tr class="print:hidden bg-indigo-50 border-t-2 border-b-2 border-indigo-200">
-            <td colspan="15" class="text-center py-2 text-indigo-700 font-bold text-sm tracking-wide">
-              ✂️ 인쇄 및 PDF 저장 시, 여기서부터 ${currentPage}페이지 첫 줄로 출력됩니다 ✂️
-            </td>
-          </tr>
-          `;
-        }
+        // 탭에 따라 활성화된 것만 보여주되, 인쇄 시에는 전부 보여주도록(print:block) 클래스 설정
+        const displayClass = isActive ? 'block' : 'hidden print:block';
+        
+        html += `<div class="unit-section ${displayClass} print:mb-8" id="unit-wrap-${uIndex}">`;
+        
+        // 단위사업체명 헤더
+        html += `<div class="flex justify-between items-end mb-2 border-b pb-1 print:border-black print:mb-1">
+                    <h2 class="text-lg font-semibold text-gray-800 print:text-[13px] print:m-0 print:p-0">
+                        <span class="text-indigo-600 mr-2 print:text-black">[${unitName}]</span> 측정 대상 및 유해인자 목록
+                    </h2>
+                 </div>`;
+                 
+        // 테이블 컨테이너
+        html += `<div class="overflow-x-auto border border-gray-200 rounded-lg print:border-black print:border-2 print:rounded-none print:shadow-none">
+                  <table class="w-full text-left text-sm whitespace-nowrap min-w-[1250px] print:min-w-0">
+                    <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black print:text-[10px]">
+                      <tr>
+                        <th class="px-2 py-2 w-10 text-center border-r print:border-black print:p-0.5">No.</th>
+                        <th class="px-2 py-2 w-20 border-r print:border-black print:p-0.5">부서명</th>
+                        <th class="px-2 py-2 w-24 border-r print:border-black print:p-0.5">공정명</th>
+                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5">교대제</th>
+                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5">근로자수</th>
+                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5">노출주기</th>
+                        <th class="px-1 py-2 w-12 border-r print:border-black text-center print:p-0.5">측정건수</th>
+                        <!-- 유해인자 통합 헤더 -->
+                        <th class="p-0 border-r print:border-black" colspan="7">
+                          <div class="flex w-full">
+                            <div class="w-[140px] px-2 py-2 border-r border-gray-200 print:border-black text-center flex-grow print:p-0.5">유해인자 (발생물질 등)</div>
+                            <div class="w-[80px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">근로자명</div>
+                            <div class="w-[30px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">A</div>
+                            <div class="w-[30px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">P</div>
+                            <div class="w-[30px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">L</div>
+                            <div class="w-[30px] px-1 py-2 border-r border-gray-200 print:border-black text-center print:p-0.5">N</div>
+                            <div class="w-[90px] px-2 py-2 text-center print:p-0.5">비고</div>
+                          </div>
+                        </th>
+                        <th class="px-2 py-2 w-16 text-center print:hidden">관리</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 print:divide-black">`;
 
-        // 페이지 분할이 켜져있으면 print 시 강제 페이지 넘김 CSS 추가
-        const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
-        html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${pageBreakClass}">`;
-        
-        // 1. 번호
-        html += `<td class="px-4 py-3 text-center text-gray-500 border-r print:border-black align-top pt-5">${index + 1}</td>`;
-        
-        // 2~7. 그룹 병합 필드들 (세로 병합)
-        if (rowSpan > 0) {
-          html += `<td class="px-3 py-3 border-r print:border-black align-top" rowspan="${rowSpan}">
-                    <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'department', this.value)" value="${worker.department}" placeholder="부서" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
-                   </td>`;
-          html += `<td class="px-3 py-3 border-r print:border-black align-top" rowspan="${rowSpan}">
-                    <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'process', this.value)" value="${worker.process}" placeholder="공정" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
-                   </td>`;
-          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
-                    <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'shiftSystem', this.value)" value="${worker.shiftSystem}" placeholder="교대" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
-                   </td>`;
-          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
-                    <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'workerCount', this.value)" value="${worker.workerCount}" placeholder="명" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
-                   </td>`;
-          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
-                    <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'exposureCycle', this.value)" value="${worker.exposureCycle}" placeholder="주기" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
-                   </td>`;
-          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
-                    <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'measurementCount', this.value)" value="${worker.measurementCount}" placeholder="건수" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
-                   </td>`;
-        }
+        if (!currentWorkers || currentWorkers.length === 0) {
+          html += `<tr><td colspan="15" class="text-center py-6 text-gray-500">데이터가 없습니다.</td></tr>`;
+        } else {
+          const spans = calculateSpansForUnit(unitName);
+          currentWorkers.forEach((worker, index) => {
+            const rowSpan = spans[index];
 
-        // 8. 근로자명
-        html += `<td class="px-3 py-3 border-r print:border-black align-top">
-                  <input type="text" data-focus-id="name-${worker.id}" oninput="updateWorker(${worker.id}, 'name', this.value)" value="${worker.name}" placeholder="이름" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
-                 </td>`;
+            if (worker.pageBreak && index > 0) {
+              html += `
+              <tr class="hidden print:table-row page-break-before">
+                <td colspan="15" class="text-center py-1 text-[10px] text-gray-500 font-medium border-t-2 border-black border-dashed bg-white">
+                  ✂️ 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️
+                </td>
+              </tr>
+              `;
+            }
 
-        // 9~14. 유해인자 및 A, P, L, N, 비고 (가로줄 1:1 매칭 구조 및 인쇄용 텍스트 래핑 처리)
-        html += `<td class="p-0 border-r print:border-black align-top" colspan="6">
-                  <div class="flex flex-col h-full w-full">`;
-        
-        worker.harmfulFactors.forEach((factor, fIndex) => {
-          const isLast = fIndex === worker.harmfulFactors.length - 1;
-          const borderClass = !isLast ? 'border-b border-gray-200 print:border-black' : '';
-          
-          html += `<div class="flex w-full ${borderClass} min-h-[44px]">
-                      
-                      <!-- 유해인자명: 인쇄 시 input은 숨기고, 줄바꿈되는 작은 글씨의 div를 표시하여 내용이 잘리지 않도록 함 -->
-                      <div class="w-[160px] border-r border-gray-200 print:border-black px-2 py-2 flex-grow relative flex items-center print:items-start print:py-1.5">
-                        <input type="text" data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'name', this.value)" value="${factor.name}" class="w-full bg-transparent outline-none pr-6 print:hidden" placeholder="유해인자 입력" />
-                        <div class="hidden print:block w-full text-[9px] leading-[1.3] break-all whitespace-pre-wrap">${factor.name}</div>
-                        
-                        <button onclick="removeFactor(${worker.id}, ${fIndex})" class="absolute right-1 text-gray-400 hover:text-red-500 print:hidden p-1 rounded" title="삭제">
-                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
+            html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${pageBreakClass}">`;
+            
+            // 1. 번호
+            html += `<td class="px-2 py-2 text-center text-gray-500 border-r print:border-black align-top print:p-0.5 print:pt-1">${index + 1}</td>`;
+            
+            // 2~7. 그룹 병합 필드들 (세로 병합)
+            if (rowSpan > 0) {
+              html += `<td class="px-2 py-2 border-r print:border-black align-top print:p-0.5 print:pt-1" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'department', this.value)" onchange="reRender()" value="${worker.department}" placeholder="부서" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none print:p-0" />
+                       </td>`;
+              html += `<td class="px-2 py-2 border-r print:border-black align-top print:p-0.5 print:pt-1" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'process', this.value)" onchange="reRender()" value="${worker.process}" placeholder="공정" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none print:p-0" />
+                       </td>`;
+              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'shiftSystem', this.value)" onchange="reRender()" value="${worker.shiftSystem}" placeholder="교대" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0" />
+                       </td>`;
+              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'workerCount', this.value)" onchange="reRender()" value="${worker.workerCount}" placeholder="명" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0" />
+                       </td>`;
+              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'exposureCycle', this.value)" onchange="reRender()" value="${worker.exposureCycle}" placeholder="주기" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0" />
+                       </td>`;
+              html += `<td class="px-1 py-2 border-r print:border-black align-top text-center print:p-0.5 print:pt-1" rowspan="${rowSpan}">
+                        <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'measurementCount', this.value)" onchange="reRender()" value="${worker.measurementCount}" placeholder="건수" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none print:p-0" />
+                       </td>`;
+            }
+
+            // 8~14. 유해인자 등 병합열 (colspan=7)
+            html += `<td class="p-0 border-r print:border-black align-top" colspan="7">
+                      <div class="flex flex-col h-full w-full">`;
+            
+            worker.harmfulFactors.forEach((factor, fIndex) => {
+              const isLast = fIndex === worker.harmfulFactors.length - 1;
+              const borderClass = !isLast ? 'border-b border-gray-200 print:border-black' : '';
+              
+              const adjustedClasses = factor.isAdjusted ? 'text-gray-400 line-through decoration-gray-400' : '';
+              const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[11px] print:text-[9px] shrink-0 flex items-center">[조정]</span>` : '';
+              
+              html += `<div class="flex w-full ${borderClass} min-h-[40px] print:min-h-0">
+                          
+                          <!-- 유해인자명 -->
+                          <div class="w-[140px] border-r border-gray-200 print:border-black px-1 py-1 flex-grow relative flex items-center print:items-start print:py-0.5 group/hazard">
+                            ${badgeHtml}
+                            <input type="text" data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'name', this.value)" value="${factor.name}" class="w-full bg-transparent outline-none pr-[55px] print:hidden ${adjustedClasses}" placeholder="유해인자 입력" />
+                            <div class="hidden print:block w-full text-[10px] leading-tight break-all whitespace-pre-wrap ${adjustedClasses}">${factor.name}</div>
+                            
+                            <!-- 횟수조정 및 삭제 버튼 -->
+                            <div class="absolute right-0.5 flex items-center gap-1 print:hidden bg-white/90 pl-1 py-0.5 rounded z-10">
+                               <button onclick="toggleAdjust(${worker.id}, ${fIndex})" class="text-[9px] font-semibold border border-gray-300 rounded px-1 py-0.5 transition-colors ${factor.isAdjusted ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' : 'bg-white text-gray-600 hover:bg-gray-100'}" title="횟수조정">조정</button>
+                               <button onclick="removeFactor(${worker.id}, ${fIndex})" class="text-gray-400 hover:text-red-500 p-0.5 rounded transition-colors" title="삭제">
+                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                               </button>
+                            </div>
+                          </div>
+
+                          <!-- 근로자명 -->
+                          <div class="w-[80px] border-r border-gray-200 print:border-black flex items-center justify-center p-1 relative print:items-start print:py-0.5 print:px-0.5">
+                            ${fIndex === 0 ? `
+                              <input type="text" data-focus-id="name-${worker.id}" oninput="updateWorker(${worker.id}, 'name', this.value)" value="${worker.name}" class="w-full text-center bg-transparent outline-none print:hidden" placeholder="이름" />
+                              <div class="hidden print:block w-full text-[10px] leading-tight break-all whitespace-pre-wrap text-center">${worker.name}</div>
+                            ` : ``}
+                          </div>
+
+                          <!-- A, P, L, N -->
+                          <div class="w-[30px] border-r border-gray-200 print:border-black flex items-center justify-center p-1 print:p-0.5">
+                            <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
+                          </div>
+                          <div class="w-[30px] border-r border-gray-200 print:border-black flex items-center justify-center p-1 print:p-0.5">
+                            <input type="text" data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'p', this.value)" value="${factor.p}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
+                          </div>
+                          <div class="w-[30px] border-r border-gray-200 print:border-black flex items-center justify-center p-1 print:p-0.5">
+                            <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
+                          </div>
+                          <div class="w-[30px] border-r border-gray-200 print:border-black flex items-center justify-center p-1 print:p-0.5">
+                            <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${factor.n}" class="w-full text-center bg-transparent outline-none uppercase print:p-0" />
+                          </div>
+
+                          <!-- 비고 -->
+                          <div class="w-[90px] flex items-center justify-center px-1 py-1 relative print:items-start print:py-0.5 print:px-0.5">
+                            <input type="text" data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value)" value="${factor.remark}" class="w-full px-1 bg-transparent outline-none print:hidden text-center" placeholder="비고" />
+                            <div class="hidden print:block w-full text-[10px] leading-tight break-all whitespace-pre-wrap text-center">${factor.remark}</div>
+                          </div>
+                       </div>`;
+            });
+
+            // 유해인자 추가 버튼
+            html += `<div class="p-1 border-t border-gray-100 print:hidden flex justify-center bg-gray-50/50">
+                       <button onclick="addFactor(${worker.id})" class="text-[11px] flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium">
+                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                         유해인자 추가
+                       </button>
+                     </div>
+                    </div>
+                   </td>`;
+
+            // 15. 관리 버튼
+            html += `<td class="px-1 py-2 text-center align-top print:hidden whitespace-nowrap">
+                      <div class="flex flex-col gap-1 items-center h-full">
+                        <div class="flex gap-1 justify-center mt-1">
+                          <button onclick="duplicateWorker(${worker.id})" class="text-gray-400 hover:text-blue-600 p-1.5 rounded-full hover:bg-blue-50 transition-colors" title="현재 행 복사">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9" /></svg>
+                          </button>
+                          <button onclick="removeWorker(${worker.id})" class="text-gray-400 hover:text-red-600 p-1.5 rounded-full hover:bg-red-50 transition-colors" title="행 삭제">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
+                        </div>
+                        <button onclick="togglePageBreak(${worker.id})" class="text-[10px] font-semibold flex items-center justify-center gap-1 w-full px-1 py-1 rounded transition-colors ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '분할선 취소' : '이 행부터 다음 페이지에 인쇄'}">
+                          ✂️ ${worker.pageBreak ? '분할 취소' : '페이지 나눔'}
                         </button>
                       </div>
+                     </td>`;
 
-                      <!-- A, P, L, N -->
-                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
-                        <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full text-center bg-transparent outline-none uppercase" />
-                      </div>
-                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
-                        <input type="text" data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'p', this.value)" value="${factor.p}" class="w-full text-center bg-transparent outline-none uppercase" />
-                      </div>
-                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
-                        <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full text-center bg-transparent outline-none uppercase" />
-                      </div>
-                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
-                        <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${factor.n}" class="w-full text-center bg-transparent outline-none uppercase" />
-                      </div>
+            html += `</tr>`;
+          });
+        }
 
-                      <!-- 비고: 유해인자와 마찬가지로 인쇄 시 줄바꿈 지원 -->
-                      <div class="w-[112px] flex items-center justify-center px-1 py-2 relative print:items-start print:py-1.5">
-                        <input type="text" data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value)" value="${factor.remark}" class="w-full px-1 bg-transparent outline-none print:hidden text-center" placeholder="비고" />
-                        <div class="hidden print:block w-full text-[10px] leading-[1.3] break-all whitespace-pre-wrap text-center">${factor.remark}</div>
-                      </div>
-                   </div>`;
-        });
-
-        // 유해인자 추가 버튼
-        html += `<div class="p-1.5 border-t border-gray-100 print:hidden flex justify-center bg-gray-50/50">
-                   <button onclick="addFactor(${worker.id})" class="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium">
-                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                     유해인자 추가
-                   </button>
-                 </div>
-                </div>
-               </td>`;
-
-        // 15. 관리 버튼 (복사, 삭제, 페이지 분할)
-        html += `<td class="px-2 py-3 text-center align-top print:hidden whitespace-nowrap">
-                  <div class="flex flex-col gap-2 items-center h-full">
-                    <div class="flex gap-1 justify-center mt-1">
-                      <button onclick="duplicateWorker(${worker.id})" class="text-gray-400 hover:text-blue-600 p-1.5 rounded-full hover:bg-blue-50 transition-colors" title="현재 행 복사">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9" /></svg>
-                      </button>
-                      <button onclick="removeWorker(${worker.id})" class="text-gray-400 hover:text-red-600 p-1.5 rounded-full hover:bg-red-50 transition-colors" title="행 삭제">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
-                    </div>
-                    <button onclick="togglePageBreak(${worker.id})" class="text-[11px] font-semibold flex items-center justify-center gap-1 w-full px-1 py-1 rounded transition-colors ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '분할선 취소' : '이 행부터 다음 페이지에 인쇄'}">
-                      ✂️ ${worker.pageBreak ? '분할 취소' : '페이지 나눔'}
+        html += `   </tbody>
+                  </table>
+                  <div class="p-2 bg-gray-50 border-t border-gray-200 print:hidden flex justify-center ${isActive ? 'block' : 'hidden'}">
+                    <button onclick="addWorker()" class="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 px-4 py-1.5 rounded shadow-sm transition-all">
+                      <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      빈 행 추가
                     </button>
                   </div>
-                 </td>`;
-
-        html += `</tr>`;
+                </div>
+              </div>`;
       });
 
-      tbody.innerHTML = html;
+      container.innerHTML = html;
     }
 
     function reRender() {
       saveFocus();
-      renderTableBody();
+      renderTables();
       restoreFocus();
     }
 
     async function copyTableToClipboard() {
       try {
-        let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t근로자명\t유해인자\tA\tP\tL\tN\t비고\n";
-        workers.forEach((worker, index) => {
-          worker.harmfulFactors.forEach((factor, fIndex) => {
-            const isFirst = fIndex === 0;
-            tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${isFirst ? worker.name || '' : ''}\t${factor.name || ''}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${factor.n || ''}\t${factor.remark || ''}\n`;
-          });
-        });
+        let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t유해인자\t근로자명\tA\tP\tL\tN\t비고\n";
+        
+        // 클립보드 복사는 화면에 보이는 '현재 탭(단위사업체)' 데이터만 복사합니다.
+        const currentWorkers = appData.units[appData.currentUnit];
+        if(currentWorkers) {
+            currentWorkers.forEach((worker, index) => {
+              worker.harmfulFactors.forEach((factor, fIndex) => {
+                const isFirst = fIndex === 0;
+                let hazardText = factor.name || '';
+                if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
+                
+                tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${isFirst ? worker.name || '' : ''}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${factor.n || ''}\t${factor.remark || ''}\n`;
+              });
+            });
+        }
 
         await navigator.clipboard.writeText(tsvData);
         
@@ -463,7 +535,7 @@
         setTimeout(() => {
           document.getElementById('copyIconDefault').classList.remove('hidden');
           document.getElementById('copyIconCheck').classList.add('hidden');
-          document.getElementById('copyBtnText').innerText = '표 데이터 복사';
+          document.getElementById('copyBtnText').innerText = '현재 표 데이터 복사';
         }, 2000);
       } catch (err) {
         alert('복사에 실패했습니다.');
@@ -525,18 +597,27 @@
       msg.innerText = '';
 
       try {
-        let excludeDepts = new Set(); 
-        let excludeProcesses = new Set();
+        let mergedGroupsByUnit = {}; 
         let excludeKeys = new Set();
+        let lastKnownUnit = '기본 사업체';
 
-        const processRows = (rows, isNoiseSheet = false, mergedGroups) => {
+        const processRows = (rows, isNoiseSheet = false) => {
           if (!rows || rows.length < 2) return;
           let lastDept = '', lastProcess = '';
 
           for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length < 2) continue;
-
+            
+            // A열 단위사업체 추출 및 Fill-down
+            let unitName = row[0]?.trim() || '';
+            if (unitName !== '') {
+                lastKnownUnit = unitName;
+            } else {
+                unitName = lastKnownUnit;
+            }
+            
+            // 부서 및 공정 추출
             let dept = row[1]?.trim() || '';
             let process = row[2]?.trim() || '';
 
@@ -548,104 +629,125 @@
 
             if (!dept && !process) continue;
 
-            const key = `${dept}|${process}`;
+            const key = `${unitName}|${dept}|${process}`;
             
+            if (!mergedGroupsByUnit[unitName]) {
+                mergedGroupsByUnit[unitName] = {};
+            }
+
             if (!isNoiseSheet) {
-              excludeDepts.add(dept);
-              excludeProcesses.add(process);
               excludeKeys.add(key);
             }
 
-            if (!mergedGroups[key]) {
-              mergedGroups[key] = {
-                department: dept, process: process, shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
+            if (!mergedGroupsByUnit[unitName][key]) {
+              mergedGroupsByUnit[unitName][key] = {
+                unit: unitName, department: dept, process: process, shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
                 factorGroups: [], hasPValue: false
               };
             }
 
             const removeDecimal = (val) => val ? val.replace(/(\d+)\.\d+/g, '$1') : '';
+            const mergedGroup = mergedGroupsByUnit[unitName][key];
 
             if (!isNoiseSheet) {
               let factor = row[3]?.trim() || '';
+              // 일반 시트는 근로자수 E열(4)
               let workerCount = removeDecimal(row[4]?.trim());
               let shift = row[5]?.trim() || '';
               let cycle = row[6]?.trim() || '';
               let pValue = row.length > 15 ? row[15]?.trim() || '' : '';
 
-              if (!mergedGroups[key].shiftSystem && shift) mergedGroups[key].shiftSystem = shift;
-              if (!mergedGroups[key].workerCount && workerCount) mergedGroups[key].workerCount = workerCount;
-              if (!mergedGroups[key].exposureCycle && cycle) mergedGroups[key].exposureCycle = cycle;
+              if (!mergedGroup.shiftSystem && shift) mergedGroup.shiftSystem = shift;
+              if (!mergedGroup.workerCount && workerCount) mergedGroup.workerCount = workerCount;
+              if (!mergedGroup.exposureCycle && cycle) mergedGroup.exposureCycle = cycle;
 
               if (pValue !== '') {
-                mergedGroups[key].hasPValue = true;
-                mergedGroups[key].factorGroups.push(new Set());
+                mergedGroup.hasPValue = true;
+                mergedGroup.factorGroups.push(new Set());
               }
               if (factor !== '') {
-                if (mergedGroups[key].factorGroups.length === 0) mergedGroups[key].factorGroups.push(new Set());
-                mergedGroups[key].factorGroups[mergedGroups[key].factorGroups.length - 1].add(factor);
+                if (mergedGroup.factorGroups.length === 0) mergedGroup.factorGroups.push(new Set());
+                mergedGroup.factorGroups[mergedGroup.factorGroups.length - 1].add(factor);
               }
             } else {
               let isNewKey = !excludeKeys.has(key);
               
               if (isNewKey) {
-                let workerCount = removeDecimal(row[4]?.trim());
+                // "소음" 시트 URL 연동 시에만 근로자수 = D열(row[3])
+                let workerCount = removeDecimal(row[3]?.trim());
                 let shift = row[5]?.trim() || '';
                 let cycle = row[6]?.trim() || '';
 
-                if (shift) mergedGroups[key].shiftSystem = shift;
-                if (workerCount) mergedGroups[key].workerCount = workerCount;
-                if (cycle) mergedGroups[key].exposureCycle = cycle;
+                if (shift) mergedGroup.shiftSystem = shift;
+                if (workerCount) mergedGroup.workerCount = workerCount;
+                if (cycle) mergedGroup.exposureCycle = cycle;
               }
 
-              mergedGroups[key].hasPValue = true;
+              mergedGroup.hasPValue = true;
               const noiseSet = new Set();
               noiseSet.add('소음');
-              mergedGroups[key].factorGroups.push(noiseSet);
+              mergedGroup.factorGroups.push(noiseSet);
             }
           }
         };
 
-        let mergedGroups = {};
         if (excludeUrl) {
           const rows1 = await fetchSheetData(excludeUrl);
-          processRows(rows1, false, mergedGroups);
+          processRows(rows1, false);
         }
         if (noiseUrl) {
           const rows2 = await fetchSheetData(noiseUrl);
-          processRows(rows2, true, mergedGroups);
+          processRows(rows2, true);
         }
 
-        const newWorkers = Object.values(mergedGroups)
-          .filter(group => group.hasPValue)
-          .map((group, index) => {
-            let parsedFactors = group.factorGroups
-              .map(set => Array.from(set).join(', '))
-              .filter(str => str !== '');
+        let totalExtracted = 0;
+        let newAppUnits = {};
 
-            let uniqueFactors = [...new Set(parsedFactors)];
-            let formattedFactors = uniqueFactors.length > 0
-              ? uniqueFactors.map(f => ({ name: f, a: '', p: '', l: '', n: '', remark: '' }))
-              : [{ name: '', a: '', p: '', l: '', n: '', remark: '' }];
+        // 사업체별로 객체화
+        for (const unitName in mergedGroupsByUnit) {
+            const newWorkers = Object.values(mergedGroupsByUnit[unitName])
+              .filter(group => group.hasPValue)
+              .map((group, index) => {
+                let parsedFactors = group.factorGroups
+                  .map(set => Array.from(set).join(', '))
+                  .filter(str => str !== '');
 
-            return {
-              id: Date.now() + index,
-              department: group.department,
-              process: group.process,
-              shiftSystem: group.shiftSystem,
-              workerCount: group.workerCount,
-              exposureCycle: group.exposureCycle,
-              measurementCount: group.measurementCount,
-              name: group.name,
-              pageBreak: false,
-              harmfulFactors: formattedFactors
-            };
-          });
+                let uniqueFactors = [...new Set(parsedFactors)];
+                let formattedFactors = uniqueFactors.length > 0
+                  ? uniqueFactors.map(f => ({ name: f, a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }))
+                  : [{ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }];
 
-        if (newWorkers.length > 0) {
-          workers = newWorkers;
-          reRender();
+                return {
+                  id: Date.now() + Math.random(),
+                  department: group.department,
+                  process: group.process,
+                  shiftSystem: group.shiftSystem,
+                  workerCount: group.workerCount,
+                  exposureCycle: group.exposureCycle,
+                  measurementCount: group.measurementCount,
+                  name: group.name,
+                  pageBreak: false,
+                  harmfulFactors: formattedFactors
+                };
+              });
+              
+              if (newWorkers.length > 0) {
+                  newAppUnits[unitName] = newWorkers;
+                  totalExtracted += newWorkers.length;
+              }
+        }
+
+        if (Object.keys(newAppUnits).length > 0) {
+          appData.units = newAppUnits;
+          
+          // 첫 번째 탭 활성화
+          const firstUnit = Object.keys(newAppUnits)[0];
+          switchTab(firstUnit);
+          
+          document.getElementById('tabContainerSection').classList.remove('hidden');
+
           msg.className = 'text-sm font-medium text-green-600';
-          msg.innerText = `연동 완료: ${newWorkers.length}개의 측정대상이 추출되었습니다.`;
+          msg.innerText = `연동 완료: ${Object.keys(newAppUnits).length}개 단위사업체, 총 ${totalExtracted}개의 공정이 추출되었습니다.`;
         } else {
           msg.className = 'text-sm font-medium text-red-600';
           msg.innerText = '조건에 맞는 데이터가 없습니다.';
@@ -658,8 +760,109 @@
         syncBtn.innerText = '데이터 연동하기';
       }
     }
+    
+    // 탭 UI 렌더링 함수
+    function renderUnitTabs() {
+        const tabsContainer = document.getElementById('unitTabs');
+        tabsContainer.innerHTML = '';
+        
+        Object.keys(appData.units).forEach(unitName => {
+            const btn = document.createElement('button');
+            btn.className = `px-4 py-2 text-sm font-bold rounded-t-lg transition-colors border-t border-l border-r ${appData.currentUnit === unitName ? 'bg-white text-indigo-600 border-indigo-200 border-b-white translate-y-[1px]' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-50'}`;
+            btn.innerText = unitName;
+            btn.onclick = () => switchTab(unitName);
+            tabsContainer.appendChild(btn);
+        });
+    }
 
-    renderTableBody();
+    // 탭 전환(클릭) 처리 함수
+    function switchTab(unitName) {
+        if (!appData.units[unitName]) return;
+        appData.currentUnit = unitName;
+        
+        if (Object.keys(appData.units).length > 1) {
+            document.getElementById('tabContainerSection').classList.remove('hidden');
+            renderUnitTabs();
+        }
+        reRender();
+    }
+
+    // 인쇄 시 숨겨진 div에 데이터가 정상 반영되도록 강제 렌더링
+    window.addEventListener('beforeprint', function() {
+      reRender();
+    });
+
+    // 엑셀 조작감 화살표 셀 이동
+    document.addEventListener('keydown', function(e) {
+      const current = e.target;
+      if (current.tagName !== 'INPUT' || !current.hasAttribute('data-focus-id')) return;
+
+      const isUp = e.key === 'ArrowUp';
+      const isDown = e.key === 'ArrowDown';
+      const isLeft = e.key === 'ArrowLeft';
+      const isRight = e.key === 'ArrowRight';
+
+      if (!isUp && !isDown && !isLeft && !isRight) return;
+
+      // 좌우 이동은 커서가 끝/처음에 있을 때만 작동하여 텍스트 수정 방해 방지
+      if (isLeft && current.selectionStart > 0) return;
+      if (isRight && current.selectionEnd < current.value.length) return;
+
+      e.preventDefault();
+
+      const currentRect = current.getBoundingClientRect();
+      // 화면에 활성화되어 보여지는(block) 테이블 내의 input만 탐색
+      const inputs = Array.from(document.querySelectorAll('#tables-container .block input'));
+
+      let bestMatch = null;
+      let minDistance = Infinity;
+
+      inputs.forEach(input => {
+        if (input === current) return;
+        const rect = input.getBoundingClientRect();
+
+        let isEligible = false;
+        let distance = Infinity;
+
+        const yOverlap = Math.max(0, Math.min(currentRect.bottom, rect.bottom) - Math.max(currentRect.top, rect.top));
+
+        if (isUp) {
+          if (rect.bottom <= currentRect.top + 5) {
+            isEligible = true;
+            distance = (currentRect.top - rect.bottom) * 100 + Math.abs((rect.left + rect.width/2) - (currentRect.left + currentRect.width/2));
+          }
+        } else if (isDown) {
+          if (rect.top >= currentRect.bottom - 5) {
+            isEligible = true;
+            distance = (rect.top - currentRect.bottom) * 100 + Math.abs((rect.left + rect.width/2) - (currentRect.left + currentRect.width/2));
+          }
+        } else if (isLeft) {
+          if (rect.right <= currentRect.left + 5 && yOverlap > 0) {
+            isEligible = true;
+            distance = currentRect.left - rect.right;
+          }
+        } else if (isRight) {
+          if (rect.left >= currentRect.right - 5 && yOverlap > 0) {
+            isEligible = true;
+            distance = rect.left - currentRect.right;
+          }
+        }
+
+        if (isEligible && distance < minDistance) {
+          minDistance = distance;
+          bestMatch = input;
+        }
+      });
+
+      if (bestMatch) {
+        bestMatch.focus();
+        if (isLeft) bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
+        else if (isRight) bestMatch.setSelectionRange(0, 0);
+        else bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
+      }
+    });
+
+    renderTables();
   </script>
 </body>
 </html>
