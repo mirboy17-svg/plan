@@ -6,153 +6,172 @@
   <title>작업환경측정 계획서</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* 화면용 스크롤바 숨김 */
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    textarea {
-      resize: none;
-      overflow-y: hidden;
-      min-height: 24px;
-      word-break: break-all;
-    }
-    textarea:focus { background-color: #eff6ff !important; outline: none; }
-
-    /* 인쇄 전용 CSS */
     @media print {
-      @page { size: landscape; margin: 8mm; }
-      body { background-color: white !important; -webkit-print-color-adjust: exact; }
+      @page { size: landscape; margin: 10mm; }
+      body { background-color: white !important; }
       
-      /* 화면용 앱 컨테이너 숨기기 */
-      #app-container { display: none !important; }
-      /* 인쇄용 컨테이너 보이기 */
-      #print-container { display: block !important; }
+      /* 인쇄 시 불필요한 요소 숨김 처리 */
+      .print\:hidden { display: none !important; }
+      .print\:block { display: block !important; }
       
+      /* 배경 및 테두리 인쇄용 설정 */
+      .print\:bg-transparent { background-color: transparent !important; }
+      .print\:border-black { border-color: black !important; }
+      .print\:border-none { border: none !important; }
+      
+      /* 입력창 텍스트 진하게 및 스크롤 고정 해제 */
+      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; }
+      input::placeholder { color: transparent !important; }
+      table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; }
+      
+      /* 강제 페이지 넘김 CSS */
       .page-break-before {
         page-break-before: always !important;
         break-before: page !important;
       }
     }
+    
+    /* Chrome, Safari, Edge, Opera에서 input number 화살표 숨기기 */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
   </style>
 </head>
-<body class="bg-gray-50 font-sans min-h-screen">
+<body class="bg-gray-50 font-sans min-h-screen p-4 md:p-8">
   
-  <!-- [1] 화면 편집용 메인 컨테이너 -->
-  <div id="app-container" class="max-w-[1550px] mx-auto p-4 md:p-8">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-      
-      <!-- 헤더 -->
-      <div class="bg-slate-800 p-6 flex flex-col md:flex-row justify-between items-center text-white gap-4">
-        <div class="flex items-center gap-3">
-          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  <div class="max-w-[1450px] mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 print:shadow-none print:border-none">
+    
+    <div class="bg-slate-800 p-6 flex justify-between items-center text-white print:bg-white print:text-black print:border-b print:border-black print:p-2 print:mb-4">
+      <div class="flex items-center gap-3">
+        <svg class="w-8 h-8 print:hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h1 class="text-2xl font-bold">작업환경측정 계획서</h1>
+      </div>
+      <div class="flex items-center gap-3 print:hidden">
+        <button id="copyBtn" onclick="copyTableToClipboard()" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <svg id="copyIconDefault" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          <h1 class="text-2xl font-bold">작업환경측정 계획서</h1>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <button onclick="downloadExcel()" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm text-sm font-medium">
-            전체 엑셀 저장
-          </button>
-          <button onclick="copyTableToClipboard()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm text-sm font-medium">
-            <span id="copyBtnText">현재 탭 표 복사</span>
-          </button>
-          <button onclick="window.print()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm text-sm font-medium">
-            인쇄 / PDF (전체)
-          </button>
-        </div>
+          <svg id="copyIconCheck" class="w-4 h-4 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span id="copyBtnText">표 데이터 복사</span>
+        </button>
+        <button onclick="window.print()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md border border-blue-800">
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>인쇄 / PDF 저장</span>
+        </button>
       </div>
+    </div>
 
-      <div class="p-4 md:p-6 space-y-6">
-        <!-- 구글 시트 연동 -->
-        <section class="bg-blue-50 p-5 rounded-lg border border-blue-100">
-          <div class="flex items-center gap-2 mb-2">
-            <h2 class="text-base font-semibold text-blue-800">구글 스프레드시트 연동</h2>
-            <span class="text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full font-medium">단위사업체(A열) 기반 자동 분류 / 조건부 매핑 적용</span>
+    <div class="p-6 md:p-8 space-y-8 print:p-0 print:space-y-0">
+      
+      <!-- 인쇄 시 숨겨지는 사업장 기본 정보 -->
+      <section class="bg-gray-50 p-6 rounded-lg border border-gray-200 print:hidden">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">사업장 기본 정보</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">사업장명</label>
+            <input type="text" id="companyName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="예) (주)한국산업" />
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 mb-1">'소음제외' 시트 URL</label>
-              <input type="text" id="excludeNoiseUrl" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white" placeholder="https://docs.google.com/spreadsheets/d/..." />
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 mb-1">'소음' 시트 URL (근로자수 D열 매핑)</label>
-              <input type="text" id="noiseUrl" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white" placeholder="https://docs.google.com/spreadsheets/d/..." />
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">대표자명</label>
+            <input type="text" id="representative" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
           </div>
-          <div class="flex items-center gap-3">
-            <button id="syncBtn" onclick="handleSyncSheets()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition-colors font-medium text-sm shadow-sm disabled:bg-blue-300">
-              데이터 연동하기
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">소재지 (주소)</label>
+            <input type="text" id="address" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">예정 측정일자</label>
+            <input type="date" id="measurementDate" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">측정 기관명</label>
+            <input type="text" id="institution" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 인쇄 시 숨겨지는 연동 메뉴 -->
+      <section class="bg-blue-50 p-6 rounded-lg border border-blue-100 print:hidden">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="text-lg font-semibold text-blue-800">구글 스프레드시트 데이터 연동</h2>
+          <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-medium">자동 병합 & 소음 조건부 적용</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">'소음제외' 시트 URL</label>
+            <input type="text" id="excludeNoiseUrl" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white" placeholder="https://docs.google.com/spreadsheets/d/..." />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">'소음' 시트 URL (제외 시트에 없는 경우만 적용)</label>
+            <input type="text" id="noiseUrl" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white" placeholder="https://docs.google.com/spreadsheets/d/..." />
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <button id="syncBtn" onclick="handleSyncSheets()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors font-medium text-sm shadow-sm disabled:bg-blue-300">
+            데이터 연동하기
+          </button>
+          <span id="syncMessage" class="text-sm font-medium text-blue-600"></span>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 print:border-black print:mb-2">측정 대상 및 유해인자 목록</h2>
+        <div class="overflow-x-auto border border-gray-200 rounded-lg print:border-black">
+          <table class="w-full text-left text-sm whitespace-nowrap min-w-[1300px] print:min-w-0">
+            <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black">
+              <tr>
+                <th class="px-4 py-3 w-12 text-center border-r print:border-black">No.</th>
+                <th class="px-3 py-3 w-24 border-r print:border-black">부서명</th>
+                <th class="px-3 py-3 w-28 border-r print:border-black">공정명</th>
+                <th class="px-2 py-3 w-16 border-r print:border-black text-center">교대제</th>
+                <th class="px-2 py-3 w-16 border-r print:border-black text-center">근로자수</th>
+                <th class="px-2 py-3 w-16 border-r print:border-black text-center">노출주기</th>
+                <th class="px-2 py-3 w-16 border-r print:border-black text-center">측정건수</th>
+                <th class="px-3 py-3 w-24 border-r print:border-black">근로자명</th>
+                <!-- 유해인자 및 기타 컬럼 (가로 병합 처리된 내부 구조를 위한 헤더) -->
+                <th class="p-0 border-r print:border-black" colspan="6">
+                  <div class="flex w-full">
+                    <div class="w-[160px] px-2 py-3 border-r border-gray-200 print:border-black text-center flex-grow">유해인자 (발생물질 등)</div>
+                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">A</div>
+                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">P</div>
+                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">L</div>
+                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">N</div>
+                    <div class="w-[112px] px-2 py-3 text-center">비고</div>
+                  </div>
+                </th>
+                <th class="px-2 py-3 w-20 text-center print:hidden">관리</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-gray-200 print:divide-black">
+              <!-- JS 렌더링 영역 -->
+            </tbody>
+          </table>
+          <div class="p-3 bg-gray-50 border-t border-gray-200 print:hidden flex justify-center">
+            <button onclick="addWorker()" class="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 px-6 py-2 rounded-lg shadow-sm transition-all">
+              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              빈 행 (측정대상) 추가
             </button>
-            <span id="syncMessage" class="text-xs font-medium"></span>
           </div>
-        </section>
-
-        <!-- 메인 관리 표 -->
-        <section>
-          <div class="flex justify-between items-end mb-2">
-            <h2 class="text-lg font-semibold text-gray-800">단위사업체별 측정계획 관리</h2>
-            <span class="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded">방향키(상하좌우) 셀 자유 이동 지원</span>
-          </div>
-          
-          <!-- 단위사업체 탭 -->
-          <div class="flex items-center border-b border-gray-300 overflow-x-auto no-scrollbar pt-2 mb-4" id="unitTabs">
-            <!-- JS 렌더링 -->
-          </div>
-
-          <div class="overflow-x-auto border border-gray-300 rounded-lg shadow-sm">
-            <table id="mainTable" class="w-full text-left text-sm whitespace-nowrap min-w-[1300px]">
-              <thead class="bg-gray-100 text-gray-700 font-semibold border-b border-gray-300">
-                <tr>
-                  <th class="px-1 py-2 w-10 text-center border-r border-gray-300">No.</th>
-                  <th class="px-2 py-2 w-24 border-r border-gray-300 text-center">부서명</th>
-                  <th class="px-2 py-2 w-28 border-r border-gray-300 text-center">공정명</th>
-                  <th class="px-1 py-2 w-14 border-r border-gray-300 text-center">교대제</th>
-                  <th class="px-1 py-2 w-16 border-r border-gray-300 text-center">근로자수</th>
-                  <th class="px-1 py-2 w-16 border-r border-gray-300 text-center">노출주기</th>
-                  <th class="px-1 py-2 w-16 border-r border-gray-300 text-center">측정건수</th>
-                  <th class="px-2 py-2 w-24 border-r border-gray-300 text-center">근로자명</th>
-                  <th class="p-0 border-r border-gray-300" colspan="6">
-                    <div class="flex w-full h-full text-center">
-                      <div class="w-full flex-grow px-2 py-2 border-r border-gray-300 flex items-center justify-center">유해인자 (발생물질 등)</div>
-                      <div class="w-[32px] flex-shrink-0 px-1 py-2 border-r border-gray-300 flex items-center justify-center">A</div>
-                      <div class="w-[32px] flex-shrink-0 px-1 py-2 border-r border-gray-300 flex items-center justify-center">P</div>
-                      <div class="w-[32px] flex-shrink-0 px-1 py-2 border-r border-gray-300 flex items-center justify-center">L</div>
-                      <div class="w-[32px] flex-shrink-0 px-1 py-2 border-r border-gray-300 flex items-center justify-center">N</div>
-                      <div class="w-[70px] flex-shrink-0 px-1 py-2 flex items-center justify-center">비고</div>
-                    </div>
-                  </th>
-                  <th class="px-2 py-2 w-24 text-center">관리</th>
-                </tr>
-              </thead>
-              <tbody id="table-body" class="divide-y divide-gray-300 bg-white">
-                <!-- JS 영역 -->
-              </tbody>
-            </table>
-            <div class="p-2 bg-gray-50 border-t border-gray-200 flex justify-center">
-              <button onclick="addWorker()" class="flex items-center gap-1 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 px-5 py-2 rounded shadow-sm transition-all">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                부서 행 추가 (현재 사업체)
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   </div>
 
-  <!-- [2] 인쇄/PDF 저장 전용 컨테이너 (평소엔 숨김) -->
-  <div id="print-container" class="hidden font-sans w-full p-0 m-0">
-    <!-- JS에서 전체 단위사업체의 인쇄용 테이블이 여기에 생성됨 -->
-  </div>
-
   <script>
-    let units = ['기본 사업체'];
-    let activeUnit = '기본 사업체';
-
     let workers = [
       {
-        id: 1, unit: '기본 사업체', department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '',
-        pageBreak: false,
+        id: 1, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '',
+        pageBreak: false, // 페이지 분할 토글
         harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
       }
     ];
@@ -161,10 +180,9 @@
     let selectionStart = null;
     let selectionEnd = null;
 
-    // 타이핑 중 렌더링이 발생해도 커서 위치와 포커스를 정확히 유지
     function saveFocus() {
       const active = document.activeElement;
-      if (active && active.tagName.toLowerCase() === 'textarea') {
+      if (active && active.dataset.focusId) {
         activeFocusId = active.dataset.focusId;
         selectionStart = active.selectionStart;
         selectionEnd = active.selectionEnd;
@@ -178,26 +196,23 @@
         const el = document.querySelector(`[data-focus-id="${activeFocusId}"]`);
         if (el) {
           el.focus();
-          try { el.setSelectionRange(selectionStart, selectionEnd); } catch(e) {}
+          try {
+            if (el.type === 'text' || el.type === 'number') {
+              el.setSelectionRange(selectionStart, selectionEnd);
+            }
+          } catch(e) {}
         }
       }
     }
 
-    function autoResizeTextarea(el) {
-      const currentScroll = window.scrollY; // 텍스트입력시 스크롤 튀는 현상 방지
-      el.style.height = 'auto';
-      el.style.height = (el.scrollHeight) + 'px';
-      window.scrollTo(0, currentScroll);
-    }
-
-    function calculateSpans(unitWorkers) {
+    function calculateSpans() {
       const groupFields = ['department', 'process', 'shiftSystem', 'workerCount', 'exposureCycle', 'measurementCount'];
-      const spans = new Array(unitWorkers.length).fill(1);
-      for (let i = 0; i < unitWorkers.length; i++) {
+      const spans = new Array(workers.length).fill(1);
+      for (let i = 0; i < workers.length; i++) {
         if (spans[i] === 0) continue;
         let count = 1;
-        for (let j = i + 1; j < unitWorkers.length; j++) {
-          const isSame = groupFields.every(field => unitWorkers[i][field] === unitWorkers[j][field]);
+        for (let j = i + 1; j < workers.length; j++) {
+          const isSame = groupFields.every(field => workers[i][field] === workers[j][field]);
           if (isSame) {
             count++;
             spans[j] = 0;
@@ -210,54 +225,16 @@
       return spans;
     }
 
-    function renderTabs() {
-      const container = document.getElementById('unitTabs');
-      let html = '';
-      units.forEach(u => {
-        const isActive = u === activeUnit;
-        const activeClass = isActive ? "border-blue-600 text-blue-700 bg-white" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100";
-        html += `<div onclick="switchUnit('${u}')" class="px-5 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 cursor-pointer transition-colors ${activeClass}">${u || '미지정'}</div>`;
-      });
-      html += `<div onclick="addNewUnit()" class="px-3 py-2.5 text-sm font-bold text-gray-400 hover:text-blue-600 cursor-pointer border-b-2 border-transparent hover:bg-gray-100 flex items-center" title="새 단위사업체 추가">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-               </div>`;
-      container.innerHTML = html;
-    }
-
-    function switchUnit(unitName) {
-      saveFocus();
-      activeUnit = unitName;
-      renderTabs();
-      renderTableBody();
-      restoreFocus();
-    }
-
-    function addNewUnit() {
-      const name = prompt('새로운 단위사업체 이름을 입력하세요:');
-      if (name && name.trim() !== '') {
-        const cleanName = name.trim();
-        if (!units.includes(cleanName)) units.push(cleanName);
-        activeUnit = cleanName;
-        const newId = Date.now();
-        workers.push({
-          id: newId, unit: cleanName, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
-          harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
-        });
-        renderTabs();
-        renderTableBody();
-      }
-    }
-
-    // 수정 시 데이터 증발 방지: ID 배열 기반 정확한 타겟팅
-    function updateGroupField(idsStr, field, value) {
-      const ids = idsStr.split(',').map(Number);
-      workers = workers.map(w => ids.includes(w.id) ? { ...w, [field]: value } : w);
-      renderPrintView(); // 백그라운드 인쇄용 DOM만 업데이트 (IME 한글 입력 끊김 방지)
-    }
-
     function updateWorker(id, field, value) {
       workers = workers.map(w => w.id === id ? { ...w, [field]: value } : w);
-      renderPrintView(); // 화면 재렌더링을 차단하여 한글 받침 분리 오류 완벽 해결
+      reRender();
+    }
+
+    function updateGroupField(workerIndex, rowSpan, field, value) {
+      for (let i = workerIndex; i < workerIndex + rowSpan; i++) {
+        workers[i][field] = value;
+      }
+      reRender();
     }
 
     function updateFactor(workerId, factorIndex, field, value) {
@@ -269,312 +246,249 @@
         }
         return worker;
       });
-      renderPrintView();
+      reRender();
     }
 
     function addWorker() {
-      const newId = Date.now();
+      const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
       workers.push({
-        id: newId, unit: activeUnit, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
+        id: newId, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
         harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
       });
-      renderTableBody();
+      reRender();
     }
 
     function removeWorker(id) {
       workers = workers.filter(w => w.id !== id);
-      if (workers.filter(w => w.unit === activeUnit).length === 0) addWorker();
-      else renderTableBody();
+      if (workers.length === 0) addWorker();
+      else reRender();
     }
 
     function duplicateWorker(id) {
       const index = workers.findIndex(w => w.id === id);
       if (index === -1) return;
-      const wToCopy = workers[index];
-      const newWorker = {
-        ...wToCopy, id: Date.now(), pageBreak: false,
-        harmfulFactors: wToCopy.harmfulFactors.map(f => ({ ...f }))
+      const workerToCopy = workers[index];
+      const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
+      const clonedWorker = {
+        ...workerToCopy,
+        id: newId,
+        pageBreak: false, // 복사 시 페이지 분할은 해제상태로
+        harmfulFactors: workerToCopy.harmfulFactors.map(factor => ({ ...factor }))
       };
-      workers.splice(index + 1, 0, newWorker);
-      renderTableBody();
+      workers.splice(index + 1, 0, clonedWorker);
+      reRender();
     }
 
     function togglePageBreak(id) {
       workers = workers.map(w => w.id === id ? { ...w, pageBreak: !w.pageBreak } : w);
-      renderTableBody();
+      reRender();
     }
 
     function addFactor(workerId) {
-      workers = workers.map(w => w.id === workerId ? { ...w, harmfulFactors: [...w.harmfulFactors, { name: '', a: '', p: '', l: '', n: '', remark: '' }] } : w);
-      renderTableBody();
+      workers = workers.map(worker => {
+        if (worker.id === workerId) {
+          return { ...worker, harmfulFactors: [...worker.harmfulFactors, { name: '', a: '', p: '', l: '', n: '', remark: '' }] };
+        }
+        return worker;
+      });
+      reRender();
     }
 
     function removeFactor(workerId, factorIndex) {
-      workers = workers.map(w => {
-        if (w.id === workerId) {
-          const newFactors = w.harmfulFactors.filter((_, idx) => idx !== factorIndex);
-          return { ...w, harmfulFactors: newFactors.length ? newFactors : [{ name: '', a: '', p: '', l: '', n: '', remark: '' }] };
+      workers = workers.map(worker => {
+        if (worker.id === workerId) {
+          const newFactors = worker.harmfulFactors.filter((_, idx) => idx !== factorIndex);
+          return {
+            ...worker,
+            harmfulFactors: newFactors.length ? newFactors : [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
+          };
         }
-        return w;
+        return worker;
       });
-      renderTableBody();
+      reRender();
     }
 
     function renderTableBody() {
-      const visibleWorkers = workers.filter(w => w.unit === activeUnit);
       const tbody = document.getElementById('table-body');
-      const spans = calculateSpans(visibleWorkers);
+      const spans = calculateSpans();
       let html = '';
-      let pageNum = 1;
+      let currentPage = 1;
 
-      visibleWorkers.forEach((worker, index) => {
+      workers.forEach((worker, index) => {
         const rowSpan = spans[index];
         
+        // 페이지 분할선 UI 랜더링
         if (worker.pageBreak) {
-          pageNum++;
-          html += `<tr class="bg-indigo-50 border-t-2 border-b-2 border-indigo-200">
-                    <td colspan="15" class="text-center py-1.5 text-indigo-700 font-bold text-xs tracking-wide">
-                      ✂️ 여기서부터 ${pageNum}페이지 첫 줄로 출력됩니다 ✂️
-                    </td>
-                   </tr>`;
+          currentPage++;
+          html += `
+          <tr class="print:hidden bg-indigo-50 border-t-2 border-b-2 border-indigo-200">
+            <td colspan="15" class="text-center py-2 text-indigo-700 font-bold text-sm tracking-wide">
+              ✂️ 인쇄 및 PDF 저장 시, 여기서부터 ${currentPage}페이지 첫 줄로 출력됩니다 ✂️
+            </td>
+          </tr>
+          `;
         }
 
-        html += `<tr class="hover:bg-gray-50 transition-colors group border-b border-gray-300">`;
-        html += `<td class="px-1 py-2 text-center text-gray-500 border-r border-gray-300 align-top pt-3">${index + 1}</td>`;
+        // 페이지 분할이 켜져있으면 print 시 강제 페이지 넘김 CSS 추가
+        const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
+        html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${pageBreakClass}">`;
         
+        // 1. 번호
+        html += `<td class="px-4 py-3 text-center text-gray-500 border-r print:border-black align-top pt-5">${index + 1}</td>`;
+        
+        // 2~7. 그룹 병합 필드들 (세로 병합)
         if (rowSpan > 0) {
-          const idsToUpdate = visibleWorkers.slice(index, index + rowSpan).map(w => w.id).join(',');
-          const genTd = (field, placeholder, idPrefix) => {
-            return `<td class="px-1 py-1 border-r border-gray-300 align-top bg-white" rowspan="${rowSpan}">
-                      <textarea data-focus-id="${idPrefix}-${worker.id}" oninput="updateGroupField('${idsToUpdate}', '${field}', this.value); autoResizeTextarea(this);" placeholder="${placeholder}" class="w-full h-full min-h-[40px] bg-transparent border-none outline-none p-1 text-center break-words resize-none" rows="1">${worker[field] || ''}</textarea>
-                    </td>`;
-          };
-
-          html += genTd('department', '부서', 'dept');
-          html += genTd('process', '공정', 'proc');
-          html += genTd('shiftSystem', '교대', 'shift');
-          html += genTd('workerCount', '명', 'cnt');
-          html += genTd('exposureCycle', '주기', 'cycle');
-          html += genTd('measurementCount', '건수', 'mcnt');
+          html += `<td class="px-3 py-3 border-r print:border-black align-top" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'department', this.value)" value="${worker.department}" placeholder="부서" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
+                   </td>`;
+          html += `<td class="px-3 py-3 border-r print:border-black align-top" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'process', this.value)" value="${worker.process}" placeholder="공정" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
+                   </td>`;
+          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'shiftSystem', this.value)" value="${worker.shiftSystem}" placeholder="교대" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
+                   </td>`;
+          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'workerCount', this.value)" value="${worker.workerCount}" placeholder="명" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
+                   </td>`;
+          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'exposureCycle', this.value)" value="${worker.exposureCycle}" placeholder="주기" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
+                   </td>`;
+          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'measurementCount', this.value)" value="${worker.measurementCount}" placeholder="건수" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
+                   </td>`;
         }
 
-        html += `<td class="px-1 py-1 border-r border-gray-300 align-top bg-white">
-                  <textarea data-focus-id="name-${worker.id}" oninput="updateWorker(${worker.id}, 'name', this.value); autoResizeTextarea(this);" placeholder="이름" class="w-full h-full min-h-[40px] bg-transparent border-none outline-none p-1 text-center break-words resize-none" rows="1">${worker.name || ''}</textarea>
+        // 8. 근로자명
+        html += `<td class="px-3 py-3 border-r print:border-black align-top">
+                  <input type="text" data-focus-id="name-${worker.id}" oninput="updateWorker(${worker.id}, 'name', this.value)" value="${worker.name}" placeholder="이름" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
                  </td>`;
 
-        // 유해인자 가로 정렬 영역
-        html += `<td class="p-0 border-r border-gray-300 align-top bg-white" colspan="6">
+        // 9~14. 유해인자 및 A, P, L, N, 비고 (가로줄 1:1 매칭 구조 및 인쇄용 텍스트 래핑 처리)
+        html += `<td class="p-0 border-r print:border-black align-top" colspan="6">
                   <div class="flex flex-col h-full w-full">`;
         
         worker.harmfulFactors.forEach((factor, fIndex) => {
-          const borderClass = fIndex !== worker.harmfulFactors.length - 1 ? 'border-b border-gray-200' : '';
-          html += `<div class="flex w-full ${borderClass} min-h-[38px] relative group/factor">
-                      <div class="flex-grow border-r border-gray-200 px-1 py-1 flex items-start w-full min-w-0">
-                        <textarea data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'name', this.value); autoResizeTextarea(this);" class="w-full bg-transparent outline-none pr-5 text-xs break-words pt-1 resize-none" placeholder="유해인자 입력" rows="1">${factor.name}</textarea>
-                      </div>
-                      ${['a', 'p', 'l', 'n'].map(field => `
-                      <div class="w-[32px] flex-shrink-0 border-r border-gray-200 flex items-start justify-center p-0.5">
-                        <textarea data-focus-id="f${field}-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, '${field}', this.value); autoResizeTextarea(this);" class="w-full text-center bg-transparent outline-none uppercase resize-none pt-1" rows="1">${factor[field]}</textarea>
-                      </div>`).join('')}
-                      <div class="w-[70px] flex-shrink-0 flex items-start justify-center px-1 py-1">
-                        <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value); autoResizeTextarea(this);" class="w-full bg-transparent outline-none text-center text-xs break-words pt-1 resize-none" placeholder="비고" rows="1">${factor.remark}</textarea>
-                      </div>
+          const isLast = fIndex === worker.harmfulFactors.length - 1;
+          const borderClass = !isLast ? 'border-b border-gray-200 print:border-black' : '';
+          
+          html += `<div class="flex w-full ${borderClass} min-h-[44px]">
                       
-                      <button onclick="removeFactor(${worker.id}, ${fIndex})" class="absolute left-[-16px] top-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover/factor:opacity-100 transition-opacity p-0.5 bg-white rounded-full shadow-sm border border-gray-200 z-10" title="삭제">
-                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
+                      <!-- 유해인자명: 인쇄 시 input은 숨기고, 줄바꿈되는 작은 글씨의 div를 표시하여 내용이 잘리지 않도록 함 -->
+                      <div class="w-[160px] border-r border-gray-200 print:border-black px-2 py-2 flex-grow relative flex items-center print:items-start print:py-1.5">
+                        <input type="text" data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'name', this.value)" value="${factor.name}" class="w-full bg-transparent outline-none pr-6 print:hidden" placeholder="유해인자 입력" />
+                        <div class="hidden print:block w-full text-[9px] leading-[1.3] break-all whitespace-pre-wrap">${factor.name}</div>
+                        
+                        <button onclick="removeFactor(${worker.id}, ${fIndex})" class="absolute right-1 text-gray-400 hover:text-red-500 print:hidden p-1 rounded" title="삭제">
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+
+                      <!-- A, P, L, N -->
+                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
+                        <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full text-center bg-transparent outline-none uppercase" />
+                      </div>
+                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
+                        <input type="text" data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'p', this.value)" value="${factor.p}" class="w-full text-center bg-transparent outline-none uppercase" />
+                      </div>
+                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
+                        <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full text-center bg-transparent outline-none uppercase" />
+                      </div>
+                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
+                        <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${factor.n}" class="w-full text-center bg-transparent outline-none uppercase" />
+                      </div>
+
+                      <!-- 비고: 유해인자와 마찬가지로 인쇄 시 줄바꿈 지원 -->
+                      <div class="w-[112px] flex items-center justify-center px-1 py-2 relative print:items-start print:py-1.5">
+                        <input type="text" data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value)" value="${factor.remark}" class="w-full px-1 bg-transparent outline-none print:hidden text-center" placeholder="비고" />
+                        <div class="hidden print:block w-full text-[10px] leading-[1.3] break-all whitespace-pre-wrap text-center">${factor.remark}</div>
+                      </div>
                    </div>`;
         });
 
-        html += `<div class="p-1 flex justify-center bg-gray-50/50 ${worker.harmfulFactors.length > 0 ? 'border-t border-gray-200' : ''}">
-                   <button onclick="addFactor(${worker.id})" class="text-[10px] flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium">
-                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg> 유해인자 추가
+        // 유해인자 추가 버튼
+        html += `<div class="p-1.5 border-t border-gray-100 print:hidden flex justify-center bg-gray-50/50">
+                   <button onclick="addFactor(${worker.id})" class="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium">
+                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                     유해인자 추가
                    </button>
                  </div>
                 </div>
                </td>`;
 
-        html += `<td class="px-1 py-2 text-center align-middle whitespace-nowrap bg-white">
-                  <div class="flex flex-col gap-1.5 items-center justify-center h-full">
-                    <div class="flex gap-1 justify-center">
-                      <button onclick="duplicateWorker(${worker.id})" class="text-gray-500 hover:text-blue-600 p-1.5 rounded hover:bg-blue-50 border border-gray-200 shadow-sm" title="현재 행 복사">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9" /></svg>
+        // 15. 관리 버튼 (복사, 삭제, 페이지 분할)
+        html += `<td class="px-2 py-3 text-center align-top print:hidden whitespace-nowrap">
+                  <div class="flex flex-col gap-2 items-center h-full">
+                    <div class="flex gap-1 justify-center mt-1">
+                      <button onclick="duplicateWorker(${worker.id})" class="text-gray-400 hover:text-blue-600 p-1.5 rounded-full hover:bg-blue-50 transition-colors" title="현재 행 복사">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9" /></svg>
                       </button>
-                      <button onclick="removeWorker(${worker.id})" class="text-gray-500 hover:text-red-600 p-1.5 rounded hover:bg-red-50 border border-gray-200 shadow-sm" title="행 삭제">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      <button onclick="removeWorker(${worker.id})" class="text-gray-400 hover:text-red-600 p-1.5 rounded-full hover:bg-red-50 transition-colors" title="행 삭제">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
-                    <button onclick="togglePageBreak(${worker.id})" class="text-[10px] font-semibold flex items-center justify-center gap-1 w-full px-1 py-1 rounded transition-colors ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="이 행부터 다음 페이지에 인쇄">
-                      ✂️ ${worker.pageBreak ? '나눔 취소' : '페이지 나눔'}
+                    <button onclick="togglePageBreak(${worker.id})" class="text-[11px] font-semibold flex items-center justify-center gap-1 w-full px-1 py-1 rounded transition-colors ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '분할선 취소' : '이 행부터 다음 페이지에 인쇄'}">
+                      ✂️ ${worker.pageBreak ? '분할 취소' : '페이지 나눔'}
                     </button>
                   </div>
                  </td>`;
+
         html += `</tr>`;
       });
 
       tbody.innerHTML = html;
-      
-      // 높이 자동조절 트리거
-      setTimeout(() => {
-        tbody.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta));
-      }, 0);
-
-      // 화면이 렌더링될 때 백그라운드에서 인쇄용 DOM도 항상 최신화
-      renderPrintView();
     }
 
-    // 인쇄/PDF 저장용 완벽 분리 DOM 생성 (전체 사업체 연속 출력)
-    function renderPrintView() {
-      const container = document.getElementById('print-container');
-      let html = '';
-      
-      units.forEach((unit, unitIdx) => {
-        const unitWorkers = workers.filter(w => w.unit === unit);
-        if (unitWorkers.length === 0) return;
-        
-        if (unitIdx > 0) html += `<div style="height: 30px;"></div>`;
-        html += `<h2 style="font-size:14px; font-weight:bold; margin-bottom:8px; text-align:center;">작업환경측정 계획서 (${unit})</h2>`;
-        
-        // 얇고 압축된 인쇄용 테이블 구조
-        html += `<table style="width: 100%; border-collapse: collapse; border: 1px solid black; text-align: center; font-size: 8.5px;">
-                  <thead style="background-color: #e5e7eb; color: black;">
-                    <tr>
-                      <th style="border: 1px solid black; padding: 2px; width:25px;">No.</th>
-                      <th style="border: 1px solid black; padding: 2px; width:70px;">부서명</th>
-                      <th style="border: 1px solid black; padding: 2px; width:75px;">공정명</th>
-                      <th style="border: 1px solid black; padding: 2px; width:35px;">교대제</th>
-                      <th style="border: 1px solid black; padding: 2px; width:45px;">근로자수</th>
-                      <th style="border: 1px solid black; padding: 2px; width:45px;">노출주기</th>
-                      <th style="border: 1px solid black; padding: 2px; width:45px;">측정건수</th>
-                      <th style="border: 1px solid black; padding: 2px; width:65px;">근로자명</th>
-                      <th style="border: 1px solid black; padding: 2px;">유해인자 (발생물질 등)</th>
-                      <th style="border: 1px solid black; padding: 2px; width:20px;">A</th>
-                      <th style="border: 1px solid black; padding: 2px; width:20px;">P</th>
-                      <th style="border: 1px solid black; padding: 2px; width:20px;">L</th>
-                      <th style="border: 1px solid black; padding: 2px; width:20px;">N</th>
-                      <th style="border: 1px solid black; padding: 2px; width:55px;">비고</th>
-                    </tr>
-                  </thead>
-                  <tbody>`;
-        
-        const spans = calculateSpans(unitWorkers);
-        
-        unitWorkers.forEach((worker, index) => {
-          const rowSpan = spans[index];
-          if (worker.pageBreak) {
-            html += `</tbody></table><div class="page-break-before"></div>
-                     <h2 style="font-size:14px; font-weight:bold; margin-bottom:8px; margin-top:15px; text-align:center;">작업환경측정 계획서 (${unit}) - 계속</h2>
-                     <table style="width: 100%; border-collapse: collapse; border: 1px solid black; text-align: center; font-size: 8.5px;">
-                     <thead style="background-color: #e5e7eb; color: black;">...</thead><tbody>`;
-          }
-          
-          html += `<tr>`;
-          html += `<td style="border: 1px solid black; padding: 2px;">${index + 1}</td>`;
-          
-          if (rowSpan > 0) {
-            html += `<td style="border: 1px solid black; padding: 2px;" rowspan="${rowSpan}">${worker.department || ''}</td>`;
-            html += `<td style="border: 1px solid black; padding: 2px;" rowspan="${rowSpan}">${worker.process || ''}</td>`;
-            html += `<td style="border: 1px solid black; padding: 2px;" rowspan="${rowSpan}">${worker.shiftSystem || ''}</td>`;
-            html += `<td style="border: 1px solid black; padding: 2px;" rowspan="${rowSpan}">${worker.workerCount || ''}</td>`;
-            html += `<td style="border: 1px solid black; padding: 2px;" rowspan="${rowSpan}">${worker.exposureCycle || ''}</td>`;
-            html += `<td style="border: 1px solid black; padding: 2px;" rowspan="${rowSpan}">${worker.measurementCount || ''}</td>`;
-          }
-          
-          html += `<td style="border: 1px solid black; padding: 2px;">${worker.name || ''}</td>`;
-          
-          html += `<td style="border: 1px solid black; padding: 0;" colspan="6">
-                    <div style="display: flex; flex-direction: column; width: 100%;">`;
-          
+    function reRender() {
+      saveFocus();
+      renderTableBody();
+      restoreFocus();
+    }
+
+    async function copyTableToClipboard() {
+      try {
+        let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t근로자명\t유해인자\tA\tP\tL\tN\t비고\n";
+        workers.forEach((worker, index) => {
           worker.harmfulFactors.forEach((factor, fIndex) => {
-            const bB = fIndex !== worker.harmfulFactors.length - 1 ? 'border-bottom: 1px solid black;' : '';
-            html += `<div style="display: flex; width: 100%; ${bB}">
-                        <div style="flex-grow: 1; text-align: left; padding: 2px 4px; border-right: 1px solid black; word-break: break-all;">${factor.name || ''}</div>
-                        <div style="width: 20px; padding: 2px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; text-transform: uppercase;">${factor.a || ''}</div>
-                        <div style="width: 20px; padding: 2px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; text-transform: uppercase;">${factor.p || ''}</div>
-                        <div style="width: 20px; padding: 2px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; text-transform: uppercase;">${factor.l || ''}</div>
-                        <div style="width: 20px; padding: 2px; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; text-transform: uppercase;">${factor.n || ''}</div>
-                        <div style="width: 55px; padding: 2px; display: flex; align-items: center; justify-content: center; word-break: break-all;">${factor.remark || ''}</div>
-                     </div>`;
+            const isFirst = fIndex === 0;
+            tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${isFirst ? worker.name || '' : ''}\t${factor.name || ''}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${factor.n || ''}\t${factor.remark || ''}\n`;
           });
-          html += `</div></td></tr>`;
         });
-        html += `</tbody></table>`;
-      });
-      container.innerHTML = html;
-    }
 
-    document.addEventListener('keydown', function(e) {
-      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-      
-      const current = document.activeElement;
-      if (!current || current.tagName.toLowerCase() !== 'textarea') return;
-      const appContainer = document.getElementById('app-container');
-      if (!appContainer.contains(current)) return;
-
-      const isFullySelected = current.selectionStart === 0 && current.selectionEnd === current.value.length;
-      const isEmpty = current.value.length === 0;
-
-      if (e.key === 'ArrowLeft' && !isFullySelected && !isEmpty && current.selectionStart > 0) return;
-      if (e.key === 'ArrowRight' && !isFullySelected && !isEmpty && current.selectionEnd < current.value.length) return;
-      
-      e.preventDefault();
-
-      const textareas = Array.from(appContainer.querySelectorAll('textarea'));
-      const currentRect = current.getBoundingClientRect();
-      
-      let bestMatch = null;
-      let minDistance = Infinity;
-      const currCX = currentRect.left + currentRect.width / 2;
-      const currCY = currentRect.top + currentRect.height / 2;
-
-      textareas.forEach(ta => {
-        if (ta === current) return;
-        const targetRect = ta.getBoundingClientRect();
-        const targetCX = targetRect.left + targetRect.width / 2;
-        const targetCY = targetRect.top + targetRect.height / 2;
-        let isMatch = false, primaryDist = 0, secondaryDist = 0;
-
-        if (e.key === 'ArrowUp' && targetCY < currCY) {
-          isMatch = Math.abs(currCX - targetCX) < (targetRect.width / 2 + currentRect.width / 2);
-          if(isMatch) { primaryDist = currCY - targetCY; secondaryDist = Math.abs(currCX - targetCX); }
-        } else if (e.key === 'ArrowDown' && targetCY > currCY) {
-          isMatch = Math.abs(currCX - targetCX) < (targetRect.width / 2 + currentRect.width / 2);
-          if(isMatch) { primaryDist = targetCY - currCY; secondaryDist = Math.abs(currCX - targetCX); }
-        } else if (e.key === 'ArrowLeft' && targetCX < currCX) {
-          isMatch = Math.abs(currCY - targetCY) < (targetRect.height / 2 + currentRect.height / 2);
-          if(isMatch) { primaryDist = currCX - targetCX; secondaryDist = Math.abs(currCY - targetCY); }
-        } else if (e.key === 'ArrowRight' && targetCX > currCX) {
-          isMatch = Math.abs(currCY - targetCY) < (targetRect.height / 2 + currentRect.height / 2);
-          if(isMatch) { primaryDist = targetCX - currCX; secondaryDist = Math.abs(currCY - targetCY); }
-        }
-
-        if (isMatch) {
-           const totalDist = primaryDist + secondaryDist * 2;
-           if (totalDist < minDistance) { minDistance = totalDist; bestMatch = ta; }
-        }
-      });
-
-      if (bestMatch) {
-        bestMatch.focus();
-        bestMatch.setSelectionRange(0, bestMatch.value.length);
+        await navigator.clipboard.writeText(tsvData);
+        
+        document.getElementById('copyIconDefault').classList.add('hidden');
+        document.getElementById('copyIconCheck').classList.remove('hidden');
+        document.getElementById('copyBtnText').innerText = '복사 완료!';
+        
+        setTimeout(() => {
+          document.getElementById('copyIconDefault').classList.remove('hidden');
+          document.getElementById('copyIconCheck').classList.add('hidden');
+          document.getElementById('copyBtnText').innerText = '표 데이터 복사';
+        }, 2000);
+      } catch (err) {
+        alert('복사에 실패했습니다.');
       }
-    });
+    }
 
     function parseCSV(text) {
-      const result = []; let row = [], cell = '', insideQuote = false;
+      const result = [];
+      let row = [];
+      let cell = '';
+      let insideQuote = false;
       for (let i = 0; i < text.length; i++) {
         const char = text[i];
         if (insideQuote) {
           if (char === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-          else if (char === '"') insideQuote = false;
-          else cell += char;
+          else if (char === '"') { insideQuote = false; }
+          else { cell += char; }
         } else {
-          if (char === '"') insideQuote = true;
+          if (char === '"') { insideQuote = true; }
           else if (char === ',') { row.push(cell); cell = ''; }
           else if (char === '\n' || char === '\r') {
             row.push(cell); result.push(row); row = []; cell = '';
             if (char === '\r' && text[i + 1] === '\n') i++;
-          } else cell += char;
+          }
+          else { cell += char; }
         }
       }
       if (cell || row.length > 0) { row.push(cell); result.push(row); }
@@ -583,178 +497,168 @@
 
     async function fetchSheetData(url) {
       if (!url.trim()) return null;
-      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-      if (!match) throw new Error("URL 형식이 잘못되었습니다.");
-      const res = await fetch(`https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`);
-      if (!res.ok) throw new Error("시트 접근 거부 (권한이 '링크가 있는 모든 사용자'인지 확인)");
-      return parseCSV(await res.text());
+      try {
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (!match) throw new Error("유효한 스프레드시트 주소가 아닙니다.");
+        const exportUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
+        const response = await fetch(exportUrl);
+        if (!response.ok) throw new Error("시트 접근 거부. 일반 액세스를 확인하세요.");
+        const text = await response.text();
+        return parseCSV(text);
+      } catch (error) { throw error; }
     }
 
     async function handleSyncSheets() {
       const excludeUrl = document.getElementById('excludeNoiseUrl').value;
       const noiseUrl = document.getElementById('noiseUrl').value;
-      const btn = document.getElementById('syncBtn');
+      const syncBtn = document.getElementById('syncBtn');
       const msg = document.getElementById('syncMessage');
 
       if (!excludeUrl && !noiseUrl) {
-        msg.className = 'text-xs font-medium text-red-600';
-        msg.innerText = 'URL을 입력해주세요.'; return;
+        msg.className = 'text-sm font-medium text-red-600';
+        msg.innerText = 'URL을 입력해주세요.';
+        return;
       }
 
-      btn.disabled = true; btn.innerText = '연동 중...'; msg.innerText = '';
-      
-      try {
-        let rawData = [];
-        
-        // 1. 순수 데이터 추출 (isNoise 여부 포함)
-        const extractRows = (rows, isNoise) => {
-          if (!rows || rows.length < 2) return;
-          let lastUnit = '', lastDept = '', lastProcess = '';
-          for (let i = 1; i < rows.length; i++) {
-            const r = rows[i] || [];
-            let unit = (r[0] || '').trim(), dept = (r[1] || '').trim(), process = (r[2] || '').trim();
-            if (!unit && !dept && !process) { unit = lastUnit; dept = lastDept; process = lastProcess; } 
-            else { lastUnit = unit || lastUnit; lastDept = dept || lastDept; lastProcess = process || lastProcess; }
-            if (!unit && !dept && !process) continue;
+      syncBtn.disabled = true;
+      syncBtn.innerText = '불러오는 중...';
+      msg.innerText = '';
 
-            let factor = '', workerCount = '', shift = '', cycle = '', pValue = '';
-            if (!isNoise) {
-              factor = (r[3] || '').trim();
-              workerCount = (r[4] || '').trim().replace(/(\d+)\.\d+/g, '$1'); // E열
-              shift = (r[5] || '').trim();
-              cycle = (r[6] || '').trim();
-              pValue = r.length > 15 ? (r[15] || '').trim() : '';
+      try {
+        let excludeDepts = new Set(); 
+        let excludeProcesses = new Set();
+        let excludeKeys = new Set();
+
+        const processRows = (rows, isNoiseSheet = false, mergedGroups) => {
+          if (!rows || rows.length < 2) return;
+          let lastDept = '', lastProcess = '';
+
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length < 2) continue;
+
+            let dept = row[1]?.trim() || '';
+            let process = row[2]?.trim() || '';
+
+            if (dept === '' && process === '') {
+              dept = lastDept; process = lastProcess;
             } else {
-              factor = '소음';
-              workerCount = (r[3] || '').trim().replace(/(\d+)\.\d+/g, '$1'); // D열 매핑 (소음시트)
-              shift = (r[5] || '').trim();
-              cycle = (r[6] || '').trim();
-              pValue = 'O'; // 강제 타겟
+              lastDept = dept; lastProcess = process;
             }
-            rawData.push({ unit, dept, process, factor, workerCount, shift, cycle, pValue, isNoise });
+
+            if (!dept && !process) continue;
+
+            const key = `${dept}|${process}`;
+            
+            if (!isNoiseSheet) {
+              excludeDepts.add(dept);
+              excludeProcesses.add(process);
+              excludeKeys.add(key);
+            }
+
+            if (!mergedGroups[key]) {
+              mergedGroups[key] = {
+                department: dept, process: process, shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
+                factorGroups: [], hasPValue: false
+              };
+            }
+
+            const removeDecimal = (val) => val ? val.replace(/(\d+)\.\d+/g, '$1') : '';
+
+            if (!isNoiseSheet) {
+              let factor = row[3]?.trim() || '';
+              let workerCount = removeDecimal(row[4]?.trim());
+              let shift = row[5]?.trim() || '';
+              let cycle = row[6]?.trim() || '';
+              let pValue = row.length > 15 ? row[15]?.trim() || '' : '';
+
+              if (!mergedGroups[key].shiftSystem && shift) mergedGroups[key].shiftSystem = shift;
+              if (!mergedGroups[key].workerCount && workerCount) mergedGroups[key].workerCount = workerCount;
+              if (!mergedGroups[key].exposureCycle && cycle) mergedGroups[key].exposureCycle = cycle;
+
+              if (pValue !== '') {
+                mergedGroups[key].hasPValue = true;
+                mergedGroups[key].factorGroups.push(new Set());
+              }
+              if (factor !== '') {
+                if (mergedGroups[key].factorGroups.length === 0) mergedGroups[key].factorGroups.push(new Set());
+                mergedGroups[key].factorGroups[mergedGroups[key].factorGroups.length - 1].add(factor);
+              }
+            } else {
+              let isNewKey = !excludeKeys.has(key);
+              
+              if (isNewKey) {
+                let workerCount = removeDecimal(row[4]?.trim());
+                let shift = row[5]?.trim() || '';
+                let cycle = row[6]?.trim() || '';
+
+                if (shift) mergedGroups[key].shiftSystem = shift;
+                if (workerCount) mergedGroups[key].workerCount = workerCount;
+                if (cycle) mergedGroups[key].exposureCycle = cycle;
+              }
+
+              mergedGroups[key].hasPValue = true;
+              const noiseSet = new Set();
+              noiseSet.add('소음');
+              mergedGroups[key].factorGroups.push(noiseSet);
+            }
           }
         };
 
-        if (excludeUrl) extractRows(await fetchSheetData(excludeUrl), false);
-        if (noiseUrl) extractRows(await fetchSheetData(noiseUrl), true);
+        let mergedGroups = {};
+        if (excludeUrl) {
+          const rows1 = await fetchSheetData(excludeUrl);
+          processRows(rows1, false, mergedGroups);
+        }
+        if (noiseUrl) {
+          const rows2 = await fetchSheetData(noiseUrl);
+          processRows(rows2, true, mergedGroups);
+        }
 
-        // 2. 부서/공정별 그룹화 및 메타데이터, 팩터 수집
-        let groups = {};
-        rawData.forEach(item => {
-          const key = `${item.unit}|${item.dept}|${item.process}`;
-          if (!groups[key]) {
-            groups[key] = { unit: item.unit, dept: item.dept, process: item.process, factors: [], workerCount: '', shift: '', cycle: '', hasExclude: false };
-          }
-          const g = groups[key];
-          if (!item.isNoise) g.hasExclude = true;
+        const newWorkers = Object.values(mergedGroups)
+          .filter(group => group.hasPValue)
+          .map((group, index) => {
+            let parsedFactors = group.factorGroups
+              .map(set => Array.from(set).join(', '))
+              .filter(str => str !== '');
 
-          // 메타데이터(근로자수 등) 우선순위 로직
-          if (!item.isNoise) {
-            if (item.workerCount) g.workerCount = item.workerCount;
-            if (item.shift) g.shift = item.shift;
-            if (item.cycle) g.cycle = item.cycle;
-          } else if (!g.hasExclude) {
-            if (item.workerCount) g.workerCount = item.workerCount;
-            if (item.shift) g.shift = item.shift;
-            if (item.cycle) g.cycle = item.cycle;
-          }
-          
-          if (item.pValue !== '' && item.factor) {
-            g.factors.push(item.factor);
-          }
-        });
+            let uniqueFactors = [...new Set(parsedFactors)];
+            let formattedFactors = uniqueFactors.length > 0
+              ? uniqueFactors.map(f => ({ name: f, a: '', p: '', l: '', n: '', remark: '' }))
+              : [{ name: '', a: '', p: '', l: '', n: '', remark: '' }];
 
-        // 3. 중복 카운팅 계산 및 근로자 행 복사 생성
-        let newWorkers = [];
-        let indexCounter = 0;
-        
-        Object.values(groups).forEach(g => {
-          if (g.factors.length === 0) return;
-          
-          let factorCounts = {};
-          g.factors.forEach(f => { factorCounts[f] = (factorCounts[f] || 0) + 1; });
-          
-          // 가장 많이 반복된 유해인자의 횟수가 곧 측정건수(복사될 행의 수)
-          let mCount = Math.max(...Object.values(factorCounts));
-          let uniqueFactors = Object.keys(factorCounts).map(name => ({ name, a: '', p: '', l: '', n: '', remark: '' }));
-          
-          for (let i = 0; i < mCount; i++) {
-            newWorkers.push({
-              id: Date.now() + indexCounter++,
-              unit: g.unit || '미분류',
-              department: g.dept,
-              process: g.process,
-              shiftSystem: g.shift,
-              workerCount: g.workerCount,
-              exposureCycle: g.cycle,
-              measurementCount: mCount.toString(), // 카운팅 숫자 자동 기입
-              name: '',
+            return {
+              id: Date.now() + index,
+              department: group.department,
+              process: group.process,
+              shiftSystem: group.shiftSystem,
+              workerCount: group.workerCount,
+              exposureCycle: group.exposureCycle,
+              measurementCount: group.measurementCount,
+              name: group.name,
               pageBreak: false,
-              harmfulFactors: JSON.parse(JSON.stringify(uniqueFactors)) // 깊은 복사 (각 행별로 독립적 A/P/L/N)
-            });
-          }
-        });
+              harmfulFactors: formattedFactors
+            };
+          });
 
         if (newWorkers.length > 0) {
           workers = newWorkers;
-          const uniqueUnits = [...new Set(workers.map(w => w.unit).filter(Boolean))];
-          units = uniqueUnits.length > 0 ? uniqueUnits : ['기본 사업체'];
-          activeUnit = units[0];
-          renderTabs();
-          renderTableBody();
-          msg.className = 'text-xs font-medium text-green-600'; msg.innerText = `성공: ${units.length}개 사업체, ${workers.length}개 측정계획 생성`;
+          reRender();
+          msg.className = 'text-sm font-medium text-green-600';
+          msg.innerText = `연동 완료: ${newWorkers.length}개의 측정대상이 추출되었습니다.`;
         } else {
-          msg.className = 'text-xs font-medium text-red-600'; msg.innerText = '조건에 맞는 측정대상이 없습니다.';
+          msg.className = 'text-sm font-medium text-red-600';
+          msg.innerText = '조건에 맞는 데이터가 없습니다.';
         }
-      } catch (e) {
-        msg.className = 'text-xs font-medium text-red-600'; msg.innerText = e.message;
+      } catch (error) {
+        msg.className = 'text-sm font-medium text-red-600';
+        msg.innerText = error.message;
       } finally {
-        btn.disabled = false; btn.innerText = '데이터 연동하기';
+        syncBtn.disabled = false;
+        syncBtn.innerText = '데이터 연동하기';
       }
     }
 
-    async function copyTableToClipboard() {
-      try {
-        const vWorkers = workers.filter(w => w.unit === activeUnit);
-        let tsv = "단위사업체\tNo.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t근로자명\t유해인자\tA\tP\tL\tN\t비고\n";
-        vWorkers.forEach((w, i) => {
-          w.harmfulFactors.forEach((f, fi) => {
-            const isF = fi === 0;
-            const s = (str) => (str || '').replace(/\t/g, ' ').replace(/\n/g, ' ');
-            tsv += `${isF?s(w.unit):''}\t${isF?i+1:''}\t${isF?s(w.department):''}\t${isF?s(w.process):''}\t${isF?s(w.shiftSystem):''}\t${isF?s(w.workerCount):''}\t${isF?s(w.exposureCycle):''}\t${isF?s(w.measurementCount):''}\t${isF?s(w.name):''}\t${s(f.name)}\t${s(f.a)}\t${s(f.p)}\t${s(f.l)}\t${s(f.n)}\t${s(f.remark)}\n`;
-          });
-        });
-        await navigator.clipboard.writeText(tsv);
-        document.getElementById('copyBtnText').innerText = '복사 완료!';
-        setTimeout(() => document.getElementById('copyBtnText').innerText = '현재 탭 표 복사', 2000);
-      } catch (err) {
-        alert('복사 권한이 없습니다.');
-      }
-    }
-
-    function downloadExcel() {
-      // 엑셀은 탭 구분 없이 전체 데이터를 저장
-      let csv = "\uFEFF단위사업체,No.,부서명,공정명,교대제,근로자수,노출주기,측정건수,근로자명,유해인자,A,P,L,N,비고\n";
-      let globalIndex = 1;
-      
-      units.forEach(unit => {
-        const uWorkers = workers.filter(w => w.unit === unit);
-        uWorkers.forEach(w => {
-          w.harmfulFactors.forEach((f, fi) => {
-            const isF = fi === 0;
-            const esc = (str) => `"${(str||'').toString().replace(/"/g, '""')}"`;
-            csv += `${isF?esc(w.unit):'""'},${isF?globalIndex++:''},${isF?esc(w.department):'""'},${isF?esc(w.process):'""'},${isF?esc(w.shiftSystem):'""'},${isF?esc(w.workerCount):'""'},${isF?esc(w.exposureCycle):'""'},${isF?esc(w.measurementCount):'""'},${isF?esc(w.name):'""'},${esc(f.name)},${esc(f.a)},${esc(f.p)},${esc(f.l)},${esc(f.n)},${esc(f.remark)}\n`;
-          });
-        });
-      });
-      
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-      link.download = `작업환경측정_전체계획서.csv`;
-      link.click();
-    }
-
-    renderTabs();
     renderTableBody();
   </script>
 </body>
