@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>작업환경측정 계획서</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      @page { size: landscape; margin: 10mm; }
+      body { background-color: white !important; }
+      
+      /* 인쇄 시 불필요한 요소 숨김 처리 */
+      .print\:hidden { display: none !important; }
+      .print\:block { display: block !important; }
+      
+      /* 배경 및 테두리 인쇄용 설정 */
+      .print\:bg-transparent { background-color: transparent !important; }
+      .print\:border-black { border-color: black !important; }
+      .print\:border-none { border: none !important; }
+      
+      /* 입력창 텍스트 진하게 및 스크롤 고정 해제 */
+      input { color: black !important; -webkit-print-color-adjust: exact; padding: 0 !important; }
+      input::placeholder { color: transparent !important; }
+      table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; }
+      
+      /* 강제 페이지 넘김 CSS */
+      .page-break-before {
+        page-break-before: always !important;
+        break-before: page !important;
+      }
+    }
+    
+    /* Chrome, Safari, Edge, Opera에서 input number 화살표 숨기기 */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen p-4 md:p-8">
+  
+  <div class="max-w-[1450px] mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 print:shadow-none print:border-none">
+    
+    <div class="bg-slate-800 p-6 flex justify-between items-center text-white print:bg-white print:text-black print:border-b print:border-black print:p-2 print:mb-4">
+      <div class="flex items-center gap-3">
+        <svg class="w-8 h-8 print:hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h1 class="text-2xl font-bold">작업환경측정 계획서</h1>
+      </div>
+      <div class="flex items-center gap-3 print:hidden">
+        <button id="copyBtn" onclick="copyTableToClipboard()" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <svg id="copyIconDefault" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <svg id="copyIconCheck" class="w-4 h-4 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span id="copyBtnText">표 데이터 복사</span>
+        </button>
+        <button onclick="window.print()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md border border-blue-800">
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>인쇄 / PDF 저장</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6 md:p-8 space-y-8 print:p-0 print:space-y-0">
+      
+      <!-- 인쇄 시 숨겨지는 사업장 기본 정보 -->
+      <section class="bg-gray-50 p-6 rounded-lg border border-gray-200 print:hidden">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">사업장 기본 정보</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">사업장명</label>
+            <input type="text" id="companyName" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="예) (주)한국산업" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">대표자명</label>
+            <input type="text" id="representative" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">소재지 (주소)</label>
+            <input type="text" id="address" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">예정 측정일자</label>
+            <input type="date" id="measurementDate" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">측정 기관명</label>
+            <input type="text" id="institution" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 인쇄 시 숨겨지는 연동 메뉴 -->
+      <section class="bg-blue-50 p-6 rounded-lg border border-blue-100 print:hidden">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="text-lg font-semibold text-blue-800">구글 스프레드시트 데이터 연동</h2>
+          <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-medium">자동 병합 & 소음 조건부 적용</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">'소음제외' 시트 URL</label>
+            <input type="text" id="excludeNoiseUrl" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white" placeholder="https://docs.google.com/spreadsheets/d/..." />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">'소음' 시트 URL (제외 시트에 없는 경우만 적용)</label>
+            <input type="text" id="noiseUrl" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white" placeholder="https://docs.google.com/spreadsheets/d/..." />
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <button id="syncBtn" onclick="handleSyncSheets()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors font-medium text-sm shadow-sm disabled:bg-blue-300">
+            데이터 연동하기
+          </button>
+          <span id="syncMessage" class="text-sm font-medium text-blue-600"></span>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 print:border-black print:mb-2">측정 대상 및 유해인자 목록</h2>
+        <div class="overflow-x-auto border border-gray-200 rounded-lg print:border-black">
+          <table class="w-full text-left text-sm whitespace-nowrap min-w-[1300px] print:min-w-0">
+            <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black">
+              <tr>
+                <th class="px-4 py-3 w-12 text-center border-r print:border-black">No.</th>
+                <th class="px-3 py-3 w-24 border-r print:border-black">부서명</th>
+                <th class="px-3 py-3 w-28 border-r print:border-black">공정명</th>
+                <th class="px-2 py-3 w-16 border-r print:border-black text-center">교대제</th>
+                <th class="px-2 py-3 w-16 border-r print:border-black text-center">근로자수</th>
+                <th class="px-2 py-3 w-16 border-r print:border-black text-center">노출주기</th>
+                <th class="px-2 py-3 w-16 border-r print:border-black text-center">측정건수</th>
+                <th class="px-3 py-3 w-24 border-r print:border-black">근로자명</th>
+                <!-- 유해인자 및 기타 컬럼 (가로 병합 처리된 내부 구조를 위한 헤더) -->
+                <th class="p-0 border-r print:border-black" colspan="6">
+                  <div class="flex w-full">
+                    <div class="w-[160px] px-2 py-3 border-r border-gray-200 print:border-black text-center flex-grow">유해인자 (발생물질 등)</div>
+                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">A</div>
+                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">P</div>
+                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">L</div>
+                    <div class="w-[40px] px-1 py-3 border-r border-gray-200 print:border-black text-center">N</div>
+                    <div class="w-[112px] px-2 py-3 text-center">비고</div>
+                  </div>
+                </th>
+                <th class="px-2 py-3 w-20 text-center print:hidden">관리</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-gray-200 print:divide-black">
+              <!-- JS 렌더링 영역 -->
+            </tbody>
+          </table>
+          <div class="p-3 bg-gray-50 border-t border-gray-200 print:hidden flex justify-center">
+            <button onclick="addWorker()" class="flex items-center gap-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 px-6 py-2 rounded-lg shadow-sm transition-all">
+              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              빈 행 (측정대상) 추가
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    let workers = [
+      {
+        id: 1, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '',
+        pageBreak: false, // 페이지 분할 토글
+        harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
+      }
+    ];
+
+    let activeFocusId = null;
+    let selectionStart = null;
+    let selectionEnd = null;
+
+    function saveFocus() {
+      const active = document.activeElement;
+      if (active && active.dataset.focusId) {
+        activeFocusId = active.dataset.focusId;
+        selectionStart = active.selectionStart;
+        selectionEnd = active.selectionEnd;
+      } else {
+        activeFocusId = null;
+      }
+    }
+
+    function restoreFocus() {
+      if (activeFocusId) {
+        const el = document.querySelector(`[data-focus-id="${activeFocusId}"]`);
+        if (el) {
+          el.focus();
+          try {
+            if (el.type === 'text' || el.type === 'number') {
+              el.setSelectionRange(selectionStart, selectionEnd);
+            }
+          } catch(e) {}
+        }
+      }
+    }
+
+    function calculateSpans() {
+      const groupFields = ['department', 'process', 'shiftSystem', 'workerCount', 'exposureCycle', 'measurementCount'];
+      const spans = new Array(workers.length).fill(1);
+      for (let i = 0; i < workers.length; i++) {
+        if (spans[i] === 0) continue;
+        let count = 1;
+        for (let j = i + 1; j < workers.length; j++) {
+          const isSame = groupFields.every(field => workers[i][field] === workers[j][field]);
+          if (isSame) {
+            count++;
+            spans[j] = 0;
+          } else {
+            break;
+          }
+        }
+        spans[i] = count;
+      }
+      return spans;
+    }
+
+    function updateWorker(id, field, value) {
+      workers = workers.map(w => w.id === id ? { ...w, [field]: value } : w);
+      reRender();
+    }
+
+    function updateGroupField(workerIndex, rowSpan, field, value) {
+      for (let i = workerIndex; i < workerIndex + rowSpan; i++) {
+        workers[i][field] = value;
+      }
+      reRender();
+    }
+
+    function updateFactor(workerId, factorIndex, field, value) {
+      workers = workers.map(worker => {
+        if (worker.id === workerId) {
+          const newFactors = [...worker.harmfulFactors];
+          newFactors[factorIndex][field] = value;
+          return { ...worker, harmfulFactors: newFactors };
+        }
+        return worker;
+      });
+      reRender();
+    }
+
+    function addWorker() {
+      const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
+      workers.push({
+        id: newId, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
+        harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
+      });
+      reRender();
+    }
+
+    function removeWorker(id) {
+      workers = workers.filter(w => w.id !== id);
+      if (workers.length === 0) addWorker();
+      else reRender();
+    }
+
+    function duplicateWorker(id) {
+      const index = workers.findIndex(w => w.id === id);
+      if (index === -1) return;
+      const workerToCopy = workers[index];
+      const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
+      const clonedWorker = {
+        ...workerToCopy,
+        id: newId,
+        pageBreak: false, // 복사 시 페이지 분할은 해제상태로
+        harmfulFactors: workerToCopy.harmfulFactors.map(factor => ({ ...factor }))
+      };
+      workers.splice(index + 1, 0, clonedWorker);
+      reRender();
+    }
+
+    function togglePageBreak(id) {
+      workers = workers.map(w => w.id === id ? { ...w, pageBreak: !w.pageBreak } : w);
+      reRender();
+    }
+
+    function addFactor(workerId) {
+      workers = workers.map(worker => {
+        if (worker.id === workerId) {
+          return { ...worker, harmfulFactors: [...worker.harmfulFactors, { name: '', a: '', p: '', l: '', n: '', remark: '' }] };
+        }
+        return worker;
+      });
+      reRender();
+    }
+
+    function removeFactor(workerId, factorIndex) {
+      workers = workers.map(worker => {
+        if (worker.id === workerId) {
+          const newFactors = worker.harmfulFactors.filter((_, idx) => idx !== factorIndex);
+          return {
+            ...worker,
+            harmfulFactors: newFactors.length ? newFactors : [{ name: '', a: '', p: '', l: '', n: '', remark: '' }]
+          };
+        }
+        return worker;
+      });
+      reRender();
+    }
+
+    function renderTableBody() {
+      const tbody = document.getElementById('table-body');
+      const spans = calculateSpans();
+      let html = '';
+      let currentPage = 1;
+
+      workers.forEach((worker, index) => {
+        const rowSpan = spans[index];
+        
+        // 페이지 분할선 UI 랜더링
+        if (worker.pageBreak) {
+          currentPage++;
+          html += `
+          <tr class="print:hidden bg-indigo-50 border-t-2 border-b-2 border-indigo-200">
+            <td colspan="15" class="text-center py-2 text-indigo-700 font-bold text-sm tracking-wide">
+              ✂️ 인쇄 및 PDF 저장 시, 여기서부터 ${currentPage}페이지 첫 줄로 출력됩니다 ✂️
+            </td>
+          </tr>
+          `;
+        }
+
+        // 페이지 분할이 켜져있으면 print 시 강제 페이지 넘김 CSS 추가
+        const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
+        html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${pageBreakClass}">`;
+        
+        // 1. 번호
+        html += `<td class="px-4 py-3 text-center text-gray-500 border-r print:border-black align-top pt-5">${index + 1}</td>`;
+        
+        // 2~7. 그룹 병합 필드들 (세로 병합)
+        if (rowSpan > 0) {
+          html += `<td class="px-3 py-3 border-r print:border-black align-top" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="dept-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'department', this.value)" value="${worker.department}" placeholder="부서" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
+                   </td>`;
+          html += `<td class="px-3 py-3 border-r print:border-black align-top" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="proc-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'process', this.value)" value="${worker.process}" placeholder="공정" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
+                   </td>`;
+          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="shift-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'shiftSystem', this.value)" value="${worker.shiftSystem}" placeholder="교대" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
+                   </td>`;
+          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="cnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'workerCount', this.value)" value="${worker.workerCount}" placeholder="명" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
+                   </td>`;
+          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="cycle-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'exposureCycle', this.value)" value="${worker.exposureCycle}" placeholder="주기" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
+                   </td>`;
+          html += `<td class="px-1 py-3 border-r print:border-black align-top text-center" rowspan="${rowSpan}">
+                    <input type="text" data-focus-id="mcnt-${worker.id}" oninput="updateGroupField(${index}, ${rowSpan}, 'measurementCount', this.value)" value="${worker.measurementCount}" placeholder="건수" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 text-center print:border-none" />
+                   </td>`;
+        }
+
+        // 8. 근로자명
+        html += `<td class="px-3 py-3 border-r print:border-black align-top">
+                  <input type="text" data-focus-id="name-${worker.id}" oninput="updateWorker(${worker.id}, 'name', this.value)" value="${worker.name}" placeholder="이름" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none p-1 print:border-none" />
+                 </td>`;
+
+        // 9~14. 유해인자 및 A, P, L, N, 비고 (가로줄 1:1 매칭 구조 및 인쇄용 텍스트 래핑 처리)
+        html += `<td class="p-0 border-r print:border-black align-top" colspan="6">
+                  <div class="flex flex-col h-full w-full">`;
+        
+        worker.harmfulFactors.forEach((factor, fIndex) => {
+          const isLast = fIndex === worker.harmfulFactors.length - 1;
+          const borderClass = !isLast ? 'border-b border-gray-200 print:border-black' : '';
+          
+          html += `<div class="flex w-full ${borderClass} min-h-[44px]">
+                      
+                      <!-- 유해인자명: 인쇄 시 input은 숨기고, 줄바꿈되는 작은 글씨의 div를 표시하여 내용이 잘리지 않도록 함 -->
+                      <div class="w-[160px] border-r border-gray-200 print:border-black px-2 py-2 flex-grow relative flex items-center print:items-start print:py-1.5">
+                        <input type="text" data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'name', this.value)" value="${factor.name}" class="w-full bg-transparent outline-none pr-6 print:hidden" placeholder="유해인자 입력" />
+                        <div class="hidden print:block w-full text-[9px] leading-[1.3] break-all whitespace-pre-wrap">${factor.name}</div>
+                        
+                        <button onclick="removeFactor(${worker.id}, ${fIndex})" class="absolute right-1 text-gray-400 hover:text-red-500 print:hidden p-1 rounded" title="삭제">
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+
+                      <!-- A, P, L, N -->
+                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
+                        <input type="text" data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'a', this.value)" value="${factor.a}" class="w-full text-center bg-transparent outline-none uppercase" />
+                      </div>
+                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
+                        <input type="text" data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'p', this.value)" value="${factor.p}" class="w-full text-center bg-transparent outline-none uppercase" />
+                      </div>
+                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
+                        <input type="text" data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'l', this.value)" value="${factor.l}" class="w-full text-center bg-transparent outline-none uppercase" />
+                      </div>
+                      <div class="w-[40px] border-r border-gray-200 print:border-black flex items-center justify-center p-1">
+                        <input type="text" data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'n', this.value)" value="${factor.n}" class="w-full text-center bg-transparent outline-none uppercase" />
+                      </div>
+
+                      <!-- 비고: 유해인자와 마찬가지로 인쇄 시 줄바꿈 지원 -->
+                      <div class="w-[112px] flex items-center justify-center px-1 py-2 relative print:items-start print:py-1.5">
+                        <input type="text" data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor(${worker.id}, ${fIndex}, 'remark', this.value)" value="${factor.remark}" class="w-full px-1 bg-transparent outline-none print:hidden text-center" placeholder="비고" />
+                        <div class="hidden print:block w-full text-[10px] leading-[1.3] break-all whitespace-pre-wrap text-center">${factor.remark}</div>
+                      </div>
+                   </div>`;
+        });
+
+        // 유해인자 추가 버튼
+        html += `<div class="p-1.5 border-t border-gray-100 print:hidden flex justify-center bg-gray-50/50">
+                   <button onclick="addFactor(${worker.id})" class="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium">
+                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                     유해인자 추가
+                   </button>
+                 </div>
+                </div>
+               </td>`;
+
+        // 15. 관리 버튼 (복사, 삭제, 페이지 분할)
+        html += `<td class="px-2 py-3 text-center align-top print:hidden whitespace-nowrap">
+                  <div class="flex flex-col gap-2 items-center h-full">
+                    <div class="flex gap-1 justify-center mt-1">
+                      <button onclick="duplicateWorker(${worker.id})" class="text-gray-400 hover:text-blue-600 p-1.5 rounded-full hover:bg-blue-50 transition-colors" title="현재 행 복사">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9" /></svg>
+                      </button>
+                      <button onclick="removeWorker(${worker.id})" class="text-gray-400 hover:text-red-600 p-1.5 rounded-full hover:bg-red-50 transition-colors" title="행 삭제">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                    <button onclick="togglePageBreak(${worker.id})" class="text-[11px] font-semibold flex items-center justify-center gap-1 w-full px-1 py-1 rounded transition-colors ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '분할선 취소' : '이 행부터 다음 페이지에 인쇄'}">
+                      ✂️ ${worker.pageBreak ? '분할 취소' : '페이지 나눔'}
+                    </button>
+                  </div>
+                 </td>`;
+
+        html += `</tr>`;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function reRender() {
+      saveFocus();
+      renderTableBody();
+      restoreFocus();
+    }
+
+    async function copyTableToClipboard() {
+      try {
+        let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t근로자명\t유해인자\tA\tP\tL\tN\t비고\n";
+        workers.forEach((worker, index) => {
+          worker.harmfulFactors.forEach((factor, fIndex) => {
+            const isFirst = fIndex === 0;
+            tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${isFirst ? worker.name || '' : ''}\t${factor.name || ''}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${factor.n || ''}\t${factor.remark || ''}\n`;
+          });
+        });
+
+        await navigator.clipboard.writeText(tsvData);
+        
+        document.getElementById('copyIconDefault').classList.add('hidden');
+        document.getElementById('copyIconCheck').classList.remove('hidden');
+        document.getElementById('copyBtnText').innerText = '복사 완료!';
+        
+        setTimeout(() => {
+          document.getElementById('copyIconDefault').classList.remove('hidden');
+          document.getElementById('copyIconCheck').classList.add('hidden');
+          document.getElementById('copyBtnText').innerText = '표 데이터 복사';
+        }, 2000);
+      } catch (err) {
+        alert('복사에 실패했습니다.');
+      }
+    }
+
+    function parseCSV(text) {
+      const result = [];
+      let row = [];
+      let cell = '';
+      let insideQuote = false;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (insideQuote) {
+          if (char === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+          else if (char === '"') { insideQuote = false; }
+          else { cell += char; }
+        } else {
+          if (char === '"') { insideQuote = true; }
+          else if (char === ',') { row.push(cell); cell = ''; }
+          else if (char === '\n' || char === '\r') {
+            row.push(cell); result.push(row); row = []; cell = '';
+            if (char === '\r' && text[i + 1] === '\n') i++;
+          }
+          else { cell += char; }
+        }
+      }
+      if (cell || row.length > 0) { row.push(cell); result.push(row); }
+      return result;
+    }
+
+    async function fetchSheetData(url) {
+      if (!url.trim()) return null;
+      try {
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (!match) throw new Error("유효한 스프레드시트 주소가 아닙니다.");
+        const exportUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
+        const response = await fetch(exportUrl);
+        if (!response.ok) throw new Error("시트 접근 거부. 일반 액세스를 확인하세요.");
+        const text = await response.text();
+        return parseCSV(text);
+      } catch (error) { throw error; }
+    }
+
+    async function handleSyncSheets() {
+      const excludeUrl = document.getElementById('excludeNoiseUrl').value;
+      const noiseUrl = document.getElementById('noiseUrl').value;
+      const syncBtn = document.getElementById('syncBtn');
+      const msg = document.getElementById('syncMessage');
+
+      if (!excludeUrl && !noiseUrl) {
+        msg.className = 'text-sm font-medium text-red-600';
+        msg.innerText = 'URL을 입력해주세요.';
+        return;
+      }
+
+      syncBtn.disabled = true;
+      syncBtn.innerText = '불러오는 중...';
+      msg.innerText = '';
+
+      try {
+        let excludeDepts = new Set(); 
+        let excludeProcesses = new Set();
+        let excludeKeys = new Set();
+
+        const processRows = (rows, isNoiseSheet = false, mergedGroups) => {
+          if (!rows || rows.length < 2) return;
+          let lastDept = '', lastProcess = '';
+
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length < 2) continue;
+
+            let dept = row[1]?.trim() || '';
+            let process = row[2]?.trim() || '';
+
+            if (dept === '' && process === '') {
+              dept = lastDept; process = lastProcess;
+            } else {
+              lastDept = dept; lastProcess = process;
+            }
+
+            if (!dept && !process) continue;
+
+            const key = `${dept}|${process}`;
+            
+            if (!isNoiseSheet) {
+              excludeDepts.add(dept);
+              excludeProcesses.add(process);
+              excludeKeys.add(key);
+            }
+
+            if (!mergedGroups[key]) {
+              mergedGroups[key] = {
+                department: dept, process: process, shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
+                factorGroups: [], hasPValue: false
+              };
+            }
+
+            const removeDecimal = (val) => val ? val.replace(/(\d+)\.\d+/g, '$1') : '';
+
+            if (!isNoiseSheet) {
+              let factor = row[3]?.trim() || '';
+              let workerCount = removeDecimal(row[4]?.trim());
+              let shift = row[5]?.trim() || '';
+              let cycle = row[6]?.trim() || '';
+              let pValue = row.length > 15 ? row[15]?.trim() || '' : '';
+
+              if (!mergedGroups[key].shiftSystem && shift) mergedGroups[key].shiftSystem = shift;
+              if (!mergedGroups[key].workerCount && workerCount) mergedGroups[key].workerCount = workerCount;
+              if (!mergedGroups[key].exposureCycle && cycle) mergedGroups[key].exposureCycle = cycle;
+
+              if (pValue !== '') {
+                mergedGroups[key].hasPValue = true;
+                mergedGroups[key].factorGroups.push(new Set());
+              }
+              if (factor !== '') {
+                if (mergedGroups[key].factorGroups.length === 0) mergedGroups[key].factorGroups.push(new Set());
+                mergedGroups[key].factorGroups[mergedGroups[key].factorGroups.length - 1].add(factor);
+              }
+            } else {
+              let isNewKey = !excludeKeys.has(key);
+              
+              if (isNewKey) {
+                let workerCount = removeDecimal(row[4]?.trim());
+                let shift = row[5]?.trim() || '';
+                let cycle = row[6]?.trim() || '';
+
+                if (shift) mergedGroups[key].shiftSystem = shift;
+                if (workerCount) mergedGroups[key].workerCount = workerCount;
+                if (cycle) mergedGroups[key].exposureCycle = cycle;
+              }
+
+              mergedGroups[key].hasPValue = true;
+              const noiseSet = new Set();
+              noiseSet.add('소음');
+              mergedGroups[key].factorGroups.push(noiseSet);
+            }
+          }
+        };
+
+        let mergedGroups = {};
+        if (excludeUrl) {
+          const rows1 = await fetchSheetData(excludeUrl);
+          processRows(rows1, false, mergedGroups);
+        }
+        if (noiseUrl) {
+          const rows2 = await fetchSheetData(noiseUrl);
+          processRows(rows2, true, mergedGroups);
+        }
+
+        const newWorkers = Object.values(mergedGroups)
+          .filter(group => group.hasPValue)
+          .map((group, index) => {
+            let parsedFactors = group.factorGroups
+              .map(set => Array.from(set).join(', '))
+              .filter(str => str !== '');
+
+            let uniqueFactors = [...new Set(parsedFactors)];
+            let formattedFactors = uniqueFactors.length > 0
+              ? uniqueFactors.map(f => ({ name: f, a: '', p: '', l: '', n: '', remark: '' }))
+              : [{ name: '', a: '', p: '', l: '', n: '', remark: '' }];
+
+            return {
+              id: Date.now() + index,
+              department: group.department,
+              process: group.process,
+              shiftSystem: group.shiftSystem,
+              workerCount: group.workerCount,
+              exposureCycle: group.exposureCycle,
+              measurementCount: group.measurementCount,
+              name: group.name,
+              pageBreak: false,
+              harmfulFactors: formattedFactors
+            };
+          });
+
+        if (newWorkers.length > 0) {
+          workers = newWorkers;
+          reRender();
+          msg.className = 'text-sm font-medium text-green-600';
+          msg.innerText = `연동 완료: ${newWorkers.length}개의 측정대상이 추출되었습니다.`;
+        } else {
+          msg.className = 'text-sm font-medium text-red-600';
+          msg.innerText = '조건에 맞는 데이터가 없습니다.';
+        }
+      } catch (error) {
+        msg.className = 'text-sm font-medium text-red-600';
+        msg.innerText = error.message;
+      } finally {
+        syncBtn.disabled = false;
+        syncBtn.innerText = '데이터 연동하기';
+      }
+    }
+
+    renderTableBody();
+  </script>
+</body>
+</html>
