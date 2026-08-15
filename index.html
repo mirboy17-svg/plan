@@ -28,7 +28,6 @@
         break-before: page !important;
       }
       
-      /* 부서명(그룹) 기준 페이지 잘림 방지 */
       .group-tbody {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
@@ -57,8 +56,50 @@
   </style>
 </head>
 <body class="bg-gray-50 font-sans min-h-screen p-4 md:p-8">
-  
-  <div class="max-w-[1450px] mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 print:shadow-none print:border-none">
+
+  <div id="loginScreen" class="fixed inset-0 bg-gray-100 flex flex-col items-center justify-center z-50 p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl border border-emerald-100 w-full max-w-[440px] text-center relative">
+      <!-- Lock Icon -->
+      <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-500 shadow-inner">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+
+      <h2 class="text-xl font-bold text-slate-800 mb-2">작업환경측정 계획서</h2>
+      <p class="text-sm text-slate-500 mb-6">경남지역본부 산업위생국</p>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <input type="password" id="loginPassword" placeholder="비밀번호 입력(임시: 1234)" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-slate-400" autocomplete="current-password" />
+        </div>
+        <div id="loginErrorMsg" class="text-xs text-red-500 font-medium hidden">비밀번호가 올바르지 않습니다. (임시: 1234)</div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-600/20">
+          접속하기
+        </button>
+      </form>
+    </div>
+
+    <!-- Footer info -->
+    <div class="mt-8 text-center text-xs text-slate-500 space-y-1">
+      <p class="font-bold text-slate-700 text-sm">시스템 오류 및 사용 문의</p>
+      <p>대한산업보건협회 경남지역본부 산업위생국</p>
+      <div class="flex items-center justify-center gap-3 pt-1 text-slate-600">
+        <span class="flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+          055-295-2461
+        </span>
+        <span>|</span>
+        <span class="flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+          aniag000@kiha21.or.kr
+        </span>
+      </div>
+      <p class="pt-2 text-[11px] text-slate-400">© Copyright 2026.08 aniag000@kiha21.or.kr. All rights reserved.</p>
+    </div>
+  </div>
+
+  <div id="mainAppContent" class="max-w-[1450px] mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 print:shadow-none print:border-none hidden">
     
     <div class="bg-slate-800 p-6 flex justify-between items-center text-white print:bg-white print:text-black print:border-b print:border-black print:p-2 print:mb-4">
       <div class="flex items-center gap-3">
@@ -176,7 +217,24 @@
   </div>
 
   <script>
-    // 입력창(textarea) 크기 자동 조절 (초고속 렌더링 최적화)
+    function handleLogin(e) {
+      e.preventDefault();
+      const pwInput = document.getElementById('loginPassword').value.trim();
+      const errBox = document.getElementById('loginErrorMsg');
+      
+      if (pwInput === '1234') {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainAppContent').classList.remove('hidden');
+        recalculateNames();
+        renderTables();
+      } else {
+        errBox.classList.remove('hidden');
+        const card = pwInput ? errBox.previousElementSibling : errBox.closest('.bg-white');
+        card.classList.add('animate-bounce');
+        setTimeout(() => card.classList.remove('animate-bounce'), 500);
+      }
+    }
+
     function smartResize(el) {
       if (!el) return;
       requestAnimationFrame(() => {
@@ -202,7 +260,6 @@
     let selectionStart = null;
     let selectionEnd = null;
 
-    // 제목 연동
     function updateTitle(val) {
       const companyName = val.trim();
       const titleText = companyName ? `작업환경측정 계획서 - ${companyName}` : '작업환경측정 계획서';
@@ -210,7 +267,6 @@
       document.title = titleText;
     }
 
-    // 포커스 저장/복구 (렌더링 시 끊김 방지용)
     function saveFocus() {
       const active = document.activeElement;
       if (active && active.dataset.focusId) {
@@ -221,6 +277,7 @@
         activeFocusId = null;
       }
     }
+
     function restoreFocus() {
       if (activeFocusId) {
         const el = document.querySelector(`[data-focus-id="${activeFocusId}"]`);
@@ -235,7 +292,6 @@
       }
     }
 
-    // A, P, L, N 갯수 UI 실시간 갱신 로직
     function updateCountsUI() {
       const allDays = getActiveDays();
       allDays.forEach(day => {
@@ -267,7 +323,6 @@
       });
     }
 
-    // 이름(근로자명) 실시간 시퀀스 재계산 (*1, *2...)
     function recalculateNames() {
       let currentSeq = 1;
       const allDays = getActiveDays();
@@ -279,17 +334,13 @@
               currentWorkers.forEach(worker => {
                   let val = (worker.name || '').trim();
                   
-                  // 사용자가 '*숫자' 형태로 커스텀 번호 점프를 지시한 경우 (*100 등)
                   if (worker.isManual && val.match(/^\*\d+$/)) {
                       currentSeq = parseInt(val.substring(1), 10) + 1;
                   } else {
-                      // 수동 입력이 아니거나 지워져서 빈칸이 된 경우 자동 넘버링 부여
                       if (!worker.isManual || val === '') {
                           worker.name = '*' + currentSeq;
                           worker.isManual = false;
                       }
-                      // 일반 텍스트(예: 홍길동)를 수기 입력하더라도, 해당 행이 
-                      // 순번 1자리를 차지하도록 하여 아래 행들의 번호가 밀리거나 바뀌지 않도록 방어!
                       currentSeq++;
                   }
               });
@@ -297,23 +348,19 @@
       });
     }
 
-    // 타이핑 지연 없는 데이터 업데이트 로직 (디바운싱 결합)
     function updateWorkerName(unitName, id, value) {
       const target = appData.units[unitName].find(w => w.id === id);
       if(target) {
           target.name = value;
-          target.isManual = true; // 수동 입력 플래그 활성화
+          target.isManual = true;
       }
       
       clearTimeout(window.nameDebounce);
       window.nameDebounce = setTimeout(() => {
-          recalculateNames(); // 데이터 상에서 번호 체계 재계산 (*1, *2, 홍길동, *3 ... 법칙 유지)
-          
-          // reRender()로 화면을 통째로 엎지 않고, 변경된 데이터만 DOM에 직접 주입 (한글 씹힘/끊김 원천 차단)
+          recalculateNames();
           Object.keys(appData.units).forEach(uName => {
               appData.units[uName].forEach(w => {
                   const ta = document.querySelector(`textarea[data-focus-id="name-${w.id}"]`);
-                  // 현재 타이핑 중인 칸(포커스된 칸)은 절대 건드리지 않음
                   if (ta && ta !== document.activeElement) {
                       ta.value = w.name;
                   }
@@ -323,7 +370,7 @@
                   }
               });
           });
-      }, 300); // 0.3초 뒤 부드럽게 나머지 칸 갱신
+      }, 300);
     }
 
     function updateFactorField(unitName, workerId, factorIndex, field, value) {
@@ -354,38 +401,25 @@
       }
     }
 
-    // "가방" 버튼 클릭 시 실행되는 초고속 기입 함수
     function addBagToRemark(unitName, workerId, factorIndex) {
       const target = appData.units[unitName].find(w => w.id === workerId);
       if(target && target.harmfulFactors[factorIndex]) {
           let currentVal = (target.harmfulFactors[factorIndex].remark || '').trim();
+          currentVal = currentVal.replace(/\[가방\]/g, '').trim();
           
-          // 기존에 있던 ', 가방' 꼬리표나 단독 '가방' 텍스트를 깔끔하게 제거
-          currentVal = currentVal.replace(/,\s*가방/g, '').trim();
-          if (currentVal === '가방') currentVal = '';
-          
-          // 맨 앞에 [가방]이 없는 경우에만 추가 실행
-          if (!currentVal.startsWith('[가방]')) {
-              // 혹시 중간에 [가방]이 끼어있다면 제거 후 맨 앞으로 이동
-              currentVal = currentVal.replace(/\[가방\]\s*/g, '');
-              
-              // 최상단에 [가방] 기입 (기존 텍스트가 있으면 한 칸 띄우고 붙임)
-              const newVal = currentVal === '' ? '[가방]' : '[가방] ' + currentVal;
-              target.harmfulFactors[factorIndex].remark = newVal;
+          const newVal = currentVal === '' ? '[가방]' : '[가방] ' + currentVal;
+          target.harmfulFactors[factorIndex].remark = newVal;
 
-              // DOM 직접 조작으로 화면 끊김(렉) 완벽 차단
-              const textarea = document.querySelector(`textarea[data-focus-id="frem-${workerId}-${factorIndex}"]`);
-              if (textarea) {
-                  textarea.value = newVal;
-                  textarea.style.height = 'auto';
-                  textarea.style.height = textarea.scrollHeight + 'px';
-                  textarea.focus(); // 입력 직후 자연스럽게 포커스 유지
-                  textarea.setSelectionRange(newVal.length, newVal.length);
-              }
-              const printDiv = document.getElementById(`print-frem-${workerId}-${factorIndex}`);
-              if (printDiv) {
-                  printDiv.innerHTML = newVal.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[가방\]/g, '<span class="font-bold text-red-600 print:text-red-600">[가방]</span>');
-              }
+          const textarea = document.querySelector(`textarea[data-focus-id="frem-${workerId}-${factorIndex}"]`);
+          if (textarea) {
+              textarea.value = newVal;
+              smartResize(textarea);
+              textarea.focus();
+              textarea.setSelectionRange(newVal.length, newVal.length);
+          }
+          const printDiv = document.getElementById(`print-frem-${workerId}-${factorIndex}`);
+          if (printDiv) {
+              printDiv.innerHTML = newVal.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[가방\]/g, '<span class="font-bold text-red-600 print:text-red-600">[가방]</span>');
           }
       }
     }
@@ -425,7 +459,7 @@
         id: newId,
         day: workerToCopy.day || 1,
         pageBreak: false,
-        name: '', // 복사 시 빈칸 초기화 -> 다음 번호로 자동 부여됨
+        name: '',
         isManual: false,
         harmfulFactors: workerToCopy.harmfulFactors.map(factor => ({ ...factor }))
       };
@@ -494,7 +528,6 @@
         return valid;
     }
 
-    // 탭 렌더링 로직
     function updateDayManageDropdowns() {
         const unitSelect = document.getElementById('moveTargetUnit');
         const deptSelect = document.getElementById('moveTargetDept');
@@ -586,7 +619,6 @@
         });
     }
 
-    // 메인 HTML 렌더링
     function renderTables() {
       const container = document.getElementById('tables-container');
       let html = '';
@@ -688,27 +720,27 @@
                       
                       if (isGroupStart) {
                           dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="dept-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value, ${worker.id}, 'dept')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.department}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="dept-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value)" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.department}</textarea></div>
                                     <div id="print-dept-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.department}</div>
                                    </td>`;
                           dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="proc-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value, ${worker.id}, 'proc')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.process}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="proc-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value)" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.process}</textarea></div>
                                     <div id="print-proc-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.process}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="shift-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value, ${worker.id}, 'shift')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.shiftSystem}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="shift-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value)" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.shiftSystem}</textarea></div>
                                     <div id="print-shift-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.shiftSystem}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="cnt-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value, ${worker.id}, 'cnt')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.workerCount}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="cnt-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value)" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.workerCount}</textarea></div>
                                     <div id="print-cnt-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.workerCount}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="cycle-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value, ${worker.id}, 'cycle')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.exposureCycle}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="cycle-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value)" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.exposureCycle}</textarea></div>
                                     <div id="print-cycle-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.exposureCycle}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="mcnt-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value, ${worker.id}, 'mcnt')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.measurementCount}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="mcnt-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value)" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.measurementCount}</textarea></div>
                                     <div id="print-mcnt-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.measurementCount}</div>
                                    </td>`;
                       }
@@ -732,7 +764,6 @@
                         </div>
                       </td>`;
 
-                      // 이름 영역: 왼쪽 정렬 적용, oninput 최적화
                       if (isWorkerStart) {
                           dayHtml += `<td class="border-r ${bClass} p-1 align-middle print:p-0.5" rowspan="${wSpan}">
                             <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden" placeholder="이름" rows="1">${worker.name}</textarea></div>
@@ -759,22 +790,21 @@
                         </td>
                         <td class="border-r ${bClass} p-1 align-middle print:p-0.5 relative group/remark">
                           <div class="w-full h-full print:hidden flex relative">
-                            <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full h-full pl-1 pr-[32px] bg-transparent outline-none text-center resize-none overflow-hidden" placeholder="비고" rows="1">${factor.remark}</textarea>
-                            <button tabindex="-1" type="button" onclick="addBagToRemark('${unitName}', ${worker.id}, ${fIndex})" class="absolute right-0 top-0 mt-[1px] mr-[1px] text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-200 border border-amber-300 px-1 py-0.5 rounded shadow-sm transition-colors z-10" title="'[가방]' 기입">가방</button>
+                            <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full h-full pl-1 pr-[36px] bg-transparent outline-none text-center resize-none overflow-hidden" placeholder="비고" rows="1">${factor.remark}</textarea>
+                            <button tabindex="-1" type="button" onclick="addBagToRemark('${unitName}', ${worker.id}, ${fIndex})" class="absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-1 py-1 rounded shadow-sm transition-colors z-10" title="최상단 '[가방]' 기입">가방</button>
                           </div>
                           <div id="print-frem-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${(factor.remark || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[가방\]/g, '<span class="font-bold text-red-600 print:text-red-600">[가방]</span>')}</div>
                         </td>
                       `;
 
-                      // 관리 버튼 영역: UI 개선
                       if (isWorkerStart) {
                           dayHtml += `<td class="px-1 py-2 text-center align-middle print:hidden whitespace-nowrap ${bClass}" rowspan="${wSpan}">
                             <div class="flex flex-col gap-1 items-center justify-center h-full w-[80px]">
-                              <button onclick="duplicateWorker('${unitName}', ${worker.id})" class="text-[10px] font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-1 py-1 rounded w-full flex items-center justify-center gap-0.5 transition-colors shadow-sm">
+                              <button onclick="duplicateWorker('${unitName}', ${worker.id})" class="text-[10px] font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-1.5 py-1 rounded w-full flex items-center justify-center gap-0.5 transition-colors shadow-sm">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6m3-3H9"></path></svg> 
-                                행 복사
+                                행복사
                               </button>
-                              <button onclick="addFactor('${unitName}', ${worker.id})" class="text-[10px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 border border-blue-300 px-1 py-1 rounded w-full flex items-center justify-center gap-0.5 transition-colors shadow-sm">
+                              <button onclick="addFactor('${unitName}', ${worker.id})" class="text-[10px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 border border-blue-300 px-1.5 py-1 rounded w-full flex items-center justify-center gap-0.5 transition-colors shadow-sm">
                                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg> 
                                 인자추가
                               </button>
@@ -814,10 +844,9 @@
       renderUnitTabs();
       
       document.querySelectorAll('#tables-container textarea').forEach(el => {
-          smartResize(el);
+        smartResize(el);
       });
       
-      // 화면 그릴 때 카운트 즉시 연동
       updateCountsUI();
     }
 
@@ -827,7 +856,6 @@
       restoreFocus();
     }
 
-    // 파일 내보내기, 복사 등의 기능
     async function copyTableToClipboard() {
       try {
         let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t유해인자\t근로자명\tA\tP\tL\tN\t비고\n";
@@ -987,7 +1015,6 @@
       syncBtn.disabled = true; syncBtn.innerText = '불러오는 중...'; msg.innerText = '';
 
       try {
-        // --- 비고 자동 매핑 시트 불러오기 시작 ---
         let factorMapping = new Map();
         try {
           const mappingSheetId = '1SrVWQxyv0n_4bQi8roKzk-nXsox-1gjWTY-z0L4H9eg';
@@ -1005,9 +1032,8 @@
             });
           }
         } catch(mapErr) {
-          console.warn("비고 매핑 시트를 불러오는데 실패했습니다(무시됨): ", mapErr);
+          console.warn("비고 매핑 시트를 불러오는데 실패했습니다: ", mapErr);
         }
-        // --- 비고 자동 매핑 시트 불러오기 끝 ---
 
         let mergedGroupsByUnit = {}; let excludeKeys = new Set(); let lastKnownUnit = '기본 사업체';
 
@@ -1088,7 +1114,6 @@
                   formattedFactors.push({ name: name, a: '', p: '', l: '', n: '', remark: autoRemark, isAdjusted: isAdjusted }); 
                 });
                 
-                // [소음] 인자가 무조건 최상단(배열 0번째)에 오도록 정렬
                 formattedFactors.sort((a, b) => {
                     const aIsNoise = (a.name || '').includes('소음');
                     const bIsNoise = (b.name || '').includes('소음');
@@ -1119,7 +1144,6 @@
       finally { syncBtn.disabled = false; syncBtn.innerText = '데이터 연동하기'; reRender(); }
     }
 
-    // 방향키 이동 로직
     document.addEventListener('keydown', function(e) {
       const current = e.target;
       if (current.tagName !== 'TEXTAREA' || !current.hasAttribute('data-focus-id')) return;
@@ -1169,9 +1193,7 @@
       }
     });
 
-    // 초기화 및 렌더링
     recalculateNames();
-    renderTables();
   </script>
 </body>
 </html>
