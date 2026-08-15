@@ -542,7 +542,7 @@
                             <th class="px-2 py-2 w-[70px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
                         </thead>
-                        <tbody class="print:border-black">`;
+                        `;
 
           let globalWorkerIndex = 0; 
 
@@ -553,9 +553,9 @@
               if (currentWorkers.length === 0) return;
               
               if (appData.currentUnit === 'ALL') {
-                  dayHtml += `<tr><td colspan="15" class="bg-indigo-50 border-b border-gray-200 print:border-black py-1.5 px-3 text-sm font-bold text-indigo-800 print:text-[10px] print:text-black">
+                  dayHtml += `<tbody class="print:border-black"><tr><td colspan="15" class="bg-indigo-50 border-b border-gray-200 print:border-black py-1.5 px-3 text-sm font-bold text-indigo-800 print:text-[10px] print:text-black">
                     🏢 [단위사업체] : ${unitName}
-                  </td></tr>`;
+                  </td></tr></tbody>`;
               }
 
               const spans = calculateSpansForWorkers(currentWorkers);
@@ -570,12 +570,20 @@
                   }
               }
 
+              let currentGroupEndIndex = -1;
+
               currentWorkers.forEach((worker, index) => {
                   globalWorkerIndex++;
                   const displayIndex = appData.currentUnit === 'ALL' ? globalWorkerIndex : index + 1;
                   const originalRowSpan = spans[index];
                   const gSpan = groupSpans[index]; 
                   const wSpan = worker.harmfulFactors.length;
+
+                  // 새로운 부서/공정 그룹이 시작될 때 페이지 잘림 방지를 위한 tbody 열기
+                  if (originalRowSpan > 0) {
+                      currentGroupEndIndex = index + originalRowSpan - 1;
+                      dayHtml += `<tbody class="print:border-black group-tbody">`;
+                  }
 
                   if (worker.pageBreak && index > 0) {
                     dayHtml += `
@@ -697,19 +705,24 @@
                       }
                       dayHtml += `</tr>`;
                   });
+                  
+                  // 현재 부서/공정 그룹이 끝나면 tbody 닫기
+                  if (index === currentGroupEndIndex) {
+                      dayHtml += `</tbody>`;
+                  }
               });
 
-              dayHtml += `<tr class="print:hidden bg-gray-50/50 hover:bg-gray-50 transition-colors">
+              dayHtml += `<tbody class="print:border-black"><tr class="print:hidden bg-gray-50/50 hover:bg-gray-50 transition-colors">
                             <td colspan="15" class="p-2 border-b border-gray-200 text-center">
                               <button onclick="addWorker('${unitName}')" class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 hover:text-indigo-600 px-3 py-1 rounded bg-white border border-slate-200 hover:border-indigo-300 shadow-sm transition-all">
                                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
                                 [${unitName}] 빈 행 추가
                               </button>
                             </td>
-                          </tr>`;
+                          </tr></tbody>`;
           });
           
-          dayHtml += `   </tbody>
+          dayHtml += `
                       </table>
                     </div>
                   </div>`;
