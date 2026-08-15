@@ -8,19 +8,18 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @media print {
-      @page { size: landscape !important; margin: 10mm; }
-      body { background-color: white !important; font-size: 7px !important; }
+      @page { size: landscape !important; margin: 5mm; }
+      body { background-color: white !important; }
       .print\:hidden { display: none !important; }
       .print\:block { display: block !important; }
       .print\:bg-transparent { background-color: transparent !important; }
       .print\:border-black { border-color: black !important; }
       .print\:border-none { border: none !important; }
       
-      /* 입력창 숨기고 일반 텍스트 노출 */
       textarea, input { display: none !important; }
       
       table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; }
-      th, td { font-size: 7px !important; padding: 1px !important; line-height: 1.1 !important; height: auto !important; }
+      th, td { font-size: 8px !important; padding: 1px 2px !important; line-height: 1.2 !important; height: auto !important; }
       
       .nowrap-col { white-space: normal !important; word-break: break-all !important; }
       
@@ -45,7 +44,6 @@
       word-break: break-all !important;
     }
     
-    /* 텍스트 줄바꿈용 텍스트에어리어 기본 스타일 */
     textarea {
       resize: none;
       overflow: hidden;
@@ -69,7 +67,6 @@
         </svg>
         <h1 id="mainTitle" class="text-2xl font-bold">작업환경측정 계획서</h1>
       </div>
-      <!-- 상단 액션 버튼 그룹 -->
       <div class="flex flex-wrap items-center justify-end gap-2 print:hidden">
         <button onclick="exportToExcel()" class="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-sm">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -88,6 +85,9 @@
           <svg id="copyIconDefault" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
+          <svg id="copyIconCheck" class="w-4 h-4 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
           <span id="copyBtnText">현재 표 데이터 복사</span>
         </button>
         <button onclick="printAllUnits()" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-md border border-violet-800">
@@ -95,12 +95,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           <span>전체사업체 인쇄/저장</span>
-        </button>
-        <button onclick="window.print()" class="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-md border border-blue-800">
-          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          <span>현재화면 인쇄 / PDF 저장</span>
         </button>
       </div>
     </div>
@@ -124,11 +118,11 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">'소음제외' 시트 URL</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">'소음제외' 시트 URL (P, R열 조건)</label>
             <input type="text" id="excludeNoiseUrl" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white block !important" placeholder="https://docs.google.com/spreadsheets/d/..." />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">'소음' 시트 URL (제외 시트에 없는 경우만 적용)</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">'소음' 시트 URL (P, M열 조건)</label>
             <input type="text" id="noiseUrl" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white block !important" placeholder="https://docs.google.com/spreadsheets/d/..." />
           </div>
         </div>
@@ -146,7 +140,6 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             측정 일차 분리 관리
           </h2>
-          <span class="text-xs bg-amber-200 text-amber-900 px-2 py-1 rounded font-medium hidden md:inline-block">기본 1일차 측정 ➔ 부서별로 2~10일차로 이동</span>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <select id="moveTargetUnit" onchange="updateMoveDeptDropdown()" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 min-w-[140px] max-w-[180px]">
@@ -158,7 +151,6 @@
           <span class="text-gray-400 font-bold px-1">➔</span>
           <select id="moveTargetDay" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-bold text-amber-700">
             <option value="1">1일차</option><option value="2">2일차</option><option value="3">3일차</option><option value="4">4일차</option><option value="5">5일차</option>
-            <option value="6">6일차</option><option value="7">7일차</option><option value="8">8일차</option><option value="9">9일차</option><option value="10">10일차</option>
           </select>
           <button onclick="moveDepartmentDay()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded font-bold text-sm shadow-sm transition-colors whitespace-nowrap">
             이동 실행
@@ -167,25 +159,18 @@
       </section>
 
       <section id="tabContainerSection" class="hidden print:hidden">
-        <!-- 일차(Day) 탭 -->
         <div class="flex items-end border-b-2 border-amber-500 mb-3 gap-2">
             <div class="bg-amber-500 text-white px-3 py-1.5 text-sm font-bold rounded-tl-lg rounded-tr-lg">일자 선택</div>
-            <div id="dayTabs" class="flex flex-wrap gap-1">
-                <!-- JS 생성 -->
-            </div>
+            <div id="dayTabs" class="flex flex-wrap gap-1"></div>
         </div>
-        <!-- 단위사업체(Unit) 탭 -->
         <div class="flex items-end border-b border-gray-300 pb-1 gap-2">
             <div class="text-indigo-600 px-3 py-1.5 text-sm font-bold bg-indigo-50 rounded-tl-lg rounded-tr-lg border border-b-0 border-indigo-200">사업체 선택</div>
-            <div id="unitTabs" class="flex flex-wrap gap-1">
-                <!-- JS 생성 -->
-            </div>
+            <div id="unitTabs" class="flex flex-wrap gap-1"></div>
         </div>
       </section>
 
-      <!-- 통합된 전체 테이블 컨테이너 -->
       <div id="tables-container" class="space-y-8 print:space-y-6">
-        <!-- JS 렌더링 영역 -->
+        <!-- 렌더링 영역 -->
       </div>
     </div>
   </div>
@@ -197,7 +182,7 @@
       units: {
         '기본 사업체': [
           {
-            id: 1, day: 1, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false, 
+            id: 1, day: 1, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', isManual: false, pageBreak: false, 
             harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }]
           }
         ]
@@ -208,6 +193,7 @@
     let selectionStart = null;
     let selectionEnd = null;
 
+    // 제목 연동
     function updateTitle(val) {
       const companyName = val.trim();
       const titleText = companyName ? `작업환경측정 계획서 - ${companyName}` : '작업환경측정 계획서';
@@ -215,6 +201,7 @@
       document.title = titleText;
     }
 
+    // 포커스 저장/복구 (렌더링 시 끊김 방지용)
     function saveFocus() {
       const active = document.activeElement;
       if (active && active.dataset.focusId) {
@@ -225,7 +212,6 @@
         activeFocusId = null;
       }
     }
-
     function restoreFocus() {
       if (activeFocusId) {
         const el = document.querySelector(`[data-focus-id="${activeFocusId}"]`);
@@ -237,6 +223,233 @@
             }
           } catch(e) {}
         }
+      }
+    }
+
+    // A, P, L, N 갯수 UI 실시간 갱신 로직
+    function updateCountsUI() {
+      const allDays = getActiveDays();
+      allDays.forEach(day => {
+          let uniqueA = new Set();
+          let uniqueP = new Set();
+          let uniqueL = new Set();
+          let countN = 0;
+          
+          Object.keys(appData.units).forEach((unitName) => {
+              if (appData.currentUnit !== 'ALL' && appData.currentUnit !== unitName) return;
+              const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
+              currentWorkers.forEach(worker => {
+                  worker.harmfulFactors.forEach(factor => {
+                      if (factor.a && String(factor.a).trim() !== '') uniqueA.add(String(factor.a).trim());
+                      if (factor.p && String(factor.p).trim() !== '') uniqueP.add(String(factor.p).trim());
+                      if (factor.l && String(factor.l).trim() !== '') uniqueL.add(String(factor.l).trim());
+                      
+                      const isNoiseFactor = String(factor.name).trim().includes('소음');
+                      const nValue = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                      if (nValue && String(nValue).trim() !== '') countN++;
+                  });
+              });
+          });
+          
+          const displayEl = document.getElementById(`count-display-${day}`);
+          if (displayEl) {
+              displayEl.innerText = `- 'A : ${uniqueA.size}개, P : ${uniqueP.size}개, L : ${uniqueL.size}개, N : ${countN}개'`;
+          }
+      });
+    }
+
+    // 이름(근로자명) 실시간 시퀀스 재계산 (*1, *2...)
+    function recalculateNames() {
+      let currentSeq = 1;
+      const allDays = getActiveDays();
+      const unitNames = Object.keys(appData.units);
+      
+      allDays.forEach(day => {
+          unitNames.forEach(unitName => {
+              const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
+              currentWorkers.forEach(worker => {
+                  let val = (worker.name || '').trim();
+                  
+                  // 사용자가 '*숫자' 형태로 커스텀 번호 점프를 지시한 경우 (*100 등)
+                  if (worker.isManual && val.match(/^\*\d+$/)) {
+                      currentSeq = parseInt(val.substring(1), 10) + 1;
+                  } else {
+                      // 수동 입력이 아니거나 지워져서 빈칸이 된 경우 자동 넘버링 부여
+                      if (!worker.isManual || val === '') {
+                          worker.name = '*' + currentSeq;
+                          worker.isManual = false;
+                      }
+                      // 일반 텍스트(예: 홍길동)를 수기 입력하더라도, 해당 행이 
+                      // 순번 1자리를 차지하도록 하여 아래 행들의 번호가 밀리거나 바뀌지 않도록 방어!
+                      currentSeq++;
+                  }
+              });
+          });
+      });
+    }
+
+    // 타이핑 지연 없는 데이터 업데이트 로직 (디바운싱 결합)
+    function updateWorkerName(unitName, id, value) {
+      const target = appData.units[unitName].find(w => w.id === id);
+      if(target) {
+          target.name = value;
+          target.isManual = true; // 수동 입력 플래그 활성화
+      }
+      
+      clearTimeout(window.nameDebounce);
+      window.nameDebounce = setTimeout(() => {
+          recalculateNames(); // 데이터 상에서 번호 체계 재계산 (*1, *2, 홍길동, *3 ... 법칙 유지)
+          
+          // reRender()로 화면을 통째로 엎지 않고, 변경된 데이터만 DOM에 직접 주입 (한글 씹힘/끊김 원천 차단)
+          Object.keys(appData.units).forEach(uName => {
+              appData.units[uName].forEach(w => {
+                  const ta = document.querySelector(`textarea[data-focus-id="name-${w.id}"]`);
+                  // 현재 타이핑 중인 칸(포커스된 칸)은 절대 건드리지 않음
+                  if (ta && ta !== document.activeElement) {
+                      ta.value = w.name;
+                  }
+                  const printDiv = document.getElementById(`print-name-${w.id}`);
+                  if (printDiv) {
+                      printDiv.innerText = w.name;
+                  }
+              });
+          });
+      }, 300); // 0.3초 뒤 부드럽게 나머지 칸 갱신
+    }
+
+    function updateFactorField(unitName, workerId, factorIndex, field, value) {
+      const target = appData.units[unitName].find(w => w.id === workerId);
+      if(target && target.harmfulFactors[factorIndex]) {
+          target.harmfulFactors[factorIndex][field] = value;
+      }
+      clearTimeout(window.countDebounce);
+      window.countDebounce = setTimeout(() => {
+          updateCountsUI();
+      }, 200);
+    }
+
+    function updateGroupField(unitName, day, filterIndex, rowSpan, field, value) {
+      const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
+      for (let i = filterIndex; i < filterIndex + rowSpan; i++) {
+        const targetId = currentWorkers[i].id;
+        const realWorker = appData.units[unitName].find(w => w.id === targetId);
+        if(realWorker) realWorker[field] = value;
+      }
+    }
+
+    function toggleAdjust(unitName, workerId, factorIndex) {
+      const target = appData.units[unitName].find(w => w.id === workerId);
+      if(target && target.harmfulFactors[factorIndex]) {
+          target.harmfulFactors[factorIndex].isAdjusted = !target.harmfulFactors[factorIndex].isAdjusted;
+          reRender();
+      }
+    }
+
+    // "가방" 버튼 클릭 시 실행되는 초고속 기입 함수
+    function addBagToRemark(unitName, workerId, factorIndex) {
+      const target = appData.units[unitName].find(w => w.id === workerId);
+      if(target && target.harmfulFactors[factorIndex]) {
+          let currentVal = (target.harmfulFactors[factorIndex].remark || '').trim();
+          
+          // 기존에 있던 ', 가방' 꼬리표나 단독 '가방' 텍스트를 깔끔하게 제거
+          currentVal = currentVal.replace(/,\s*가방/g, '').trim();
+          if (currentVal === '가방') currentVal = '';
+          
+          // 맨 앞에 [가방]이 없는 경우에만 추가 실행
+          if (!currentVal.startsWith('[가방]')) {
+              // 혹시 중간에 [가방]이 끼어있다면 제거 후 맨 앞으로 이동
+              currentVal = currentVal.replace(/\[가방\]\s*/g, '');
+              
+              // 최상단에 [가방] 기입 (기존 텍스트가 있으면 한 칸 띄우고 붙임)
+              const newVal = currentVal === '' ? '[가방]' : '[가방] ' + currentVal;
+              target.harmfulFactors[factorIndex].remark = newVal;
+
+              // DOM 직접 조작으로 화면 끊김(렉) 완벽 차단
+              const textarea = document.querySelector(`textarea[data-focus-id="frem-${workerId}-${factorIndex}"]`);
+              if (textarea) {
+                  textarea.value = newVal;
+                  textarea.style.height = 'auto';
+                  textarea.style.height = textarea.scrollHeight + 'px';
+                  textarea.focus(); // 입력 직후 자연스럽게 포커스 유지
+                  textarea.setSelectionRange(newVal.length, newVal.length);
+              }
+              const printDiv = document.getElementById(`print-frem-${workerId}-${factorIndex}`);
+              if (printDiv) {
+                  printDiv.innerHTML = newVal.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[가방\]/g, '<span class="font-bold text-red-600 print:text-red-600">[가방]</span>');
+              }
+          }
+      }
+    }
+
+    function addWorker(unitName) {
+      const currentWorkers = appData.units[unitName];
+      const newId = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => w.id)) + 1 : 1;
+      currentWorkers.push({
+        id: newId, day: appData.currentDay, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', isManual: false, pageBreak: false,
+        harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }]
+      });
+      recalculateNames();
+      reRender();
+    }
+
+    function removeWorker(unitName, id) {
+      let currentWorkers = appData.units[unitName];
+      currentWorkers = currentWorkers.filter(w => w.id !== id);
+      appData.units[unitName] = currentWorkers;
+      if (currentWorkers.length === 0) addWorker(unitName);
+      else {
+          recalculateNames();
+          reRender();
+      }
+    }
+
+    function duplicateWorker(unitName, id) {
+      const currentWorkers = appData.units[unitName];
+      const index = currentWorkers.findIndex(w => w.id === id);
+      if (index === -1) return;
+      
+      const workerToCopy = currentWorkers[index];
+      const newId = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => w.id)) + 1 : 1;
+      
+      const clonedWorker = {
+        ...workerToCopy,
+        id: newId,
+        day: workerToCopy.day || 1,
+        pageBreak: false,
+        name: '', // 복사 시 빈칸 초기화 -> 다음 번호로 자동 부여됨
+        isManual: false,
+        harmfulFactors: workerToCopy.harmfulFactors.map(factor => ({ ...factor }))
+      };
+      
+      currentWorkers.splice(index + 1, 0, clonedWorker);
+      recalculateNames();
+      reRender();
+    }
+
+    function addFactor(unitName, workerId) {
+      const target = appData.units[unitName].find(w => w.id === workerId);
+      if(target) {
+          target.harmfulFactors.push({ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false });
+          reRender();
+      }
+    }
+
+    function removeFactor(unitName, workerId, factorIndex) {
+      const target = appData.units[unitName].find(w => w.id === workerId);
+      if(target) {
+          target.harmfulFactors.splice(factorIndex, 1);
+          if(target.harmfulFactors.length === 0) {
+              target.harmfulFactors.push({ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false });
+          }
+          reRender();
+      }
+    }
+
+    function togglePageBreak(unitName, id) {
+      const target = appData.units[unitName].find(w => w.id === id);
+      if(target) {
+          target.pageBreak = !target.pageBreak;
+          reRender();
       }
     }
 
@@ -257,122 +470,22 @@
       return spans;
     }
 
-    /* 모든 수정 함수는 파라미터로 unitName을 받도록 변경 */
-    function updateWorker(unitName, id, field, value) {
-      const currentWorkers = appData.units[unitName];
-      appData.units[unitName] = currentWorkers.map(w => w.id === id ? { ...w, [field]: value } : w);
-    }
-
-    function updateGroupField(unitName, day, filterIndex, rowSpan, field, value) {
-      const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
-      for (let i = filterIndex; i < filterIndex + rowSpan; i++) {
-        const targetId = currentWorkers[i].id;
-        const realWorker = appData.units[unitName].find(w => w.id === targetId);
-        if(realWorker) realWorker[field] = value;
-      }
-    }
-
-    function updateFactor(unitName, workerId, factorIndex, field, value) {
-      const currentWorkers = appData.units[unitName];
-      appData.units[unitName] = currentWorkers.map(worker => {
-        if (worker.id === workerId) {
-          const newFactors = [...worker.harmfulFactors];
-          newFactors[factorIndex][field] = value;
-          return { ...worker, harmfulFactors: newFactors };
-        }
-        return worker;
-      });
-    }
-    
-    function toggleAdjust(unitName, workerId, factorIndex) {
-      const currentWorkers = appData.units[unitName];
-      appData.units[unitName] = currentWorkers.map(worker => {
-        if (worker.id === workerId) {
-          const newFactors = [...worker.harmfulFactors];
-          newFactors[factorIndex].isAdjusted = !newFactors[factorIndex].isAdjusted;
-          return { ...worker, harmfulFactors: newFactors };
-        }
-        return worker;
-      });
-      reRender();
-    }
-
-    function addWorker(unitName) {
-      const currentWorkers = appData.units[unitName];
-      const newId = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => w.id)) + 1 : 1;
-      currentWorkers.push({
-        id: newId, day: appData.currentDay, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
-        harmfulFactors: [{ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }]
-      });
-      reRender();
-    }
-
-    function removeWorker(unitName, id) {
-      let currentWorkers = appData.units[unitName];
-      currentWorkers = currentWorkers.filter(w => w.id !== id);
-      appData.units[unitName] = currentWorkers;
-      if (currentWorkers.length === 0) addWorker(unitName);
-      else reRender();
-    }
-
-    function duplicateWorker(unitName, id) {
-      const currentWorkers = appData.units[unitName];
-      const index = currentWorkers.findIndex(w => w.id === id);
-      if (index === -1) return;
-      const workerToCopy = currentWorkers[index];
-      const newId = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => w.id)) + 1 : 1;
-      const clonedWorker = {
-        ...workerToCopy,
-        id: newId,
-        day: workerToCopy.day || 1,
-        pageBreak: false,
-        harmfulFactors: workerToCopy.harmfulFactors.map(factor => ({ ...factor }))
-      };
-      currentWorkers.splice(index + 1, 0, clonedWorker);
-      reRender();
-    }
-
-    function togglePageBreak(unitName, id) {
-      const currentWorkers = appData.units[unitName];
-      appData.units[unitName] = currentWorkers.map(w => w.id === id ? { ...w, pageBreak: !w.pageBreak } : w);
-      reRender();
-    }
-
-    function addFactor(unitName, workerId) {
-      const currentWorkers = appData.units[unitName];
-      appData.units[unitName] = currentWorkers.map(worker => {
-        if (worker.id === workerId) {
-          return { ...worker, harmfulFactors: [...worker.harmfulFactors, { name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }] };
-        }
-        return worker;
-      });
-      reRender();
-    }
-
-    function removeFactor(unitName, workerId, factorIndex) {
-      const currentWorkers = appData.units[unitName];
-      appData.units[unitName] = currentWorkers.map(worker => {
-        if (worker.id === workerId) {
-          const newFactors = worker.harmfulFactors.filter((_, idx) => idx !== factorIndex);
-          return {
-            ...worker,
-            harmfulFactors: newFactors.length ? newFactors : [{ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false }]
-          };
-        }
-        return worker;
-      });
-      reRender();
-    }
-
     function getActiveDays() {
         let activeDays = new Set();
-        Object.values(appData.units).forEach(workers => {
-            workers.forEach(w => activeDays.add(w.day || 1));
-        });
+        Object.values(appData.units).forEach(workers => workers.forEach(w => activeDays.add(w.day || 1)));
         if(activeDays.size === 0) activeDays.add(1);
         return Array.from(activeDays).sort((a,b) => a - b);
     }
+    
+    function getValidUnitsForDay(day) {
+        let valid = [];
+        Object.keys(appData.units).forEach(unit => {
+            if(appData.units[unit].some(w => (w.day || 1) === day)) valid.push(unit);
+        });
+        return valid;
+    }
 
+    // 탭 렌더링 로직
     function updateDayManageDropdowns() {
         const unitSelect = document.getElementById('moveTargetUnit');
         const deptSelect = document.getElementById('moveTargetDept');
@@ -397,21 +510,7 @@
             if(prevDept === 'ALL' || Array.from(depts).includes(prevDept)) deptSelect.value = prevDept;
         }
     }
-
-    function updateMoveDeptDropdown() {
-        updateDayManageDropdowns();
-    }
-
-    function printAllUnits() {
-        // 1. 강제로 [전체 사업체] 모드로 전환
-        appData.currentUnit = 'ALL';
-        reRender();
-        
-        // 2. 화면이 '전체 사업체'로 렌더링될 수 있도록 잠시 대기 후 인쇄 다이얼로그 호출
-        setTimeout(() => {
-            window.print();
-        }, 300);
-    }
+    function updateMoveDeptDropdown() { updateDayManageDropdowns(); }
 
     function moveDepartmentDay() {
         const unit = document.getElementById('moveTargetUnit').value;
@@ -419,24 +518,20 @@
         const targetDay = parseInt(document.getElementById('moveTargetDay').value);
 
         if(!unit) return alert("단위사업체를 선택하세요.");
-        if(!dept) return alert("이동할 부서명을 선택하거나 '단위사업체 전체 이동'을 선택하세요.");
+        if(!dept) return alert("이동할 부서명을 선택하세요.");
         if(!targetDay) return;
 
         let movedCount = 0;
         appData.units[unit].forEach(w => {
-            if(dept === 'ALL' || w.department === dept) { 
-                w.day = targetDay; 
-                movedCount++; 
-            }
+            if(dept === 'ALL' || w.department === dept) { w.day = targetDay; movedCount++; }
         });
 
         if(movedCount > 0) {
-            alert(`해당 데이터(${movedCount}건)가 ${targetDay}일차로 성공적으로 이동되었습니다.`);
+            alert(`${movedCount}건이 ${targetDay}일차로 이동되었습니다.`);
             appData.currentDay = targetDay;
             if(appData.currentUnit !== 'ALL') appData.currentUnit = unit;
+            recalculateNames();
             reRender();
-        } else {
-            alert("해당 데이터를 찾을 수 없습니다.");
         }
     }
 
@@ -444,7 +539,6 @@
         const tabsContainer = document.getElementById('dayTabs');
         if(!tabsContainer) return;
         tabsContainer.innerHTML = '';
-        
         const sortedDays = getActiveDays();
         if(!sortedDays.includes(appData.currentDay)) appData.currentDay = sortedDays[0] || 1;
 
@@ -453,24 +547,9 @@
             const isActive = appData.currentDay === day;
             btn.className = `px-4 py-1.5 text-sm font-bold rounded-t-lg transition-colors border-t border-l border-r ${isActive ? 'bg-white text-amber-600 border-amber-200 border-b-white translate-y-[1px]' : 'bg-amber-100/50 text-amber-700/60 border-amber-200/50 hover:bg-amber-100'}`;
             btn.innerText = `${day}일차`;
-            btn.onclick = () => {
-                appData.currentDay = day;
-                let validUnits = getValidUnitsForDay(day);
-                if(appData.currentUnit !== 'ALL' && validUnits.length > 0 && !validUnits.includes(appData.currentUnit)) {
-                    appData.currentUnit = validUnits[0];
-                }
-                reRender();
-            };
+            btn.onclick = () => { appData.currentDay = day; reRender(); };
             tabsContainer.appendChild(btn);
         });
-    }
-
-    function getValidUnitsForDay(day) {
-        let valid = [];
-        Object.keys(appData.units).forEach(unit => {
-            if(appData.units[unit].some(w => (w.day || 1) === day)) valid.push(unit);
-        });
-        return valid;
     }
 
     function renderUnitTabs() {
@@ -479,11 +558,7 @@
         tabsContainer.innerHTML = '';
 
         let validUnits = getValidUnitsForDay(appData.currentDay);
-
-        if(validUnits.length === 0) {
-            tabsContainer.innerHTML = `<span class="text-sm text-gray-500 py-1.5 px-2">배정된 사업체가 없습니다.</span>`;
-            return;
-        }
+        if(validUnits.length === 0) return;
 
         const allBtn = document.createElement('button');
         const isAllActive = appData.currentUnit === 'ALL';
@@ -502,56 +577,28 @@
         });
     }
 
+    // 메인 HTML 렌더링
     function renderTables() {
       const container = document.getElementById('tables-container');
       let html = '';
-      
       const allDays = getActiveDays();
       const unitNames = Object.keys(appData.units);
       
       allDays.forEach(day => {
           let hasDataForDay = false;
-          unitNames.forEach(u => {
-              if(appData.units[u].some(w => (w.day || 1) === day)) hasDataForDay = true;
-          });
-          
+          unitNames.forEach(u => { if(appData.units[u].some(w => (w.day || 1) === day)) hasDataForDay = true; });
           if(!hasDataForDay) return;
           
           const isActiveDay = (day === appData.currentDay);
           const displayClass = isActiveDay ? 'block' : 'hidden print:block';
-          
-          let uniqueA = new Set();
-          let uniqueP = new Set();
-          let uniqueL = new Set();
-          let countN = 0;
-          
-          unitNames.forEach((unitName) => {
-              if (appData.currentUnit !== 'ALL' && appData.currentUnit !== unitName) return;
-              const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
-              currentWorkers.forEach(worker => {
-                  worker.harmfulFactors.forEach(factor => {
-                      if (factor.a && String(factor.a).trim() !== '') uniqueA.add(String(factor.a).trim());
-                      if (factor.p && String(factor.p).trim() !== '') uniqueP.add(String(factor.p).trim());
-                      if (factor.l && String(factor.l).trim() !== '') uniqueL.add(String(factor.l).trim());
-                      
-                      const isNoiseFactor = String(factor.name).trim().includes('소음');
-                      const nValue = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
-                      if (nValue && String(nValue).trim() !== '') countN++;
-                  });
-              });
-          });
-          
-          let dayHtml = `<div class="day-section ${displayClass} print:mb-8" id="day-wrap-${day}">`;
-          
           let headerTitle = appData.currentUnit === 'ALL' ? '전체 사업체' : `[단위사업체] : ${appData.currentUnit}`;
 
+          let dayHtml = `<div class="day-section ${displayClass} print:mb-8">`;
           dayHtml += `<div class="print-unit-header flex justify-between items-end mb-2 border-b pb-1 print:border-black print:mb-1 print:mt-4">
                         <h2 class="text-lg font-semibold text-gray-800 print:text-[12px] print:m-0 print:p-0 print:font-bold flex items-center flex-wrap">
                             <span class="text-amber-600 mr-2 print:text-black">[ ${day}일차 ]</span>
                             <span class="text-indigo-600 mr-2 print:text-black">${headerTitle}</span> 측정 대상 및 유해인자 목록
-                            <span id="count-display-${day}" class="text-sm text-gray-600 print:text-[10px] print:text-black font-medium ml-2">
-                                - 'A : ${uniqueA.size}개, P : ${uniqueP.size}개, L : ${uniqueL.size}개, N : ${countN}개'
-                            </span>
+                            <span id="count-display-${day}" class="text-sm text-gray-600 print:text-[10px] print:text-black font-medium ml-2"></span>
                         </h2>
                      </div>`;
                      
@@ -573,16 +620,14 @@
                             <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">L</th>
                             <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">N</th>
                             <th class="px-2 py-2 w-[90px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
-                            <th class="px-2 py-2 w-[70px] text-center border-b border-gray-200 print:hidden">관리</th>
+                            <th class="px-2 py-2 w-[80px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
-                        </thead>
-                        `;
+                        </thead>`;
 
           let globalWorkerIndex = 0; 
 
           unitNames.forEach((unitName) => {
               if (appData.currentUnit !== 'ALL' && appData.currentUnit !== unitName) return;
-              
               const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
               if (currentWorkers.length === 0) return;
               
@@ -599,9 +644,7 @@
                       let tf = 0;
                       for(let j=i; j<i+spans[i]; j++) tf += currentWorkers[j].harmfulFactors.length;
                       groupSpans[i] = tf;
-                  } else {
-                      groupSpans[i] = 0;
-                  }
+                  } else groupSpans[i] = 0;
               }
 
               let currentGroupEndIndex = -1;
@@ -613,20 +656,13 @@
                   const gSpan = groupSpans[index]; 
                   const wSpan = worker.harmfulFactors.length;
 
-                  // 새로운 부서/공정 그룹이 시작될 때 페이지 잘림 방지를 위한 tbody 열기
                   if (originalRowSpan > 0) {
                       currentGroupEndIndex = index + originalRowSpan - 1;
                       dayHtml += `<tbody class="print:border-black group-tbody">`;
                   }
 
                   if (worker.pageBreak && index > 0) {
-                    dayHtml += `
-                    <tr class="hidden print:table-row page-break-before">
-                      <td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-b-2 border-black border-dashed bg-white">
-                        ✂️ 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️
-                      </td>
-                    </tr>
-                    `;
+                    dayHtml += `<tr class="hidden print:table-row page-break-before"><td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-b-2 border-black border-dashed bg-white">✂️ 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️</td></tr>`;
                   }
                   const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
 
@@ -643,27 +679,27 @@
                       
                       if (isGroupStart) {
                           dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="dept-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value)" onchange="reRender()" placeholder="부서" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.department}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="dept-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.department}</textarea></div>
                                     <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.department}</div>
                                    </td>`;
                           dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="proc-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value)" onchange="reRender()" placeholder="공정" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.process}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="proc-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.process}</textarea></div>
                                     <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.process}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="shift-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value)" onchange="reRender()" placeholder="교대" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.shiftSystem}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="shift-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.shiftSystem}</textarea></div>
                                     <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.shiftSystem}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="cnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value)" onchange="reRender()" placeholder="명" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.workerCount}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="cnt-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.workerCount}</textarea></div>
                                     <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.workerCount}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="cycle-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value)" onchange="reRender()" placeholder="주기" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.exposureCycle}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="cycle-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.exposureCycle}</textarea></div>
                                     <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.exposureCycle}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="mcnt-${worker.id}" oninput="updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value)" onchange="reRender()" placeholder="건수" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.measurementCount}</textarea></div>
+                                    <div class="print:hidden"><textarea data-focus-id="mcnt-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.measurementCount}</textarea></div>
                                     <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.measurementCount}</div>
                                    </td>`;
                       }
@@ -676,8 +712,8 @@
                       dayHtml += `<td class="border-r ${bClass} p-1 relative group/hazard align-middle">
                         <div class="flex items-center w-full">
                             ${badgeHtml}
-                            <div class="w-full print:hidden"><textarea data-focus-id="fname-${worker.id}-${fIndex}" oninput="updateFactor('${unitName}', ${worker.id}, ${fIndex}, 'name', this.value)" class="w-full bg-transparent outline-none pr-[40px] resize-none overflow-hidden ${adjustedClasses}" placeholder="유해인자 입력" rows="1">${factor.name}</textarea></div>
-                            <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap ${adjustedClasses}">${factor.name}</div>
+                            <div class="w-full print:hidden"><textarea data-focus-id="fname-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'name', this.value)" class="w-full bg-transparent outline-none pr-[40px] resize-none overflow-hidden ${adjustedClasses}" rows="1">${factor.name}</textarea></div>
+                            <div id="print-fname-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap ${adjustedClasses}">${factor.name}</div>
                         </div>
                         <div class="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center gap-1 print:hidden bg-white/90 pl-1 py-0.5 rounded z-10 opacity-0 group-hover/hazard:opacity-100 transition-opacity">
                            <button onclick="toggleAdjust('${unitName}', ${worker.id}, ${fIndex})" class="text-[9px] font-semibold border border-gray-300 rounded px-1 py-0.5 transition-colors ${factor.isAdjusted ? 'bg-red-50 text-red-600 hover:bg-red-100 border-red-200' : 'bg-white text-gray-600 hover:bg-gray-100'}" title="횟수조정">조정</button>
@@ -687,63 +723,66 @@
                         </div>
                       </td>`;
 
+                      // 이름 영역: 왼쪽 정렬 적용, oninput 최적화
                       if (isWorkerStart) {
-                          dayHtml += `<td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5" rowspan="${wSpan}">
-                            <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="updateWorker('${unitName}', ${worker.id}, 'name', this.value)" class="w-full h-full text-center bg-transparent outline-none resize-none overflow-hidden" placeholder="이름" rows="1">${worker.name}</textarea></div>
-                            <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.name}</div>
+                          dayHtml += `<td class="border-r ${bClass} p-1 align-middle print:p-0.5" rowspan="${wSpan}">
+                            <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden" placeholder="이름" rows="1">${worker.name}</textarea></div>
+                            <div id="print-name-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-left">${worker.name}</div>
                           </td>`;
                       }
 
                       dayHtml += `
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="updateFactor('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.a}</textarea></div>
-                          <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.a}</div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.a}</textarea></div>
+                          <div id="print-fa-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.a}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="updateFactor('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.p}</textarea></div>
-                          <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.p}</div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.p}</textarea></div>
+                          <div id="print-fp-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.p}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="updateFactor('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.l}</textarea></div>
-                          <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.l}</div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.l}</textarea></div>
+                          <div id="print-fl-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.l}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="updateFactor('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 자동으로 V가 표시됩니다."' : ''}>${nValue}</textarea></div>
-                          <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${nValue}</div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 V"' : ''}>${nValue}</textarea></div>
+                          <div id="print-fn-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${nValue}</div>
                         </td>
-                        <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="updateFactor('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full h-full px-1 bg-transparent outline-none text-center resize-none overflow-hidden" placeholder="비고" rows="1">${factor.remark}</textarea></div>
-                          <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.remark}</div>
+                        <td class="border-r ${bClass} p-1 align-middle print:p-0.5 relative group/remark">
+                          <div class="w-full h-full print:hidden flex relative">
+                            <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full h-full pl-1 pr-[32px] bg-transparent outline-none text-center resize-none overflow-hidden" placeholder="비고" rows="1">${factor.remark}</textarea>
+                            <button tabindex="-1" type="button" onclick="addBagToRemark('${unitName}', ${worker.id}, ${fIndex})" class="absolute right-0 top-0 mt-[1px] mr-[1px] text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-200 border border-amber-300 px-1 py-0.5 rounded shadow-sm transition-colors z-10" title="'[가방]' 기입">가방</button>
+                          </div>
+                          <div id="print-frem-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${(factor.remark || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[가방\]/g, '<span class="font-bold text-red-600 print:text-red-600">[가방]</span>')}</div>
                         </td>
                       `;
 
+                      // 관리 버튼 영역: UI 개선
                       if (isWorkerStart) {
                           dayHtml += `<td class="px-1 py-2 text-center align-middle print:hidden whitespace-nowrap ${bClass}" rowspan="${wSpan}">
-                            <div class="flex flex-col gap-1 items-center justify-center h-full w-[70px]">
+                            <div class="flex flex-col gap-1 items-center justify-center h-full w-[80px]">
+                              <button onclick="duplicateWorker('${unitName}', ${worker.id})" class="text-[10px] font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-1 py-1 rounded w-full flex items-center justify-center gap-0.5 transition-colors shadow-sm">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6m3-3H9"></path></svg> 
+                                행 복사
+                              </button>
+                              <button onclick="addFactor('${unitName}', ${worker.id})" class="text-[10px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 border border-blue-300 px-1 py-1 rounded w-full flex items-center justify-center gap-0.5 transition-colors shadow-sm">
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg> 
+                                인자추가
+                              </button>
                               <div class="flex gap-1 w-full">
-                                <button onclick="duplicateWorker('${unitName}', ${worker.id})" class="flex-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 py-0.5 rounded flex items-center justify-center gap-0.5 transition-colors shadow-sm" title="현재 행 복사">
-                                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9" /></svg> 행복사
+                                <button onclick="togglePageBreak('${unitName}', ${worker.id})" class="flex-1 text-[10px] font-semibold flex items-center justify-center gap-0.5 px-1 py-1 rounded transition-colors shadow-sm ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '분할선 취소' : '이 행부터 다음 페이지에 인쇄'}">
+                                  ✂️나눔
                                 </button>
-                                <button onclick="removeWorker('${unitName}', ${worker.id})" class="w-5 shrink-0 text-red-500 bg-red-50 hover:bg-red-100 border border-red-200 py-0.5 rounded flex items-center justify-center transition-colors shadow-sm" title="행 삭제">
+                                <button onclick="removeWorker('${unitName}', ${worker.id})" class="w-6 shrink-0 text-red-500 bg-red-50 hover:bg-red-100 border border-red-200 py-1 rounded flex items-center justify-center transition-colors shadow-sm" title="행 삭제">
                                   <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                 </button>
                               </div>
-                              <button onclick="addFactor('${unitName}', ${worker.id})" class="text-[10px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-1 py-0.5 rounded w-full flex items-center justify-center gap-0.5 transition-colors shadow-sm">
-                                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg> 인자추가
-                              </button>
-                              <button onclick="togglePageBreak('${unitName}', ${worker.id})" class="text-[10px] font-semibold flex items-center justify-center gap-0.5 w-full px-1 py-0.5 rounded transition-colors shadow-sm ${worker.pageBreak ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-inner' : 'text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '분할선 취소' : '이 행부터 다음 페이지에 인쇄'}">
-                                ✂️ ${worker.pageBreak ? '분할취소' : '페이지나눔'}
-                              </button>
                             </div>
                            </td>`;
                       }
                       dayHtml += `</tr>`;
                   });
-                  
-                  // 현재 부서/공정 그룹이 끝나면 tbody 닫기
-                  if (index === currentGroupEndIndex) {
-                      dayHtml += `</tbody>`;
-                  }
+                  if (index === currentGroupEndIndex) dayHtml += `</tbody>`;
               });
 
               dayHtml += `<tbody class="print:border-black"><tr class="print:hidden bg-gray-50/50 hover:bg-gray-50 transition-colors">
@@ -756,10 +795,7 @@
                           </tr></tbody>`;
           });
           
-          dayHtml += `
-                      </table>
-                    </div>
-                  </div>`;
+          dayHtml += `</table></div></div>`;
           html += dayHtml;
       });
 
@@ -772,6 +808,9 @@
           el.style.height = 'auto';
           el.style.height = (el.scrollHeight) + 'px';
       });
+      
+      // 화면 그릴 때 카운트 즉시 연동
+      updateCountsUI();
     }
 
     function reRender() {
@@ -780,15 +819,13 @@
       restoreFocus();
     }
 
+    // 파일 내보내기, 복사 등의 기능
     async function copyTableToClipboard() {
       try {
         let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t유해인자\t근로자명\tA\tP\tL\tN\t비고\n";
-        
         let targetWorkers = [];
         if (appData.currentUnit === 'ALL') {
-            Object.keys(appData.units).forEach(unitName => {
-                targetWorkers = targetWorkers.concat(appData.units[unitName].filter(w => (w.day || 1) === appData.currentDay));
-            });
+            Object.keys(appData.units).forEach(unitName => { targetWorkers = targetWorkers.concat(appData.units[unitName].filter(w => (w.day || 1) === appData.currentDay)); });
         } else {
             targetWorkers = (appData.units[appData.currentUnit]||[]).filter(w => (w.day || 1) === appData.currentDay);
         }
@@ -801,34 +838,24 @@
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                 const isNoiseFactor = factor.name.trim().includes('소음');
                 const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
-                
                 tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${isFirst ? worker.name || '' : ''}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${nVal}\t${factor.remark || ''}\n`;
               });
             });
         }
-
         await navigator.clipboard.writeText(tsvData);
-        
         document.getElementById('copyIconDefault').classList.add('hidden');
         document.getElementById('copyIconCheck').classList.remove('hidden');
         document.getElementById('copyBtnText').innerText = '복사 완료!';
-        
         setTimeout(() => {
           document.getElementById('copyIconDefault').classList.remove('hidden');
           document.getElementById('copyIconCheck').classList.add('hidden');
           document.getElementById('copyBtnText').innerText = '현재 표 데이터 복사';
         }, 2000);
-      } catch (err) {
-        alert('복사에 실패했습니다.');
-      }
+      } catch (err) { alert('복사에 실패했습니다.'); }
     }
 
     function exportToExcel() {
-      if (typeof XLSX === 'undefined') {
-        alert('엑셀 라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
-        return;
-      }
-      
+      if (typeof XLSX === 'undefined') { alert('라이브러리를 불러오는 중입니다.'); return; }
       const wb = XLSX.utils.book_new();
       const allDays = getActiveDays();
       const unitNames = Object.keys(appData.units);
@@ -836,58 +863,38 @@
       
       allDays.forEach(day => {
           unitNames.forEach(unitName => {
-            let currentNameSeq = 1;
             const currentWorkers = appData.units[unitName].filter(w => (w.day||1) === day);
             if(currentWorkers.length === 0) return;
-            
             let wsData = [];
             wsData.push(["No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "근로자명", "A", "P", "L", "N", "비고"]);
-            
             currentWorkers.forEach((worker, index) => {
-              let displayWorkerName = worker.name;
-              if (displayWorkerName && /^\*(\d+)$/.test(displayWorkerName.trim())) {
-                  currentNameSeq = parseInt(displayWorkerName.trim().substring(1)) + 1;
-              } else if (!displayWorkerName) {
-                  displayWorkerName = `*${currentNameSeq}`;
-                  currentNameSeq++;
-              }
-
               worker.harmfulFactors.forEach((factor, fIndex) => {
                 const isFirst = fIndex === 0;
                 let hazardText = factor.name || '';
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                 const isNoiseFactor = factor.name.trim().includes('소음');
                 const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
-                
                 wsData.push([
-                  isFirst ? index + 1 : '',
-                  isFirst ? worker.department || '' : '',
-                  isFirst ? worker.process || '' : '',
-                  isFirst ? worker.shiftSystem || '' : '',
-                  isFirst ? worker.workerCount || '' : '',
-                  isFirst ? worker.exposureCycle || '' : '',
-                  isFirst ? worker.measurementCount || '' : '',
-                  hazardText,
-                  isFirst ? displayWorkerName : '',
-                  factor.a || '',
-                  factor.p || '',
-                  factor.l || '',
-                  nVal,
-                  factor.remark || ''
+                  isFirst ? index + 1 : '', isFirst ? worker.department || '' : '', isFirst ? worker.process || '' : '', isFirst ? worker.shiftSystem || '' : '', isFirst ? worker.workerCount || '' : '', isFirst ? worker.exposureCycle || '' : '', isFirst ? worker.measurementCount || '' : '',
+                  hazardText, isFirst ? worker.name : '', factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || ''
                 ]);
               });
             });
-
             const ws = XLSX.utils.aoa_to_sheet(wsData);
             let safeSheetName = `${day}일_${unitName}`.replace(/[\\/?*[\]]/g, '').substring(0, 31);
             XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
             sheetCount++;
           });
       });
-      
       if(sheetCount === 0) { alert('저장할 데이터가 없습니다.'); return; }
       const companyName = document.getElementById('companyName').value.trim() || '작업환경측정_계획서';
       XLSX.writeFile(wb, `${companyName}.xlsx`);
+    }
+
+    function printAllUnits() {
+        appData.currentUnit = 'ALL';
+        reRender();
+        setTimeout(() => { window.print(); }, 300);
     }
 
     function saveData() {
@@ -895,11 +902,9 @@
       const dataStr = JSON.stringify(appData, null, 2);
       const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      
       const a = document.createElement('a');
       a.href = url;
-      const companyName = appData.companyName.trim() || '작업환경측정_백업데이터';
-      a.download = `${companyName}.json`;
+      a.download = `${appData.companyName.trim() || '작업환경측정_백업데이터'}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -909,48 +914,32 @@
     function loadData(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
           const loadedData = JSON.parse(e.target.result);
           if (loadedData && loadedData.units) {
-            Object.keys(loadedData.units).forEach(u => {
-                loadedData.units[u].forEach(w => {
-                    if(!w.day) w.day = 1;
-                });
-            });
-            loadedData.currentDay = loadedData.currentDay || 1;
-            loadedData.currentUnit = loadedData.currentUnit || 'ALL'; // 저장파일 불러올때 기본 ALL
-            
+            Object.keys(loadedData.units).forEach(u => { loadedData.units[u].forEach(w => { if(!w.day) w.day = 1; }); });
             appData = loadedData;
-            
+            appData.currentDay = appData.currentDay || 1;
+            appData.currentUnit = appData.currentUnit || 'ALL';
             if (appData.companyName) {
               document.getElementById('companyName').value = appData.companyName;
               updateTitle(appData.companyName);
             }
-            
-            if (Object.keys(appData.units).length > 0) {
-              document.getElementById('tabContainerSection').classList.remove('hidden');
-            }
+            if (Object.keys(appData.units).length > 0) document.getElementById('tabContainerSection').classList.remove('hidden');
+            recalculateNames();
             reRender();
-            alert('데이터를 성공적으로 불러왔습니다.');
-          } else {
-            alert('올바른 형식의 백업 데이터 파일이 아닙니다.');
+            alert('성공적으로 불러왔습니다.');
           }
-        } catch (err) {
-          alert('파일을 읽는 중 오류가 발생했습니다.');
-        }
+        } catch (err) { alert('오류가 발생했습니다.'); }
       };
       reader.readAsText(file);
       event.target.value = '';
     }
 
     function parseCSV(text) {
-      const result = [];
-      let row = [];
-      let cell = '';
-      let insideQuote = false;
+      const result = []; let row = []; let cell = ''; let insideQuote = false;
       for (let i = 0; i < text.length; i++) {
         const char = text[i];
         if (insideQuote) {
@@ -960,10 +949,7 @@
         } else {
           if (char === '"') { insideQuote = true; }
           else if (char === ',') { row.push(cell); cell = ''; }
-          else if (char === '\n' || char === '\r') {
-            row.push(cell); result.push(row); row = []; cell = '';
-            if (char === '\r' && text[i + 1] === '\n') i++;
-          }
+          else if (char === '\n' || char === '\r') { row.push(cell); result.push(row); row = []; cell = ''; if (char === '\r' && text[i + 1] === '\n') i++; }
           else { cell += char; }
         }
       }
@@ -978,9 +964,8 @@
         if (!match) throw new Error("유효한 스프레드시트 주소가 아닙니다.");
         const exportUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
         const response = await fetch(exportUrl);
-        if (!response.ok) throw new Error("시트 접근 거부. 일반 액세스를 확인하세요.");
-        const text = await response.text();
-        return parseCSV(text);
+        if (!response.ok) throw new Error("시트 접근 거부. 권한을 확인하세요.");
+        return parseCSV(await response.text());
       } catch (error) { throw error; }
     }
 
@@ -990,20 +975,33 @@
       const syncBtn = document.getElementById('syncBtn');
       const msg = document.getElementById('syncMessage');
 
-      if (!excludeUrl && !noiseUrl) {
-        msg.className = 'text-sm font-medium text-red-600';
-        msg.innerText = 'URL을 입력해주세요.';
-        return;
-      }
-
-      syncBtn.disabled = true;
-      syncBtn.innerText = '불러오는 중...';
-      msg.innerText = '';
+      if (!excludeUrl && !noiseUrl) { msg.className = 'text-sm font-medium text-red-600'; msg.innerText = 'URL을 입력해주세요.'; return; }
+      syncBtn.disabled = true; syncBtn.innerText = '불러오는 중...'; msg.innerText = '';
 
       try {
-        let mergedGroupsByUnit = {}; 
-        let excludeKeys = new Set();
-        let lastKnownUnit = '기본 사업체';
+        // --- 비고 자동 매핑 시트 불러오기 시작 ---
+        let factorMapping = new Map();
+        try {
+          const mappingSheetId = '1SrVWQxyv0n_4bQi8roKzk-nXsox-1gjWTY-z0L4H9eg';
+          const mappingExportUrl = `https://docs.google.com/spreadsheets/d/${mappingSheetId}/export?format=csv`;
+          const mapRes = await fetch(mappingExportUrl);
+          if (mapRes.ok) {
+            const mapCsv = await mapRes.text();
+            const mapRows = parseCSV(mapCsv);
+            mapRows.forEach(row => {
+               if(row.length >= 2) {
+                   const fName = (row[0]||'').trim();
+                   const fRemark = (row[1]||'').trim();
+                   if(fName) factorMapping.set(fName, fRemark);
+               }
+            });
+          }
+        } catch(mapErr) {
+          console.warn("비고 매핑 시트를 불러오는데 실패했습니다(무시됨): ", mapErr);
+        }
+        // --- 비고 자동 매핑 시트 불러오기 끝 ---
+
+        let mergedGroupsByUnit = {}; let excludeKeys = new Set(); let lastKnownUnit = '기본 사업체';
 
         const processRows = (rows, isNoiseSheet = false) => {
           if (!rows || rows.length < 2) return;
@@ -1014,213 +1012,130 @@
             if (!row || row.length < 4) continue;
             
             let unitName = row[0]?.trim() || '';
-            if (unitName !== '') lastKnownUnit = unitName;
-            else unitName = lastKnownUnit;
+            if (unitName !== '') lastKnownUnit = unitName; else unitName = lastKnownUnit;
             
-            let dept = row[1]?.trim() || '';
-            let process = row[2]?.trim() || '';
-
+            let dept = row[1]?.trim() || ''; let process = row[2]?.trim() || '';
             if (dept === '' && process === '') { dept = lastDept; process = lastProcess; } 
             else { lastDept = dept; lastProcess = process; }
-
             if (!dept && !process) continue;
 
             const key = `${unitName}|${dept}|${process}`;
             if (!mergedGroupsByUnit[unitName]) mergedGroupsByUnit[unitName] = {};
-
             if (!isNoiseSheet) excludeKeys.add(key);
 
             if (!mergedGroupsByUnit[unitName][key]) {
-              mergedGroupsByUnit[unitName][key] = {
-                unit: unitName, department: dept, process: process, shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false,
-                factorGroups: [], hasPValue: false
-              };
+              mergedGroupsByUnit[unitName][key] = { unit: unitName, department: dept, process: process, shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false, factorGroups: [], hasPValue: false };
             }
 
-            const removeDecimal = (val) => val ? val.replace(/(\d+)\.\d+/g, '$1') : '';
             const mergedGroup = mergedGroupsByUnit[unitName][key];
 
             if (!isNoiseSheet) {
-              let factor = row[3]?.trim() || '';
-              let workerCount = removeDecimal(row[4]?.trim());
-              let shift = row[5]?.trim() || '';
-              let cycle = row[6]?.trim() || '';
-              
-              let pValue = row.length > 15 ? row[15]?.trim() || '' : ''; // P열
-              let rValue = row.length > 17 ? row[17]?.trim() || '' : ''; // R열
-              
+              let factor = row[3]?.trim() || ''; let workerCount = (row[4]?.trim()||'').replace(/(\d+)\.\d+/g, '$1'); let shift = row[5]?.trim() || ''; let cycle = row[6]?.trim() || '';
+              let pValue = row.length > 15 ? row[15]?.trim() || '' : '';
+              let rValue = row.length > 17 ? row[17]?.trim() || '' : '';
               let isAdjusted = (rValue === '횟수조정');
               let isTrigger = (pValue !== '') || isAdjusted;
 
-              if (!mergedGroup.shiftSystem && shift) mergedGroup.shiftSystem = shift;
-              if (!mergedGroup.workerCount && workerCount) mergedGroup.workerCount = workerCount;
-              if (!mergedGroup.exposureCycle && cycle) mergedGroup.exposureCycle = cycle;
+              if (shift) mergedGroup.shiftSystem = shift;
+              if (workerCount) mergedGroup.workerCount = workerCount;
+              if (cycle) mergedGroup.exposureCycle = cycle;
 
-              if (isTrigger) {
-                mergedGroup.hasPValue = true;
-                mergedGroup.factorGroups.push({ factors: new Set(), isAdjusted: isAdjusted });
-              }
+              if (isTrigger) { mergedGroup.hasPValue = true; mergedGroup.factorGroups.push({ factors: new Set(), isAdjusted: isAdjusted }); }
               if (factor !== '') {
                 if (mergedGroup.factorGroups.length === 0) mergedGroup.factorGroups.push({ factors: new Set(), isAdjusted: false });
                 mergedGroup.factorGroups[mergedGroup.factorGroups.length - 1].factors.add(factor);
-                if (isAdjusted) {
-                    mergedGroup.factorGroups[mergedGroup.factorGroups.length - 1].isAdjusted = true;
-                    mergedGroup.hasPValue = true;
-                }
+                if (isAdjusted) { mergedGroup.factorGroups[mergedGroup.factorGroups.length - 1].isAdjusted = true; mergedGroup.hasPValue = true; }
               }
             } else {
-              let pValue = row.length > 15 ? row[15]?.trim() || '' : ''; // P열
-              let mValue = row.length > 12 ? row[12]?.trim() || '' : ''; // M열
-              
+              let pValue = row.length > 15 ? row[15]?.trim() || '' : '';
+              let mValue = row.length > 12 ? row[12]?.trim() || '' : '';
               let isAdjusted = (mValue === '횟수조정');
               let isTrigger = (pValue !== '') || isAdjusted;
 
               let isNewKey = !excludeKeys.has(key);
               if (isNewKey) {
-                let workerCount = removeDecimal(row[3]?.trim()); // D열
-                let shift = row[5]?.trim() || '';
-                let cycle = row[6]?.trim() || '';
-
-                if (shift) mergedGroup.shiftSystem = shift;
-                if (workerCount) mergedGroup.workerCount = workerCount;
-                if (cycle) mergedGroup.exposureCycle = cycle;
+                let workerCount = (row[3]?.trim()||'').replace(/(\d+)\.\d+/g, '$1'); let shift = row[5]?.trim() || ''; let cycle = row[6]?.trim() || '';
+                if (shift) mergedGroup.shiftSystem = shift; if (workerCount) mergedGroup.workerCount = workerCount; if (cycle) mergedGroup.exposureCycle = cycle;
               }
-
-              if (isTrigger) {
-                mergedGroup.hasPValue = true;
-                const noiseSet = new Set();
-                noiseSet.add('소음');
-                mergedGroup.factorGroups.push({ factors: noiseSet, isAdjusted: isAdjusted });
-              }
+              if (isTrigger) { mergedGroup.hasPValue = true; const noiseSet = new Set(); noiseSet.add('소음'); mergedGroup.factorGroups.push({ factors: noiseSet, isAdjusted: isAdjusted }); }
             }
           }
         };
 
-        if (excludeUrl) {
-          const rows1 = await fetchSheetData(excludeUrl);
-          processRows(rows1, false);
-        }
-        if (noiseUrl) {
-          const rows2 = await fetchSheetData(noiseUrl);
-          processRows(rows2, true);
-        }
+        if (excludeUrl) { processRows(await fetchSheetData(excludeUrl), false); }
+        if (noiseUrl) { processRows(await fetchSheetData(noiseUrl), true); }
 
-        let totalExtracted = 0;
-        let newAppUnits = {};
+        let totalExtracted = 0; let newAppUnits = {};
 
         for (const unitName in mergedGroupsByUnit) {
-            const newWorkers = Object.values(mergedGroupsByUnit[unitName])
-              .filter(group => group.hasPValue)
-              .map((group) => {
+            const newWorkers = Object.values(mergedGroupsByUnit[unitName]).filter(group => group.hasPValue).map((group) => {
                 let uniqueFactorsMap = new Map();
-                
                 group.factorGroups.forEach(fg => {
                   let str = Array.from(fg.factors).join(', ').trim();
-                  if (str !== '') {
-                    if (!uniqueFactorsMap.has(str) || fg.isAdjusted) {
-                      uniqueFactorsMap.set(str, fg.isAdjusted);
-                    }
-                  }
+                  if (str !== '') { if (!uniqueFactorsMap.has(str) || fg.isAdjusted) uniqueFactorsMap.set(str, fg.isAdjusted); }
                 });
-
                 let formattedFactors = [];
-                uniqueFactorsMap.forEach((isAdjusted, name) => {
-                  formattedFactors.push({ name: name, a: '', p: '', l: '', n: '', remark: '', isAdjusted: isAdjusted });
+                uniqueFactorsMap.forEach((isAdjusted, name) => { 
+                  let autoRemark = factorMapping.get(name) || '';
+                  formattedFactors.push({ name: name, a: '', p: '', l: '', n: '', remark: autoRemark, isAdjusted: isAdjusted }); 
+                });
+                
+                // [소음] 인자가 무조건 최상단(배열 0번째)에 오도록 정렬
+                formattedFactors.sort((a, b) => {
+                    const aIsNoise = (a.name || '').includes('소음');
+                    const bIsNoise = (b.name || '').includes('소음');
+                    if (aIsNoise && !bIsNoise) return -1;
+                    if (!aIsNoise && bIsNoise) return 1;
+                    return 0;
                 });
 
-                if (formattedFactors.length === 0) {
-                  formattedFactors.push({ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false });
-                }
+                if (formattedFactors.length === 0) formattedFactors.push({ name: '', a: '', p: '', l: '', n: '', remark: '', isAdjusted: false });
 
                 return {
-                  id: Date.now() + Math.random(),
-                  day: 1, 
-                  department: group.department,
-                  process: group.process,
-                  shiftSystem: group.shiftSystem,
-                  workerCount: group.workerCount,
-                  exposureCycle: group.exposureCycle,
-                  measurementCount: group.measurementCount,
-                  name: group.name,
-                  pageBreak: false,
-                  harmfulFactors: formattedFactors
+                  id: Date.now() + Math.random(), day: 1, department: group.department, process: group.process, shiftSystem: group.shiftSystem, workerCount: group.workerCount, exposureCycle: group.exposureCycle, measurementCount: group.measurementCount,
+                  name: '', isManual: false, pageBreak: false, harmfulFactors: formattedFactors
                 };
-              });
-              
-              if (newWorkers.length > 0) {
-                  newAppUnits[unitName] = newWorkers;
-                  totalExtracted += newWorkers.length;
-              }
+            });
+            if (newWorkers.length > 0) { newAppUnits[unitName] = newWorkers; totalExtracted += newWorkers.length; }
         }
 
         if (Object.keys(newAppUnits).length > 0) {
-          appData.units = newAppUnits;
-          appData.currentDay = 1;
-          appData.currentUnit = 'ALL'; // 연동 직후 '전체 사업체' 기본 활성화
-          
+          appData.units = newAppUnits; appData.currentDay = 1; appData.currentUnit = 'ALL';
+          recalculateNames();
           document.getElementById('tabContainerSection').classList.remove('hidden');
-
-          msg.className = 'text-sm font-medium text-green-600';
-          msg.innerText = `연동 완료: ${Object.keys(newAppUnits).length}개 단위사업체 추출 (기본 1일차 배정)`;
+          msg.className = 'text-sm font-medium text-green-600'; msg.innerText = `연동 완료: ${totalExtracted}건의 측정대상이 추출되었습니다.`;
         } else {
-          msg.className = 'text-sm font-medium text-red-600';
-          msg.innerText = '조건에 맞는 데이터가 없습니다.';
+          msg.className = 'text-sm font-medium text-red-600'; msg.innerText = '조건에 맞는 데이터가 없습니다.';
         }
-      } catch (error) {
-        msg.className = 'text-sm font-medium text-red-600';
-        msg.innerText = error.message;
-      } finally {
-        syncBtn.disabled = false;
-        syncBtn.innerText = '데이터 연동하기';
-        reRender();
-      }
+      } catch (error) { msg.className = 'text-sm font-medium text-red-600'; msg.innerText = error.message; } 
+      finally { syncBtn.disabled = false; syncBtn.innerText = '데이터 연동하기'; reRender(); }
     }
 
-    window.addEventListener('beforeprint', function() {
-      reRender();
-    });
-
+    // 방향키 이동 로직
     document.addEventListener('keydown', function(e) {
       const current = e.target;
       if (current.tagName !== 'TEXTAREA' || !current.hasAttribute('data-focus-id')) return;
 
-      const isUp = e.key === 'ArrowUp';
-      const isDown = e.key === 'ArrowDown';
-      const isLeft = e.key === 'ArrowLeft';
-      const isRight = e.key === 'ArrowRight';
-
+      const isUp = e.key === 'ArrowUp'; const isDown = e.key === 'ArrowDown'; const isLeft = e.key === 'ArrowLeft'; const isRight = e.key === 'ArrowRight';
       if (!isUp && !isDown && !isLeft && !isRight) return;
-
       if (isLeft && current.selectionStart > 0) return;
       if (isRight && current.selectionEnd < current.value.length) return;
-      
       if (isUp || isDown) {
           const lines = current.value.substr(0, current.selectionStart).split("\n");
-          const totalLines = current.value.split("\n").length;
-          if(isUp && lines.length > 1) return;
-          if(isDown && lines.length < totalLines) return;
+          if(isUp && lines.length > 1) return; if(isDown && lines.length < current.value.split("\n").length) return;
       }
-
       e.preventDefault();
 
       const currentRect = current.getBoundingClientRect();
       const inputs = Array.from(document.querySelectorAll('#tables-container .block textarea:not([type="hidden"]):not([readonly])'));
-
-      let bestMatch = null;
-      let minDistance = Infinity;
-
-      const cx = currentRect.left + currentRect.width / 2;
-      const cy = currentRect.top + currentRect.height / 2;
+      let bestMatch = null; let minDistance = Infinity;
+      const cx = currentRect.left + currentRect.width / 2; const cy = currentRect.top + currentRect.height / 2;
 
       inputs.forEach(input => {
         if (input === current) return;
         const rect = input.getBoundingClientRect();
-        const ix = rect.left + rect.width / 2;
-        const iy = rect.top + rect.height / 2;
-
-        let isEligible = false;
-        let distance = Infinity;
-
+        const ix = rect.left + rect.width / 2; const iy = rect.top + rect.height / 2;
+        let isEligible = false; let distance = Infinity;
         const xOverlap = Math.max(0, Math.min(currentRect.right, rect.right) - Math.max(currentRect.left, rect.left));
         const yOverlap = Math.max(0, Math.min(currentRect.bottom, rect.bottom) - Math.max(currentRect.top, rect.top));
 
@@ -1230,25 +1145,12 @@
         else if (isRight && ix > cx && yOverlap > 0) { isEligible = true; distance = ix - cx; }
 
         if (!isEligible) {
-             if (isUp && rect.bottom <= currentRect.top + 5) {
-                 isEligible = true;
-                 distance = (currentRect.top - rect.bottom)*10 + Math.abs(cx - ix);
-             } else if (isDown && rect.top >= currentRect.bottom - 5) {
-                 isEligible = true;
-                 distance = (rect.top - currentRect.bottom)*10 + Math.abs(cx - ix);
-             } else if (isLeft && rect.right <= currentRect.left + 5) {
-                 isEligible = true;
-                 distance = (currentRect.left - rect.right)*10 + Math.abs(cy - iy);
-             } else if (isRight && rect.left >= currentRect.right - 5) {
-                 isEligible = true;
-                 distance = (rect.left - currentRect.right)*10 + Math.abs(cy - iy);
-             }
+             if (isUp && rect.bottom <= currentRect.top + 5) { isEligible = true; distance = (currentRect.top - rect.bottom)*10 + Math.abs(cx - ix); } 
+             else if (isDown && rect.top >= currentRect.bottom - 5) { isEligible = true; distance = (rect.top - currentRect.bottom)*10 + Math.abs(cx - ix); } 
+             else if (isLeft && rect.right <= currentRect.left + 5) { isEligible = true; distance = (currentRect.left - rect.right)*10 + Math.abs(cy - iy); } 
+             else if (isRight && rect.left >= currentRect.right - 5) { isEligible = true; distance = (rect.left - currentRect.right)*10 + Math.abs(cy - iy); }
         }
-
-        if (isEligible && distance < minDistance) {
-          minDistance = distance;
-          bestMatch = input;
-        }
+        if (isEligible && distance < minDistance) { minDistance = distance; bestMatch = input; }
       });
 
       if (bestMatch) {
@@ -1259,6 +1161,8 @@
       }
     });
 
+    // 초기화 및 렌더링
+    recalculateNames();
     renderTables();
   </script>
 </body>
