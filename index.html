@@ -176,6 +176,15 @@
   </div>
 
   <script>
+    // 입력창(textarea) 크기 자동 조절 (초고속 렌더링 최적화)
+    function smartResize(el) {
+      if (!el) return;
+      requestAnimationFrame(() => {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+      });
+    }
+
     let appData = {
       currentDay: 1,
       currentUnit: 'ALL',
@@ -679,28 +688,28 @@
                       
                       if (isGroupStart) {
                           dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="dept-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.department}</textarea></div>
-                                    <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.department}</div>
+                                    <div class="print:hidden"><textarea data-focus-id="dept-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value, ${worker.id}, 'dept')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.department}</textarea></div>
+                                    <div id="print-dept-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.department}</div>
                                    </td>`;
                           dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="proc-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.process}</textarea></div>
-                                    <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.process}</div>
+                                    <div class="print:hidden"><textarea data-focus-id="proc-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'process', this.value, ${worker.id}, 'proc')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.process}</textarea></div>
+                                    <div id="print-proc-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.process}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="shift-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.shiftSystem}</textarea></div>
-                                    <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.shiftSystem}</div>
+                                    <div class="print:hidden"><textarea data-focus-id="shift-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'shiftSystem', this.value, ${worker.id}, 'shift')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.shiftSystem}</textarea></div>
+                                    <div id="print-shift-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.shiftSystem}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="cnt-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.workerCount}</textarea></div>
-                                    <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.workerCount}</div>
+                                    <div class="print:hidden"><textarea data-focus-id="cnt-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'workerCount', this.value, ${worker.id}, 'cnt')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.workerCount}</textarea></div>
+                                    <div id="print-cnt-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.workerCount}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="cycle-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.exposureCycle}</textarea></div>
-                                    <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.exposureCycle}</div>
+                                    <div class="print:hidden"><textarea data-focus-id="cycle-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'exposureCycle', this.value, ${worker.id}, 'cycle')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.exposureCycle}</textarea></div>
+                                    <div id="print-cycle-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.exposureCycle}</div>
                                    </td>`;
                           dayHtml += `<td class="px-1 py-2 border-r ${bClass} align-middle text-center print:p-0.5 print:pt-1" rowspan="${gSpan}">
-                                    <div class="print:hidden"><textarea data-focus-id="mcnt-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value)" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.measurementCount}</textarea></div>
-                                    <div class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.measurementCount}</div>
+                                    <div class="print:hidden"><textarea data-focus-id="mcnt-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'measurementCount', this.value, ${worker.id}, 'mcnt')" onchange="reRender()" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.measurementCount}</textarea></div>
+                                    <div id="print-mcnt-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${worker.measurementCount}</div>
                                    </td>`;
                       }
 
@@ -712,7 +721,7 @@
                       dayHtml += `<td class="border-r ${bClass} p-1 relative group/hazard align-middle">
                         <div class="flex items-center w-full">
                             ${badgeHtml}
-                            <div class="w-full print:hidden"><textarea data-focus-id="fname-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'name', this.value)" class="w-full bg-transparent outline-none pr-[40px] resize-none overflow-hidden ${adjustedClasses}" rows="1">${factor.name}</textarea></div>
+                            <div class="w-full print:hidden"><textarea data-focus-id="fname-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'name', this.value)" class="w-full bg-transparent outline-none pr-[40px] resize-none overflow-hidden ${adjustedClasses}" rows="1">${factor.name}</textarea></div>
                             <div id="print-fname-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap ${adjustedClasses}">${factor.name}</div>
                         </div>
                         <div class="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center gap-1 print:hidden bg-white/90 pl-1 py-0.5 rounded z-10 opacity-0 group-hover/hazard:opacity-100 transition-opacity">
@@ -726,31 +735,31 @@
                       // 이름 영역: 왼쪽 정렬 적용, oninput 최적화
                       if (isWorkerStart) {
                           dayHtml += `<td class="border-r ${bClass} p-1 align-middle print:p-0.5" rowspan="${wSpan}">
-                            <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden" placeholder="이름" rows="1">${worker.name}</textarea></div>
+                            <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden" placeholder="이름" rows="1">${worker.name}</textarea></div>
                             <div id="print-name-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-left">${worker.name}</div>
                           </td>`;
                       }
 
                       dayHtml += `
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.a}</textarea></div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.a}</textarea></div>
                           <div id="print-fa-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.a}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.p}</textarea></div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.p}</textarea></div>
                           <div id="print-fp-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.p}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.l}</textarea></div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.l}</textarea></div>
                           <div id="print-fl-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.l}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 V"' : ''}>${nValue}</textarea></div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 V"' : ''}>${nValue}</textarea></div>
                           <div id="print-fn-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${nValue}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 align-middle print:p-0.5 relative group/remark">
                           <div class="w-full h-full print:hidden flex relative">
-                            <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'; updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full h-full pl-1 pr-[32px] bg-transparent outline-none text-center resize-none overflow-hidden" placeholder="비고" rows="1">${factor.remark}</textarea>
+                            <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full h-full pl-1 pr-[32px] bg-transparent outline-none text-center resize-none overflow-hidden" placeholder="비고" rows="1">${factor.remark}</textarea>
                             <button tabindex="-1" type="button" onclick="addBagToRemark('${unitName}', ${worker.id}, ${fIndex})" class="absolute right-0 top-0 mt-[1px] mr-[1px] text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-200 border border-amber-300 px-1 py-0.5 rounded shadow-sm transition-colors z-10" title="'[가방]' 기입">가방</button>
                           </div>
                           <div id="print-frem-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${(factor.remark || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[가방\]/g, '<span class="font-bold text-red-600 print:text-red-600">[가방]</span>')}</div>
@@ -805,8 +814,7 @@
       renderUnitTabs();
       
       document.querySelectorAll('#tables-container textarea').forEach(el => {
-          el.style.height = 'auto';
-          el.style.height = (el.scrollHeight) + 'px';
+          smartResize(el);
       });
       
       // 화면 그릴 때 카운트 즉시 연동
