@@ -520,14 +520,38 @@
           const isActiveDay = (day === appData.currentDay);
           const displayClass = isActiveDay ? 'block' : 'hidden print:block';
           
+          let uniqueA = new Set();
+          let uniqueP = new Set();
+          let uniqueL = new Set();
+          let countN = 0;
+          
+          unitNames.forEach((unitName) => {
+              if (appData.currentUnit !== 'ALL' && appData.currentUnit !== unitName) return;
+              const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
+              currentWorkers.forEach(worker => {
+                  worker.harmfulFactors.forEach(factor => {
+                      if (factor.a && String(factor.a).trim() !== '') uniqueA.add(String(factor.a).trim());
+                      if (factor.p && String(factor.p).trim() !== '') uniqueP.add(String(factor.p).trim());
+                      if (factor.l && String(factor.l).trim() !== '') uniqueL.add(String(factor.l).trim());
+                      
+                      const isNoiseFactor = String(factor.name).trim().includes('소음');
+                      const nValue = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                      if (nValue && String(nValue).trim() !== '') countN++;
+                  });
+              });
+          });
+          
           let dayHtml = `<div class="day-section ${displayClass} print:mb-8" id="day-wrap-${day}">`;
           
           let headerTitle = appData.currentUnit === 'ALL' ? '전체 사업체' : `[단위사업체] : ${appData.currentUnit}`;
 
           dayHtml += `<div class="print-unit-header flex justify-between items-end mb-2 border-b pb-1 print:border-black print:mb-1 print:mt-4">
-                        <h2 class="text-lg font-semibold text-gray-800 print:text-[12px] print:m-0 print:p-0 print:font-bold">
+                        <h2 class="text-lg font-semibold text-gray-800 print:text-[12px] print:m-0 print:p-0 print:font-bold flex items-center flex-wrap">
                             <span class="text-amber-600 mr-2 print:text-black">[ ${day}일차 ]</span>
                             <span class="text-indigo-600 mr-2 print:text-black">${headerTitle}</span> 측정 대상 및 유해인자 목록
+                            <span id="count-display-${day}" class="text-sm text-gray-600 print:text-[10px] print:text-black font-medium ml-2">
+                                - 'A : ${uniqueA.size}개, P : ${uniqueP.size}개, L : ${uniqueL.size}개, N : ${countN}개'
+                            </span>
                         </h2>
                      </div>`;
                      
@@ -812,6 +836,7 @@
       
       allDays.forEach(day => {
           unitNames.forEach(unitName => {
+            let currentNameSeq = 1;
             const currentWorkers = appData.units[unitName].filter(w => (w.day||1) === day);
             if(currentWorkers.length === 0) return;
             
@@ -819,6 +844,14 @@
             wsData.push(["No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "근로자명", "A", "P", "L", "N", "비고"]);
             
             currentWorkers.forEach((worker, index) => {
+              let displayWorkerName = worker.name;
+              if (displayWorkerName && /^\*(\d+)$/.test(displayWorkerName.trim())) {
+                  currentNameSeq = parseInt(displayWorkerName.trim().substring(1)) + 1;
+              } else if (!displayWorkerName) {
+                  displayWorkerName = `*${currentNameSeq}`;
+                  currentNameSeq++;
+              }
+
               worker.harmfulFactors.forEach((factor, fIndex) => {
                 const isFirst = fIndex === 0;
                 let hazardText = factor.name || '';
@@ -835,7 +868,7 @@
                   isFirst ? worker.exposureCycle || '' : '',
                   isFirst ? worker.measurementCount || '' : '',
                   hazardText,
-                  isFirst ? worker.name || '' : '',
+                  isFirst ? displayWorkerName : '',
                   factor.a || '',
                   factor.p || '',
                   factor.l || '',
