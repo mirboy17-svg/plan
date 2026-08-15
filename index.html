@@ -55,9 +55,9 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans min-h-screen p-4 md:p-8">
+<body class="bg-gray-50 font-sans m-0 p-0">
 
-  <div id="loginScreen" class="fixed inset-0 bg-gray-100 flex flex-col items-center justify-center z-50 p-4">
+  <div id="loginScreen" class="fixed inset-0 bg-gray-50 flex flex-col items-center justify-center z-50 p-4">
     <div class="bg-white p-8 rounded-2xl shadow-xl border border-emerald-100 w-full max-w-[440px] text-center relative">
       <!-- Lock Icon -->
       <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-500 shadow-inner">
@@ -99,9 +99,9 @@
     </div>
   </div>
 
-  <div id="mainAppContent" class="max-w-[1450px] mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 print:shadow-none print:border-none hidden">
+  <div id="mainAppContent" class="max-w-[1450px] mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 print:shadow-none print:border-none hidden my-4 md:my-8 p-4 md:p-8">
     
-    <div class="bg-slate-800 p-6 flex justify-between items-center text-white print:bg-white print:text-black print:border-b print:border-black print:p-2 print:mb-4">
+    <div class="bg-slate-800 p-6 flex justify-between items-center text-white print:bg-white print:text-black print:border-b print:border-black print:p-2 print:mb-4 rounded-xl">
       <div class="flex items-center gap-3">
         <svg class="w-8 h-8 print:hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -223,10 +223,15 @@
       const errBox = document.getElementById('loginErrorMsg');
       
       if (pwInput === '1234') {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('mainAppContent').classList.remove('hidden');
-        recalculateNames();
-        renderTables();
+        const loginScr = document.getElementById('loginScreen');
+        loginScr.style.opacity = '0';
+        loginScr.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => {
+          loginScr.classList.add('hidden');
+          document.getElementById('mainAppContent').classList.remove('hidden');
+          recalculateNames();
+          renderTables();
+        }, 300);
       } else {
         errBox.classList.remove('hidden');
         const card = pwInput ? errBox.previousElementSibling : errBox.closest('.bg-white');
