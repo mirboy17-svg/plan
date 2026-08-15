@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @media print {
-      @page { size: portrait !important; margin: 5mm; }
+      @page { size: landscape !important; margin: 10mm; }
       body { background-color: white !important; font-size: 7px !important; }
       .print\:hidden { display: none !important; }
       .print\:block { display: block !important; }
@@ -27,6 +27,16 @@
       .page-break-before {
         page-break-before: always !important;
         break-before: page !important;
+      }
+      
+      /* 부서명(그룹) 기준 페이지 잘림 방지 */
+      .group-tbody {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
     }
     
