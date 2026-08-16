@@ -253,6 +253,7 @@
           <span class="text-gray-400 font-bold px-1">➔</span>
           <select id="moveTargetDay" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-bold text-amber-700">
             <option value="1">1일차</option><option value="2">2일차</option><option value="3">3일차</option><option value="4">4일차</option><option value="5">5일차</option>
+            <option value="6">6일차</option><option value="7">7일차</option><option value="8">8일차</option><option value="9">9일차</option><option value="10">10일차</option>
           </select>
           <button onclick="moveDepartmentDay()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded font-bold text-sm shadow-sm transition-colors whitespace-nowrap">
             이동 실행
@@ -764,7 +765,7 @@
                   }
 
                   if (worker.pageBreak && index > 0) {
-                    dayHtml += `<tr class="hidden print:table-row page-break-before"><td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-b-2 border-black border-dashed bg-white">✂️ 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️</td></tr>`;
+                    dayHtml += `<tr class="print:hidden"><td colspan="15" class="text-center py-1.5 text-xs text-indigo-500 font-bold border-t-2 border-b-2 border-indigo-200 border-dashed bg-indigo-50/50">✂️ 인쇄 시 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️</td></tr>`;
                   }
                   const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
 
