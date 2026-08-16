@@ -76,7 +76,7 @@
       </div>
 
       <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-tight mb-1">작업환경측정 계획서</h2>
-      <p class="text-[13px] text-slate-500 mb-5">대시보드 접속을 위해 비밀번호를 입력해주세요.</p>
+      <p class="text-[13px] text-slate-500 mb-5">경남지역본부 산업위생국 전용 플랫폼입니다.</p>
 
       <form onsubmit="handleLogin(event)" class="w-full">
         <div class="relative group">
@@ -665,20 +665,20 @@
                         <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black print:text-[9px]">
                           <tr>
                             <th class="px-2 py-2 w-10 text-center border-r border-b border-gray-200 print:border-black nowrap-col">No.</th>
-                            <th class="px-2 py-2 w-[80px] border-r border-b border-gray-200 print:border-black nowrap-col">부서명</th>
-                            <th class="px-2 py-2 w-[100px] border-r border-b border-gray-200 print:border-black nowrap-col">공정명</th>
+                            <th class="px-2 py-2 w-[40px] print:w-[80px] border-r border-b border-gray-200 print:border-black nowrap-col">부서명</th>
+                            <th class="px-2 py-2 w-[40px] print:w-[100px] border-r border-b border-gray-200 print:border-black nowrap-col">공정명</th>
                             <th class="px-1 py-2 w-12 border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
                             <th class="px-1 py-2 w-12 border-r border-b border-gray-200 print:border-black text-center nowrap-col">근로자수</th>
                             <th class="px-1 py-2 w-14 border-r border-b border-gray-200 print:border-black text-center nowrap-col">노출주기</th>
                             <th class="px-1 py-2 w-14 border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
-                            <th class="px-2 py-2 min-w-[140px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
+                            <th class="px-2 py-2 w-[180px] print:min-w-[140px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
                             <th class="px-1 py-2 w-[70px] border-r border-b border-gray-200 print:border-black text-center">근로자명</th>
-                            <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">A</th>
-                            <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">P</th>
-                            <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">L</th>
-                            <th class="px-1 py-2 w-8 border-r border-b border-gray-200 print:border-black text-center">N</th>
-                            <th class="px-2 py-2 w-[90px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
-                            <th class="px-2 py-2 w-[80px] text-center border-b border-gray-200 print:hidden">관리</th>
+                            <th class="px-1 py-2 w-[37px] print:w-8 border-r border-b border-gray-200 print:border-black text-center">A</th>
+                            <th class="px-1 py-2 w-[37px] print:w-8 border-r border-b border-gray-200 print:border-black text-center">P</th>
+                            <th class="px-1 py-2 w-[37px] print:w-8 border-r border-b border-gray-200 print:border-black text-center">L</th>
+                            <th class="px-1 py-2 w-[37px] print:w-8 border-r border-b border-gray-200 print:border-black text-center">N</th>
+                            <th class="px-2 py-2 w-[110px] print:w-[90px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
+                            <th class="px-2 py-2 w-[100px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
                         </thead>`;
 
@@ -915,6 +915,49 @@
       let sheetCount = 0;
       
       allDays.forEach(day => {
+          // --- 1. [전체사업체] 통합 시트 추가 ---
+          let allUnitsData = [];
+          allUnitsData.push(["단위사업체", "No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "근로자명", "A", "P", "L", "N", "비고"]);
+          let globalIndex = 1;
+          let hasAnyData = false;
+
+          unitNames.forEach(unitName => {
+            const currentWorkers = appData.units[unitName].filter(w => (w.day||1) === day);
+            if(currentWorkers.length > 0) {
+              hasAnyData = true;
+              currentWorkers.forEach((worker) => {
+                worker.harmfulFactors.forEach((factor, fIndex) => {
+                  const isFirst = fIndex === 0;
+                  let hazardText = factor.name || '';
+                  if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
+                  const isNoiseFactor = factor.name.trim().includes('소음');
+                  const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                  allUnitsData.push([
+                    isFirst ? unitName : '', 
+                    isFirst ? globalIndex++ : '', 
+                    isFirst ? worker.department || '' : '', 
+                    isFirst ? worker.process || '' : '', 
+                    isFirst ? worker.shiftSystem || '' : '', 
+                    isFirst ? worker.workerCount || '' : '', 
+                    isFirst ? worker.exposureCycle || '' : '', 
+                    isFirst ? worker.measurementCount || '' : '',
+                    hazardText, 
+                    isFirst ? worker.name : '', 
+                    factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || ''
+                  ]);
+                });
+              });
+            }
+          });
+
+          if (hasAnyData) {
+            const wsAll = XLSX.utils.aoa_to_sheet(allUnitsData);
+            let safeAllSheetName = `${day}일_전체사업체`.replace(/[\\/?*[\]]/g, '').substring(0, 31);
+            XLSX.utils.book_append_sheet(wb, wsAll, safeAllSheetName);
+            sheetCount++;
+          }
+
+          // --- 2. 개별 단위사업체 시트 추가 ---
           unitNames.forEach(unitName => {
             const currentWorkers = appData.units[unitName].filter(w => (w.day||1) === day);
             if(currentWorkers.length === 0) return;
@@ -939,6 +982,7 @@
             sheetCount++;
           });
       });
+      
       if(sheetCount === 0) { alert('저장할 데이터가 없습니다.'); return; }
       const companyName = document.getElementById('companyName').value.trim() || '작업환경측정_계획서';
       XLSX.writeFile(wb, `${companyName}.xlsx`);
@@ -1076,9 +1120,9 @@
 
             if (!mergedGroupsByUnit[unitName][key]) {
               mergedGroupsByUnit[unitName][key] = { unit: unitName, department: dept, process: process, shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', pageBreak: false, factorGroups: [], hasPValue: false };
-            }
+          }
 
-            const mergedGroup = mergedGroupsByUnit[unitName][key];
+          const mergedGroup = mergedGroupsByUnit[unitName][key];
 
             if (!isNoiseSheet) {
               let factor = row[3]?.trim() || ''; let workerCount = (row[4]?.trim()||'').replace(/(\d+)\.\d+/g, '$1'); let shift = row[5]?.trim() || ''; let cycle = row[6]?.trim() || '';
@@ -1161,49 +1205,73 @@
       finally { syncBtn.disabled = false; syncBtn.innerText = '데이터 연동하기'; reRender(); }
     }
 
+    // 엑셀 스타일 상하좌우 방향키 내비게이션 기능
     document.addEventListener('keydown', function(e) {
       const current = e.target;
       if (current.tagName !== 'TEXTAREA' || !current.hasAttribute('data-focus-id')) return;
 
-      const isUp = e.key === 'ArrowUp'; const isDown = e.key === 'ArrowDown'; const isLeft = e.key === 'ArrowLeft'; const isRight = e.key === 'ArrowRight';
+      const isUp = e.key === 'ArrowUp'; 
+      const isDown = e.key === 'ArrowDown'; 
+      const isLeft = e.key === 'ArrowLeft'; 
+      const isRight = e.key === 'ArrowRight';
+      
       if (!isUp && !isDown && !isLeft && !isRight) return;
+
+      // 텍스트 내부 커서 이동 방해 금지 (맨 앞/맨 끝에서만 옆칸 이동)
       if (isLeft && current.selectionStart > 0) return;
       if (isRight && current.selectionEnd < current.value.length) return;
       if (isUp || isDown) {
           const lines = current.value.substr(0, current.selectionStart).split("\n");
-          if(isUp && lines.length > 1) return; if(isDown && lines.length < current.value.split("\n").length) return;
+          if(isUp && lines.length > 1) return; 
+          if(isDown && lines.length < current.value.split("\n").length) return;
       }
-      e.preventDefault();
+      
+      e.preventDefault(); // 기본 스크롤 동작 방지
 
       const currentRect = current.getBoundingClientRect();
+      // 보이는 화면의 모든 입력창 수집
       const inputs = Array.from(document.querySelectorAll('#tables-container .block textarea:not([type="hidden"]):not([readonly])'));
-      let bestMatch = null; let minDistance = Infinity;
-      const cx = currentRect.left + currentRect.width / 2; const cy = currentRect.top + currentRect.height / 2;
+      
+      let bestMatch = null; 
+      let minDistance = Infinity;
+      const cx = currentRect.left + currentRect.width / 2; 
+      const cy = currentRect.top + currentRect.height / 2;
 
+      // 가장 가까운 방향의 텍스트창을 기하학적으로 계산
       inputs.forEach(input => {
         if (input === current) return;
         const rect = input.getBoundingClientRect();
-        const ix = rect.left + rect.width / 2; const iy = rect.top + rect.height / 2;
-        let isEligible = false; let distance = Infinity;
+        const ix = rect.left + rect.width / 2; 
+        const iy = rect.top + rect.height / 2;
+        
+        let isEligible = false; 
+        let distance = Infinity;
         const xOverlap = Math.max(0, Math.min(currentRect.right, rect.right) - Math.max(currentRect.left, rect.left));
         const yOverlap = Math.max(0, Math.min(currentRect.bottom, rect.bottom) - Math.max(currentRect.top, rect.top));
 
+        // 직진(위아래 동일 라인) 우선
         if (isUp && iy < cy && xOverlap > 0) { isEligible = true; distance = cy - iy; }
         else if (isDown && iy > cy && xOverlap > 0) { isEligible = true; distance = iy - cy; }
         else if (isLeft && ix < cx && yOverlap > 0) { isEligible = true; distance = cx - ix; }
         else if (isRight && ix > cx && yOverlap > 0) { isEligible = true; distance = ix - cx; }
 
+        // 대각선(병합셀 등 인접 라인) 차선
         if (!isEligible) {
              if (isUp && rect.bottom <= currentRect.top + 5) { isEligible = true; distance = (currentRect.top - rect.bottom)*10 + Math.abs(cx - ix); } 
              else if (isDown && rect.top >= currentRect.bottom - 5) { isEligible = true; distance = (rect.top - currentRect.bottom)*10 + Math.abs(cx - ix); } 
              else if (isLeft && rect.right <= currentRect.left + 5) { isEligible = true; distance = (currentRect.left - rect.right)*10 + Math.abs(cy - iy); } 
              else if (isRight && rect.left >= currentRect.right - 5) { isEligible = true; distance = (rect.left - currentRect.right)*10 + Math.abs(cy - iy); }
         }
-        if (isEligible && distance < minDistance) { minDistance = distance; bestMatch = input; }
+        
+        if (isEligible && distance < minDistance) { 
+            minDistance = distance; 
+            bestMatch = input; 
+        }
       });
 
       if (bestMatch) {
         bestMatch.focus();
+        // 왼쪽으로 가면 끝부분, 오른쪽으로 가면 첫부분, 위아래는 전체선택 (엑셀 느낌)
         if (isLeft) bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
         else if (isRight) bestMatch.setSelectionRange(0, 0);
         else bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
