@@ -722,7 +722,7 @@
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">L</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">N</th>
                             <th class="px-1 py-2 w-[60px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
-                            <th class="px-2 py-2 w-[100px] text-center border-b border-gray-200 print:hidden">관리</th>
+                            <th class="px-2 py-2 w-[160px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
                         </thead>`;
 
@@ -859,12 +859,12 @@
                       `;
 
                       if (isWorkerStart) {
-                          dayHtml += `<td class="px-1 py-2 text-center align-middle print:hidden whitespace-nowrap ${bClass}" rowspan="${wSpan}">
-                            <div class="grid grid-cols-2 gap-1 w-full max-w-[96px] mx-auto h-full content-center">
-                              <button onclick="duplicateWorker('${unitName}', ${worker.id})" class="flex items-center justify-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 py-1.5 rounded shadow-sm transition-colors tracking-tighter" title="행 복사">행복사</button>
-                              <button onclick="removeWorker('${unitName}', ${worker.id})" class="flex items-center justify-center text-[10px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 py-1.5 rounded shadow-sm transition-colors tracking-tighter" title="행 삭제">행삭제</button>
-                              <button onclick="addFactor('${unitName}', ${worker.id})" class="flex items-center justify-center text-[10px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 py-1.5 rounded shadow-sm transition-colors tracking-tighter" title="유해인자 추가">인자추가</button>
-                              <button onclick="togglePageBreak('${unitName}', ${worker.id})" class="flex items-center justify-center text-[10px] font-semibold py-1.5 rounded shadow-sm transition-colors tracking-tighter ${worker.pageBreak ? 'bg-indigo-600 text-white border-indigo-700 shadow-inner' : 'text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '나눔 취소' : '이 행부터 다음 페이지로 인쇄'}">나눔</button>
+                          dayHtml += `<td class="px-1 py-1 text-center align-middle print:hidden whitespace-nowrap ${bClass}" rowspan="${wSpan}">
+                            <div class="flex items-center justify-center gap-1 w-full h-full">
+                              <button onclick="duplicateWorker('${unitName}', ${worker.id})" class="px-1.5 py-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition-colors tracking-tighter" title="행 복사">행복사</button>
+                              <button onclick="removeWorker('${unitName}', ${worker.id})" class="px-1.5 py-1 text-[10px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-colors tracking-tighter" title="행 삭제">행삭제</button>
+                              <button onclick="addFactor('${unitName}', ${worker.id})" class="px-1.5 py-1 text-[10px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors tracking-tighter" title="유해인자 추가">인자추가</button>
+                              <button onclick="togglePageBreak('${unitName}', ${worker.id})" class="px-1.5 py-1 text-[10px] font-semibold rounded transition-colors tracking-tighter ${worker.pageBreak ? 'bg-indigo-600 text-white border-indigo-700 shadow-inner' : 'text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'}" title="${worker.pageBreak ? '나눔 취소' : '이 행부터 다음 페이지로 인쇄'}">나눔</button>
                             </div>
                            </td>`;
                       }
