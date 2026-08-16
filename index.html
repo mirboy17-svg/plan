@@ -55,53 +55,53 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans min-h-screen m-0 p-0 overflow-x-hidden">
+<body class="bg-[#FAFAFA] font-sans min-h-screen p-0 m-0">
 
-  <div id="loginScreen" class="fixed inset-0 bg-gray-100 flex flex-col items-center justify-center z-50 p-4">
-    <div class="bg-white p-8 rounded-2xl shadow-xl border border-emerald-100 w-full max-w-[440px] text-center relative">
+  <div id="loginScreen" class="fixed inset-0 bg-[#FAFAFA] flex flex-col items-center justify-center z-50">
+    <div class="bg-white p-8 md:p-10 rounded-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#EAEAEA] w-full max-w-[420px] text-center flex flex-col items-center relative">
       <!-- Lock Icon -->
-      <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-500 shadow-inner">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <div class="w-14 h-14 bg-[#ECFDF5] rounded-full flex items-center justify-center mb-5">
+        <svg class="w-6 h-6 text-[#10B981]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       </div>
 
-      <h2 class="text-xl font-bold text-slate-800 mb-2">작업환경측정 계획서 작성</h2>
-      <p class="text-sm text-slate-500 mb-6">대시보드 접속을 위해 비밀번호를 입력해주세요.</p>
+      <h2 class="text-xl font-bold text-gray-900 tracking-tight mb-2">작업환경측정 계획서</h2>
+      <p class="text-[14px] text-gray-500 mb-8">대시보드 접속을 위해 비밀번호를 입력해주세요.</p>
 
-      <form onsubmit="handleLogin(event)" class="space-y-4">
+      <form onsubmit="handleLogin(event)" class="w-full space-y-4">
         <div>
-          <input type="password" id="loginPassword" placeholder="비밀번호 입력(임시:1234)" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-slate-400" autocomplete="current-password" />
+          <input type="password" id="loginPassword" placeholder="비밀번호 입력(임시:1234)" class="w-full px-4 py-3.5 bg-white border border-[#EAEAEA] rounded-xl text-[14px] text-center text-gray-900 outline-none focus:ring-2 focus:ring-[#10B981] focus:border-transparent transition-all placeholder:text-gray-400 shadow-sm" autocomplete="current-password" />
         </div>
-        <div id="loginErrorMsg" class="text-xs text-red-500 font-medium hidden">비밀번호가 올바르지 않습니다. (임시: 1234)</div>
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-600/20">
+        <div id="loginErrorMsg" class="text-[13px] text-red-500 font-medium hidden">비밀번호가 올바르지 않습니다. (임시: 1234)</div>
+        <button type="submit" class="w-full bg-[#10B981] hover:bg-[#059669] text-white font-semibold py-3.5 rounded-xl transition-colors text-[15px] shadow-sm">
           접속하기
         </button>
       </form>
     </div>
 
     <!-- Footer info -->
-    <div class="mt-8 text-center text-xs text-slate-500 space-y-1">
-      <p class="font-bold text-slate-700 text-sm">시스템 오류 및 사용 문의</p>
-      <p>대한산업보건협회 경남지역본부 산업위생국</p>
-      <div class="flex items-center justify-center gap-3 pt-1 text-slate-600">
-        <span class="flex items-center gap-1">
-          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+    <div class="absolute bottom-8 text-center space-y-2 w-full">
+      <p class="text-[13px] font-semibold text-gray-800">시스템 오류 및 사용 문의</p>
+      <p class="text-[13px] text-gray-500">대한산업보건협회 경남지역본부 산업위생국</p>
+      <div class="flex items-center justify-center gap-3 pt-1 text-gray-400 text-[13px]">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
           055-295-2461
         </span>
         <span>|</span>
-        <span class="flex items-center gap-1">
-          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        <span class="flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
           aniag000@kiha21.or.kr
         </span>
       </div>
-      <p class="pt-2 text-[11px] text-slate-400">© Copyright 2026.08 aniag000@kiha21.or.kr. All rights reserved.</p>
+      <p class="pt-3 text-[12px] text-gray-400">© Copyright 2026.08 aniag000@kiha21.or.kr. All rights reserved.</p>
     </div>
   </div>
 
-  <div id="mainAppContent" class="w-full min-h-screen bg-white print:shadow-none print:border-none hidden">
+  <div id="mainAppContent" class="h-screen w-full bg-white overflow-y-auto hidden">
     
-    <div class="bg-slate-800 px-4 py-4 md:px-6 flex justify-between items-center text-white print:bg-white print:text-black print:border-b print:border-black print:p-2 print:mb-4">
+    <div class="bg-slate-800 p-6 flex justify-between items-center text-white print:bg-white print:text-black print:border-b print:border-black print:p-2 print:mb-4">
       <div class="flex items-center gap-3">
         <svg class="w-8 h-8 print:hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -140,7 +140,7 @@
       </div>
     </div>
 
-    <div class="p-4 md:p-6 space-y-6 print:p-0 print:space-y-0">
+    <div class="p-6 md:p-8 space-y-6 print:p-0 print:space-y-0">
       
       <section class="bg-gray-50 p-5 rounded-lg border border-gray-200 print:hidden">
         <h2 class="text-base font-semibold text-gray-800 mb-3 border-b pb-2">사업장 기본 정보</h2>
