@@ -1307,6 +1307,25 @@
         if (isLeft) bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
         else if (isRight) bestMatch.setSelectionRange(0, 0);
         else bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
+
+        // 🚀 스마트 자동 스크롤 (화면 끄트머리에 커서가 가면 자연스럽게 중앙으로 끌어올림/내림)
+        const scrollContainer = document.getElementById('mainAppContent');
+        if (scrollContainer) {
+            const matchRect = bestMatch.getBoundingClientRect();
+            const containerRect = scrollContainer.getBoundingClientRect();
+            
+            // 화면 상/하단 시야 확보를 위한 임계값 (하단은 다음 줄들을 미리 보기 위해 넉넉히 250px)
+            const bottomThreshold = 250; 
+            const topThreshold = 150;    
+            
+            if (isDown && matchRect.bottom > containerRect.bottom - bottomThreshold) {
+                // 아래로 내려갈 때 하단 시야가 좁아지면 부드럽게 위로 끌어올림 (+50px 여유 추가)
+                scrollContainer.scrollBy({ top: matchRect.bottom - (containerRect.bottom - bottomThreshold) + 50, behavior: 'smooth' });
+            } else if (isUp && matchRect.top < containerRect.top + topThreshold) {
+                // 위로 올라갈 때 상단 시야가 좁아지면 부드럽게 아래로 내림
+                scrollContainer.scrollBy({ top: matchRect.top - (containerRect.top + topThreshold) - 50, behavior: 'smooth' });
+            }
+        }
       }
     });
 
