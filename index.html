@@ -687,6 +687,8 @@
       const allDays = getActiveDays();
       const unitNames = Object.keys(appData.units);
       
+      let printedDayCount = 0; // 인쇄 시 출력된 일차 카운트
+      
       allDays.forEach(day => {
           let hasDataForDay = false;
           unitNames.forEach(u => { if(appData.units[u].some(w => (w.day || 1) === day)) hasDataForDay = true; });
@@ -696,7 +698,11 @@
           const displayClass = isActiveDay ? 'block' : 'hidden print:block';
           let headerTitle = appData.currentUnit === 'ALL' ? '전체 사업체' : `[단위사업체] : ${appData.currentUnit}`;
 
-          let dayHtml = `<div class="day-section ${displayClass} print:mb-8">`;
+          // 2일차, 3일차 등 첫 출력 일차 이후부터 강제 페이지 나눔 클래스 추가
+          const pageBreakClass = printedDayCount > 0 ? 'page-break-before' : '';
+          printedDayCount++;
+
+          let dayHtml = `<div class="day-section ${displayClass} print:mb-8 ${pageBreakClass}">`;
           dayHtml += `<div class="print-unit-header flex flex-col md:flex-row md:justify-between md:items-end gap-2 mb-2 border-b pb-1 print:border-black print:mb-1 print:mt-4">
                         <h2 class="text-lg font-semibold text-gray-800 print:text-[12px] print:m-0 print:p-0 print:font-bold flex items-center flex-wrap">
                             <span class="text-amber-600 mr-2 print:text-black">[ ${day}일차 ]</span>
