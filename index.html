@@ -8,87 +8,111 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @media print {
-      @page { size: landscape !important; margin: 10mm; } 
+      @page { size: landscape !important; margin: 10mm; } /* 여백을 조금 넉넉히 주어 잘림 방지 */
       
+      /* 기본적으로 화면에만 보이는 요소 숨김 */
       .print\:hidden { display: none !important; }
+      .print\:block { display: block !important; }
       
-      /* 모든 컨테이너의 제한을 완전히 풀어버림 */
-      body, html, #mainAppContent, #tables-container, .day-section, div { 
-        height: auto !important; 
-        max-height: none !important;
-        overflow: visible !important; 
-        position: static !important;
-        background-color: white !important;
+      /* 배경 및 텍스트 강제 설정 */
+      body, html { 
+        background-color: white !important; 
         color: black !important;
+        height: auto !important; /* 스크롤 높이 제한 완벽 해제 */
+        overflow: visible !important; 
+        margin: 0 !important;
+        padding: 0 !important;
       }
       
-      /* 
-         테이블이 한 줄만 나오고 잘리는 원인 제거:
-         display: block이나 기타 꼬인 속성들을 원시 테이블 상태로 되돌림
-      */
+      /* 메인 컨테이너들이 인쇄 시 화면에 갇히지 않도록 완전히 해제 */
+      #mainAppContent, #tables-container, .day-section {
+        height: auto !important;
+        overflow: visible !important;
+        position: relative !important;
+      }
+
+      /* 테이블 테두리 및 렌더링 강제 설정 */
       table { 
-        display: table !important;
-        width: 100% !important;
-        border-collapse: collapse !important;
-        page-break-after: auto !important;
+        border-collapse: collapse !important; 
+        width: 100% !important; 
+        table-layout: auto !important; /* 브라우저가 내용에 맞게 폭 계산하게 둠 */
         page-break-inside: auto !important;
       }
       
-      thead { display: table-header-group !important; }
-      
-      /* tbody가 잘리는 최악의 버그 방지 */
-      tbody, .group-tbody { 
-        display: table-row-group !important; 
-        page-break-inside: auto !important;
-      }
-      
-      tr { 
-        display: table-row !important;
-        page-break-inside: avoid !important; 
+      /* 줄바꿈 및 페이지 나눔 설정 강화 */
+      tr {
+        page-break-inside: avoid !important;
         page-break-after: auto !important;
       }
       
-      td, th { 
-        display: table-cell !important;
+      /* 표 헤더는 페이지마다 반복 (필수) */
+      thead {
+        display: table-header-group !important;
+      }
+
+      /* 표 바디와 행 그룹이 끊기지 않도록 설정 */
+      tbody, .group-tbody {
+        display: table-row-group !important;
+        page-break-inside: auto !important;
+      }
+
+      /* 셀 내부 여백 및 폰트 크기 설정 */
+      th, td { 
         font-size: 8px !important; 
         padding: 2px !important; 
-        line-height: 1.2 !important; 
-        border: 1px solid black !important; 
+        line-height: 1.3 !important; 
+        border: 1px solid black !important; /* 테두리 확실하게 표시 */
       }
       
-      /* 텍스트 줄바꿈 설정 */
+      /* 글자 잘림 방지 */
       .nowrap-col { white-space: nowrap !important; }
       .break-all { word-break: break-all !important; white-space: pre-wrap !important; }
 
-      /* 입력창 숨기고 텍스트만 보이게 설정 */
+      /* textarea는 무조건 숨기고, print 전용 div만 보이도록 강력하게 통제 */
       textarea, input { display: none !important; }
-      div[id^="print-"] { display: block !important; }
-      
-      /* 부서 나눔 */
-      .page-break-before {
-        page-break-before: always !important;
+      div[id^="print-"] { 
+        display: block !important; 
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
       }
       
+      /* 부서명 변경 시 페이지 나눔용 클래스 (확실히 작동하도록 break-* 속성 추가) */
+      .page-break-before {
+        page-break-before: always !important;
+        break-before: page !important;
+      }
+      
+      /* 불필요한 배경/테두리 제거 */
       .print\:bg-transparent { background-color: transparent !important; }
       .print\:border-black { border-color: black !important; }
       .print\:border-none { border: none !important; }
-      .print\:hidden { display: none !important; }
-      .print\:block { display: block !important; }
     }
     
-    textarea { resize: none; overflow: hidden; }
-    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    /* 화면용 스크롤바 감추기 (선택사항) */
+    textarea {
+      resize: none;
+      overflow: hidden;
+    }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+      -webkit-appearance: none; margin: 0;
+    }
   </style>
 </head>
 <body class="bg-[#FAFAFA] font-sans min-h-screen p-0 m-0">
 
   <div id="loginScreen" class="fixed inset-0 bg-[#F8FAFC] flex flex-col items-center justify-center z-50 overflow-hidden px-4">
+    <!-- 모던 그라데이션 배경 장식 (크기 약간 축소) -->
     <div class="absolute top-[-5%] left-[-5%] w-[30%] h-[30%] rounded-full bg-emerald-400/20 blur-[80px] pointer-events-none"></div>
     <div class="absolute bottom-[-5%] right-[-5%] w-[30%] h-[30%] rounded-full bg-blue-400/20 blur-[80px] pointer-events-none"></div>
 
+    <!-- 메인 로그인 카드 (패딩, 마진 대폭 축소) -->
     <div class="relative bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white/60 w-full max-w-[380px] text-center flex flex-col items-center z-10">
+      
+      <!-- 상단 포인트 컬러 바 -->
       <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-b-full opacity-80"></div>
 
+      <!-- Lock Icon (크기 축소) -->
       <div class="w-12 h-12 bg-gradient-to-br from-emerald-50 to-teal-100 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-emerald-100/50 group hover:-rotate-6 transition-transform duration-300">
         <svg class="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -118,6 +142,7 @@
       </form>
     </div>
 
+    <!-- Footer info (절대 위치에서 상대 위치로 변경하여 카드 밑에 촘촘하게 붙임) -->
     <div class="relative z-10 mt-5 w-full flex flex-col items-center justify-center space-y-1.5">
       <p class="text-[12px] font-semibold text-slate-700">시스템 오류 및 사용 문의</p>
       <div class="flex items-center gap-2.5 text-slate-500 text-[11px] bg-white/60 px-4 py-1.5 rounded-full border border-slate-200/50 shadow-sm backdrop-blur-sm">
@@ -683,21 +708,21 @@
                       <table class="w-full text-left text-sm whitespace-nowrap min-w-[1250px] print:min-w-0 border-collapse">
                         <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black print:text-[9px]">
                           <tr>
-                            <th class="px-1 py-2 text-center border-r border-b border-gray-200 print:border-black nowrap-col" style="width: 25px;">No.</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black nowrap-col text-center" style="width: 55px;">부서명</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black nowrap-col text-center" style="width: 55px;">공정명</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center nowrap-col" style="width: 55px;">교대제</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center nowrap-col" style="width: 40px;">근로자수</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center nowrap-col" style="width: 50px;">노출주기</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center nowrap-col" style="width: 40px;">측정건수</th>
-                            <th class="px-2 py-2 border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center" style="width: 70px;">근로자명</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center" style="width: 37px;">A</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center" style="width: 37px;">P</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center" style="width: 37px;">L</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center" style="width: 37px;">N</th>
-                            <th class="px-1 py-2 border-r border-b border-gray-200 print:border-black text-center" style="width: 60px;">비고</th>
-                            <th class="px-2 py-2 text-center border-b border-gray-200 print:hidden" style="width: 80px;">관리</th>
+                            <th class="px-1 py-2 w-[25px] text-center border-r border-b border-gray-200 print:border-black nowrap-col">No.</th>
+                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">부서명</th>
+                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">공정명</th>
+                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
+                            <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">근로자수</th>
+                            <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">노출주기</th>
+                            <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
+                            <th class="px-2 py-2 w-[300px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
+                            <th class="px-1 py-2 w-[70px] border-r border-b border-gray-200 print:border-black text-center">근로자명</th>
+                            <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">A</th>
+                            <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">P</th>
+                            <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">L</th>
+                            <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">N</th>
+                            <th class="px-1 py-2 w-[60px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
+                            <th class="px-2 py-2 w-[100px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
                         </thead>`;
 
@@ -741,21 +766,7 @@
                   if (worker.pageBreak && index > 0) {
                     dayHtml += `<tr class="hidden print:table-row page-break-before"><td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-b-2 border-black border-dashed bg-white">✂️ 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️</td></tr>`;
                   }
-                  
-                  // 자동 페이지 분할 로직 복구
-                  let isDiffDept = false;
-                  if (index > 0 && originalRowSpan > 0) {
-                      const prevWorker = currentWorkers[index - 1];
-                      if (prevWorker.department !== worker.department) {
-                          isDiffDept = true;
-                      }
-                  }
-                  
-                  if (isDiffDept) {
-                     dayHtml += `<tr class="hidden print:table-row page-break-before"><td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-b-2 border-black border-dashed bg-white">✂️ 부서 변경 나눔 ✂️</td></tr>`;
-                  }
-                  
-                  const pageBreakClass = (worker.pageBreak || isDiffDept) ? 'page-break-before' : '';
+                  const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
 
                   worker.harmfulFactors.forEach((factor, fIndex) => {
                       const isGroupStart = (gSpan > 0 && fIndex === 0);
@@ -948,6 +959,7 @@
       let sheetCount = 0;
       
       allDays.forEach(day => {
+          // --- 1. [전체사업체] 통합 시트 추가 ---
           let allUnitsData = [];
           allUnitsData.push(["단위사업체", "No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "근로자명", "A", "P", "L", "N", "비고"]);
           let globalIndex = 1;
@@ -989,6 +1001,7 @@
             sheetCount++;
           }
 
+          // --- 2. 개별 단위사업체 시트 추가 ---
           unitNames.forEach(unitName => {
             const currentWorkers = appData.units[unitName].filter(w => (w.day||1) === day);
             if(currentWorkers.length === 0) return;
@@ -1236,6 +1249,7 @@
       finally { syncBtn.disabled = false; syncBtn.innerText = '데이터 연동하기'; reRender(); }
     }
 
+    // 엑셀 스타일 상하좌우 방향키 내비게이션 기능
     document.addEventListener('keydown', function(e) {
       const current = e.target;
       if (current.tagName !== 'TEXTAREA' || !current.hasAttribute('data-focus-id')) return;
@@ -1247,6 +1261,7 @@
       
       if (!isUp && !isDown && !isLeft && !isRight) return;
 
+      // 텍스트 내부 커서 이동 방해 금지 (맨 앞/맨 끝에서만 옆칸 이동)
       if (isLeft && current.selectionStart > 0) return;
       if (isRight && current.selectionEnd < current.value.length) return;
       if (isUp || isDown) {
@@ -1255,9 +1270,10 @@
           if(isDown && lines.length < current.value.split("\n").length) return;
       }
       
-      e.preventDefault(); 
+      e.preventDefault(); // 기본 스크롤 동작 방지
 
       const currentRect = current.getBoundingClientRect();
+      // 보이는 화면의 모든 입력창 수집
       const inputs = Array.from(document.querySelectorAll('#tables-container .block textarea:not([type="hidden"]):not([readonly])'));
       
       let bestMatch = null; 
@@ -1265,6 +1281,7 @@
       const cx = currentRect.left + currentRect.width / 2; 
       const cy = currentRect.top + currentRect.height / 2;
 
+      // 가장 가까운 방향의 텍스트창을 기하학적으로 계산
       inputs.forEach(input => {
         if (input === current) return;
         const rect = input.getBoundingClientRect();
@@ -1276,11 +1293,13 @@
         const xOverlap = Math.max(0, Math.min(currentRect.right, rect.right) - Math.max(currentRect.left, rect.left));
         const yOverlap = Math.max(0, Math.min(currentRect.bottom, rect.bottom) - Math.max(currentRect.top, rect.top));
 
+        // 직진(위아래 동일 라인) 우선
         if (isUp && iy < cy && xOverlap > 0) { isEligible = true; distance = cy - iy; }
         else if (isDown && iy > cy && xOverlap > 0) { isEligible = true; distance = iy - cy; }
         else if (isLeft && ix < cx && yOverlap > 0) { isEligible = true; distance = cx - ix; }
         else if (isRight && ix > cx && yOverlap > 0) { isEligible = true; distance = ix - cx; }
 
+        // 대각선(병합셀 등 인접 라인) 차선
         if (!isEligible) {
              if (isUp && rect.bottom <= currentRect.top + 5) { isEligible = true; distance = (currentRect.top - rect.bottom)*10 + Math.abs(cx - ix); } 
              else if (isDown && rect.top >= currentRect.bottom - 5) { isEligible = true; distance = (rect.top - currentRect.bottom)*10 + Math.abs(cx - ix); } 
@@ -1296,6 +1315,7 @@
 
       if (bestMatch) {
         bestMatch.focus();
+        // 왼쪽으로 가면 끝부분, 오른쪽으로 가면 첫부분, 위아래는 전체선택 (엑셀 느낌)
         if (isLeft) bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
         else if (isRight) bestMatch.setSelectionRange(0, 0);
         else bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
