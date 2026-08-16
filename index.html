@@ -9,7 +9,8 @@
   <style>
     @media print {
       @page { size: landscape !important; margin: 5mm; }
-      body { background-color: white !important; }
+      body, html { background-color: white !important; height: auto !important; overflow: visible !important; }
+      #mainAppContent { height: auto !important; overflow: visible !important; position: static !important; }
       .print\:hidden { display: none !important; }
       .print\:block { display: block !important; }
       .print\:bg-transparent { background-color: transparent !important; }
@@ -706,6 +707,7 @@
               }
 
               let currentGroupEndIndex = -1;
+              let autoLastDept = null;
 
               currentWorkers.forEach((worker, index) => {
                   globalWorkerIndex++;
@@ -714,15 +716,24 @@
                   const gSpan = groupSpans[index]; 
                   const wSpan = worker.harmfulFactors.length;
 
+                  let isDeptChanged = false;
+                  if (originalRowSpan > 0) {
+                      if (autoLastDept !== null && autoLastDept !== worker.department) {
+                          isDeptChanged = true;
+                      }
+                      autoLastDept = worker.department;
+                  }
+                  const isPageBreak = worker.pageBreak || isDeptChanged;
+
                   if (originalRowSpan > 0) {
                       currentGroupEndIndex = index + originalRowSpan - 1;
                       dayHtml += `<tbody class="print:border-black group-tbody">`;
                   }
 
-                  if (worker.pageBreak && index > 0) {
-                    dayHtml += `<tr class="hidden print:table-row page-break-before"><td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-b-2 border-black border-dashed bg-white">✂️ 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️</td></tr>`;
+                  if (isPageBreak && index > 0) {
+                    dayHtml += `<tr class="hidden print:table-row page-break-before"><td colspan="15" class="text-center py-1 text-[9px] text-gray-500 font-medium border-t-2 border-b-2 border-black border-dashed bg-white">✂️ 부서 변경 또는 수동설정으로 다음 페이지에 출력됩니다 ✂️</td></tr>`;
                   }
-                  const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
+                  const pageBreakClass = isPageBreak ? 'page-break-before' : '';
 
                   worker.harmfulFactors.forEach((factor, fIndex) => {
                       const isGroupStart = (gSpan > 0 && fIndex === 0);
