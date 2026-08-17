@@ -736,8 +736,8 @@
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">P</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">L</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">N</th>
-                            <th class="px-1 py-2 w-[110px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
-                            <th class="px-2 py-2 w-[110px] text-center border-b border-gray-200 print:hidden">관리</th>
+                            <th class="px-1 py-2 w-[120px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
+                            <th class="px-2 py-2 w-[100px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
                         </thead>`;
 
@@ -1300,7 +1300,26 @@
           msg.className = 'text-sm font-medium text-red-600'; msg.innerText = '조건에 맞는 데이터가 없습니다.';
         }
       } catch (error) { msg.className = 'text-sm font-medium text-red-600'; msg.innerText = error.message; } 
-      finally { syncBtn.disabled = false; syncBtn.innerText = '데이터 연동하기'; reRender(); }
+      finally { 
+        syncBtn.disabled = false; 
+        syncBtn.innerText = '데이터 연동하기'; 
+        reRender(); 
+        
+        // 연동 직후 측정건수가 2 이상인 행을 자동으로 찾아 체크박스 선택 (일괄 행복사 연계용)
+        setTimeout(() => {
+          document.querySelectorAll('input[type="checkbox"][class*="worker-checkbox-"]').forEach(cb => {
+            const uName = cb.getAttribute('data-unit');
+            const id = Number(cb.value);
+            if (appData.units[uName]) {
+              const worker = appData.units[uName].find(w => w.id === id);
+              if (worker && worker.measurementCount) {
+                const count = parseInt(String(worker.measurementCount).replace(/[^0-9]/g, ''), 10);
+                if (count >= 2) cb.checked = true; // 2 이상일 때 자동 체크
+              }
+            }
+          });
+        }, 150); // 렌더링 직후 안전하게 체크되도록 약간의 딜레이
+      }
     }
 
     // 엑셀 스타일 상하좌우 방향키 내비게이션 기능
