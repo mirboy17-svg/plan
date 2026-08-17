@@ -876,7 +876,7 @@
                       if (isWorkerStart) {
                           dayHtml += `<td class="px-1 py-1 text-center align-middle print:hidden whitespace-nowrap ${bClass}" rowspan="${wSpan}">
                             <div class="flex items-center justify-center gap-1 w-full h-full">
-                              <input type="checkbox" class="worker-checkbox-${day} w-3 h-3 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer shrink-0" value="${worker.id}" data-unit="${unitName}" title="일괄 처리용 선택">
+                              <input type="checkbox" class="worker-checkbox-${day} w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer shrink-0" value="${worker.id}" data-unit="${unitName}" title="일괄 처리용 선택">
                               <button onclick="duplicateWorker('${unitName}', ${worker.id})" class="px-1.5 py-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition-colors tracking-tighter" title="행 복사">행복사</button>
                               <button onclick="removeWorker('${unitName}', ${worker.id})" class="px-1.5 py-1 text-[10px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-colors tracking-tighter" title="행 삭제">행삭제</button>
                               <button onclick="addFactor('${unitName}', ${worker.id})" class="px-1.5 py-1 text-[10px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors tracking-tighter" title="유해인자 추가">인자추가</button>
@@ -1449,11 +1449,12 @@
         // 선택된 항목들을 사업체(unit)별로 묶음
         checkboxes.forEach(cb => {
             const uName = cb.getAttribute('data-unit');
-            // 핵심 수정: parseInt 대신 Number를 사용하여 소수점 ID까지 정확하게 매칭
             const id = Number(cb.value);
             if (!grouped[uName]) grouped[uName] = [];
             grouped[uName].push(id);
         });
+
+        let totalDuplicatedCount = 0;
 
         Object.keys(grouped).forEach(unitName => {
             const idsToDuplicate = grouped[unitName];
@@ -1462,23 +1463,39 @@
             // 역순(뒤에서부터)으로 처리하여 원본 바로 아래에 splice로 찔러넣음 (인덱스 밀림 완벽 방지)
             for (let i = currentWorkers.length - 1; i >= 0; i--) {
                 const worker = currentWorkers[i];
+                
                 // 소수점 포함 정확한 ID 매칭
                 if (idsToDuplicate.includes(Number(worker.id))) {
-                    let newIdCounter = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => Number(w.id))) + 1 : 1;
-
-                    // 완전히 새로운 객체 생성 (기존 개별 '행복사'와 100% 동일)
-                    const clonedWorker = {
-                        ...worker,
-                        id: newIdCounter,
-                        day: worker.day || 1,
-                        pageBreak: false,
-                        name: '', // 이름은 복사 시 초기화
-                        isManual: false,
-                        harmfulFactors: worker.harmfulFactors.map(factor => ({ ...factor }))
-                    };
                     
-                    // 원본 위치(i) 바로 다음(i+1)에 삽입
-                    currentWorkers.splice(i + 1, 0, clonedWorker);
+                    // 측정건수 유무에 따른 복사 횟수 계산 (기본 1회, 기입 시 n-1회 복사하여 총 n개로 맞춤)
+                    let dupCount = 1;
+                    if (worker.measurementCount && String(worker.measurementCount).trim() !== '') {
+                        const parsed = parseInt(String(worker.measurementCount).replace(/[^0-9]/g, ''), 10);
+                        if (!isNaN(parsed) && parsed > 0) {
+                            dupCount = parsed - 1;
+                        }
+                    }
+
+                    // 현재 최고 ID 값을 한 번만 구해서 복사할 때마다 1씩 더해줌
+                    let currentMaxId = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => Number(w.id))) : 0;
+                    
+                    // 산정된 횟수(dupCount)만큼 반복해서 원본 바로 아래에 차곡차곡 삽입
+                    for (let k = 0; k < dupCount; k++) {
+                        currentMaxId++;
+                        const clonedWorker = {
+                            ...worker,
+                            id: currentMaxId,
+                            day: worker.day || 1,
+                            pageBreak: false,
+                            name: '', // 이름은 복사 시 초기화
+                            isManual: false,
+                            harmfulFactors: worker.harmfulFactors.map(factor => ({ ...factor }))
+                        };
+                        
+                        // i+1 위치부터 순서대로 밀어넣기
+                        currentWorkers.splice(i + 1 + k, 0, clonedWorker);
+                        totalDuplicatedCount++;
+                    }
                 }
             }
         });
@@ -1491,7 +1508,7 @@
         const selectAllCb = document.querySelector(`input[onchange="toggleAllCheckboxesDay(${day}, this.checked)"]`);
         if(selectAllCb) selectAllCb.checked = false;
         
-        showToast(`선택하신 ${checkboxes.length}개 항목이 바로 아래 각각 복사되었습니다.`);
+        showToast(`선택하신 항목들이 측정건수에 따라 총 ${totalDuplicatedCount}건 복사되었습니다.`);
     }
 
     // 선택 항목 일괄 행삭제
