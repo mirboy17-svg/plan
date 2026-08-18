@@ -966,7 +966,7 @@
                       const adjustedClasses = factor.isAdjusted ? 'text-gray-400 line-through decoration-gray-400' : '';
                       const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[10px] print:text-[8px] shrink-0 flex items-center">[조정]</span>` : '';
                       const isNoiseFactor = factor.name.trim().includes('소음');
-                      const nValue = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                      const nValue = (!factor.isAdjusted && isNoiseFactor) ? '(    )' : (factor.n || '');
 
                       dayHtml += `<td class="border-r ${bClass} p-1 relative group/hazard align-middle">
                         <div class="flex items-center w-full">
@@ -1159,7 +1159,7 @@
                 let hazardText = factor.name || '';
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                 const isNoiseFactor = factor.name.trim().includes('소음');
-                const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                const nVal = (!factor.isAdjusted && isNoiseFactor && !factor.n) ? 'V' : (factor.n || '');
                 wsData.push([
                   isFirst ? index + 1 : '', isFirst ? worker.department || '' : '', isFirst ? worker.process || '' : '', isFirst ? worker.shiftSystem || '' : '', isFirst ? worker.workerCount || '' : '', isFirst ? worker.exposureCycle || '' : '', isFirst ? worker.measurementCount || '' : '',
                   hazardText, isFirst ? worker.name : '', factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || ''
@@ -1753,35 +1753,11 @@
         document.body.style.userSelect = ''; // 마우스 떼면 일반 텍스트 드래그 허용 복구
     });
 
-    // 일괄 삭제 실행 취소(Undo)를 위한 임시 데이터 백업 변수
-    let bulkDeleteSnapshot = null;
-
     document.addEventListener('keydown', function(e) {
-        // 1. Ctrl+Z (또는 Cmd+Z) 감지 - 일괄 삭제 직후에만 작동하도록 설정
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-            if (bulkDeleteSnapshot) {
-                e.preventDefault(); // 기본 되돌리기 방지 (충돌 방지)
-                appData = JSON.parse(bulkDeleteSnapshot); // 백업해둔 데이터로 통째로 롤백
-                bulkDeleteSnapshot = null; // 복구 완료 후 백업본 비우기
-                
-                // 파란색 선택 영역 초기화
-                selectedTextareas.forEach(ta => ta.style.backgroundColor = '');
-                selectedTextareas.clear();
-                
-                reRender(); // 화면 다시 그리기
-                showToast('일괄 삭제가 실행 취소(복구)되었습니다.');
-                return;
-            }
-        }
-
-        // 2. 다중 선택된 상태에서 Delete나 Backspace를 누르면 일괄 삭제
+        // 다중 선택된 상태에서 Delete나 Backspace를 누르면 일괄 삭제
         if (e.key === 'Delete' || e.key === 'Backspace') {
             if (selectedTextareas.size > 1) {
                 e.preventDefault(); // 뒤로가기 등 브라우저 기본 동작 방지
-                
-                // ★ 지우기 직전의 완벽한 상태를 스냅샷으로 찰칵 저장 (Ctrl+Z 대비)
-                bulkDeleteSnapshot = JSON.stringify(appData);
-                
                 let clearedCount = 0;
                 
                 selectedTextareas.forEach(ta => {
@@ -1792,7 +1768,7 @@
                     }
                 });
                 
-                showToast(`${clearedCount}개 셀 일괄 삭제됨 (Ctrl+Z 로 복구 가능)`);
+                showToast(`${clearedCount}개 셀의 내용이 일괄 삭제되었습니다.`);
             }
         } else if (e.key === 'Escape') {
             // Esc 누르면 다중 선택 깔끔하게 해제
