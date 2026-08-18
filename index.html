@@ -244,16 +244,34 @@
           </h2>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <select id="moveTargetUnit" onchange="updateMoveDeptDropdown()" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 min-w-[140px] max-w-[180px]">
-            <option value="">단위사업체 선택</option>
-          </select>
-          <select id="moveTargetDept" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 min-w-[140px] max-w-[180px]">
-            <option value="">부서명 선택</option>
-          </select>
+          
+          <!-- 단위사업체 다중 선택 드롭다운 -->
+          <div class="relative">
+            <button id="unitDropdownBtn" onclick="toggleCustomDropdown('unitDropdownList')" class="w-[180px] text-left bg-white border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 flex justify-between items-center shadow-sm">
+              단위사업체 선택 <span class="text-xs text-gray-400">▼</span>
+            </button>
+            <div id="unitDropdownList" class="hidden absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+              <!-- JS로 채워짐 -->
+            </div>
+          </div>
+
+          <!-- 부서명 다중 선택 드롭다운 -->
+          <div class="relative">
+            <button id="deptDropdownBtn" onclick="toggleCustomDropdown('deptDropdownList')" class="w-[180px] text-left bg-white border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 flex justify-between items-center shadow-sm">
+              부서명 선택 <span class="text-xs text-gray-400">▼</span>
+            </button>
+            <div id="deptDropdownList" class="hidden absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+              <!-- JS로 채워짐 -->
+            </div>
+          </div>
+
           <span class="text-gray-400 font-bold px-1">➔</span>
-          <select id="moveTargetDay" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-bold text-amber-700">
-            <option value="1">1일차</option><option value="2">2일차</option><option value="3">3일차</option><option value="4">4일차</option><option value="5">5일차</option>
-            <option value="6">6일차</option><option value="7">7일차</option><option value="8">8일차</option><option value="9">9일차</option><option value="10">10일차</option>
+          <select id="moveTargetDay" class="border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-bold text-amber-700 shadow-sm bg-white">
+            <option value="1">1일차-1팀</option><option value="2">1일차-2팀</option><option value="3">1일차-3팀</option>
+            <option value="4">2일차-1팀</option><option value="5">2일차-2팀</option><option value="6">2일차-3팀</option>
+            <option value="7">3일차-1팀</option><option value="8">3일차-2팀</option><option value="9">3일차-3팀</option>
+            <option value="10">4일차-1팀</option><option value="11">4일차-2팀</option><option value="12">4일차-3팀</option>
+            <option value="13">5일차-1팀</option><option value="14">5일차-2팀</option><option value="15">5일차-3팀</option> 
           </select>
           <button onclick="moveDepartmentDay()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded font-bold text-sm shadow-sm transition-colors whitespace-nowrap">
             이동 실행
@@ -582,6 +600,17 @@
         return Array.from(activeDays).sort((a,b) => a - b);
     }
     
+    function getDayName(day) {
+        const dayMap = {
+            1: "1일차-1팀", 2: "1일차-2팀", 3: "1일차-3팀",
+            4: "2일차-1팀", 5: "2일차-2팀", 6: "2일차-3팀",
+            7: "3일차-1팀", 8: "3일차-2팀", 9: "3일차-3팀",
+            10: "4일차-1팀", 11: "4일차-2팀", 12: "4일차-3팀",
+            13: "5일차-1팀", 14: "5일차-2팀", 15: "5일차-3팀"
+        };
+        return dayMap[day] || `${day}일차`;
+    }
+
     function getValidUnitsForDay(day) {
         let valid = [];
         Object.keys(appData.units).forEach(unit => {
@@ -590,52 +619,139 @@
         return valid;
     }
 
+    // 커스텀 드롭다운 열기/닫기 토글 함수
+    function toggleCustomDropdown(id) {
+        const el = document.getElementById(id);
+        if(el) el.classList.toggle('hidden');
+    }
+
+    // 바깥 공간을 클릭하면 열려있던 드롭다운 닫기
+    document.addEventListener('click', function(event) {
+        const uBtn = document.getElementById('unitDropdownBtn');
+        const uList = document.getElementById('unitDropdownList');
+        const dBtn = document.getElementById('deptDropdownBtn');
+        const dList = document.getElementById('deptDropdownList');
+        
+        if (uBtn && uList && !uBtn.contains(event.target) && !uList.contains(event.target)) {
+            uList.classList.add('hidden');
+        }
+        if (dBtn && dList && !dBtn.contains(event.target) && !dList.contains(event.target)) {
+            dList.classList.add('hidden');
+        }
+    });
+
+    // 연동 직후 및 데이터 변경 시 체크박스 리스트 자동 업데이트
     function updateDayManageDropdowns() {
-        const unitSelect = document.getElementById('moveTargetUnit');
-        const deptSelect = document.getElementById('moveTargetDept');
-        if(!unitSelect || !deptSelect) return;
+        const unitList = document.getElementById('unitDropdownList');
+        const deptList = document.getElementById('deptDropdownList');
+        if(!unitList || !deptList) return;
+
+        // 기존에 체크되어 있던 항목 보존
+        const checkedUnits = Array.from(unitList.querySelectorAll('input:checked')).map(el => el.value);
+        const checkedDepts = Array.from(deptList.querySelectorAll('input:checked')).map(el => el.value);
 
         const currentUnits = Object.keys(appData.units);
-        const prevUnit = unitSelect.value;
-        const prevDept = deptSelect.value;
+        
+        // 단위사업체 체크박스 렌더링
+        let unitOptions = '';
+        currentUnits.forEach(u => {
+            const isChecked = checkedUnits.includes(u) ? 'checked' : '';
+            unitOptions += `<label class="flex items-center px-4 py-2 hover:bg-amber-50 cursor-pointer text-sm transition-colors border-b border-gray-50"><input type="checkbox" value="${u}" class="mr-3 w-4 h-4 unit-checkbox text-amber-600 focus:ring-amber-500 rounded border-gray-300" onchange="updateMoveDeptDropdown()" ${isChecked}> ${u}</label>`;
+        });
+        unitList.innerHTML = unitOptions || '<div class="px-4 py-3 text-sm text-gray-500 text-center">사업체 데이터가 없습니다.</div>';
 
-        let unitOptions = '<option value="">단위사업체 선택</option>';
-        currentUnits.forEach(u => unitOptions += `<option value="${u}">${u}</option>`);
-        unitSelect.innerHTML = unitOptions;
-        if (currentUnits.includes(prevUnit)) unitSelect.value = prevUnit;
-
-        let deptOptions = '<option value="">부서명 선택</option>';
-        if (unitSelect.value && appData.units[unitSelect.value]) {
-            deptOptions += '<option value="ALL" class="font-bold text-blue-600">✨ 단위사업체 전체 이동</option>';
+        // 선택된 단위사업체를 기준으로 부서명 리스트 추출
+        const activeUnits = Array.from(unitList.querySelectorAll('input:checked')).map(el => el.value);
+        
+        let deptOptions = '';
+        if (activeUnits.length > 0) {
+            deptOptions += `<label class="flex items-center px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm font-bold text-blue-700 border-b-2 border-gray-200 transition-colors bg-gray-50"><input type="checkbox" value="ALL" class="mr-3 w-4 h-4 dept-checkbox text-blue-600 focus:ring-blue-500 rounded border-gray-300" onchange="toggleAllDepts(this)"> ✨ 선택 단위사업체 전체 이동</label>`;
+            
             const depts = new Set();
-            appData.units[unitSelect.value].forEach(w => { if(w.department) depts.add(w.department); });
-            Array.from(depts).sort().forEach(d => deptOptions += `<option value="${d}">${d}</option>`);
-            deptSelect.innerHTML = deptOptions;
-            if(prevDept === 'ALL' || Array.from(depts).includes(prevDept)) deptSelect.value = prevDept;
+            activeUnits.forEach(u => {
+                if (appData.units[u]) {
+                    appData.units[u].forEach(w => { if(w.department) depts.add(w.department); });
+                }
+            });
+            Array.from(depts).sort().forEach(d => {
+                const isChecked = checkedDepts.includes(d) || checkedDepts.includes('ALL') ? 'checked' : '';
+                deptOptions += `<label class="flex items-center px-4 py-2 hover:bg-amber-50 cursor-pointer text-sm transition-colors border-b border-gray-50"><input type="checkbox" value="${d}" class="mr-3 w-4 h-4 dept-checkbox text-amber-600 focus:ring-amber-500 rounded border-gray-300" onchange="updateDeptBtnText()" ${isChecked}> ${d}</label>`;
+            });
+        } else {
+            deptOptions = `<div class="px-4 py-3 text-sm text-gray-500 bg-gray-50 text-center font-medium">위에서 단위사업체를 먼저 체크하세요</div>`;
+        }
+        deptList.innerHTML = deptOptions;
+        
+        updateUnitBtnText();
+        updateDeptBtnText();
+    }
+
+    function updateUnitBtnText() {
+        const uBtn = document.getElementById('unitDropdownBtn');
+        const activeUnits = Array.from(document.querySelectorAll('.unit-checkbox:checked')).map(el => el.value);
+        if (uBtn) {
+            if (activeUnits.length > 0) uBtn.innerHTML = `<span class="font-bold text-amber-700">${activeUnits.length}개 선택됨</span> <span class="text-xs ml-2 text-gray-400">▼</span>`;
+            else uBtn.innerHTML = `단위사업체 선택 <span class="text-xs ml-2 text-gray-400">▼</span>`;
         }
     }
-    function updateMoveDeptDropdown() { updateDayManageDropdowns(); }
 
+    function updateDeptBtnText() {
+        const dBtn = document.getElementById('deptDropdownBtn');
+        const activeDepts = Array.from(document.querySelectorAll('.dept-checkbox:checked')).filter(el => el.value !== 'ALL');
+        if (dBtn) {
+            if (activeDepts.length > 0) dBtn.innerHTML = `<span class="font-bold text-amber-700">${activeDepts.length}개 부서 선택됨</span> <span class="text-xs ml-2 text-gray-400">▼</span>`;
+            else dBtn.innerHTML = `부서명 선택 <span class="text-xs ml-2 text-gray-400">▼</span>`;
+        }
+    }
+
+    function toggleAllDepts(source) {
+        const checkboxes = document.querySelectorAll('.dept-checkbox');
+        checkboxes.forEach(cb => { cb.checked = source.checked; });
+        updateDeptBtnText();
+    }
+
+    function updateMoveDeptDropdown() { 
+        updateDayManageDropdowns(); 
+    }
+
+    // 선택된 여러 단위사업체/부서명들을 한 번에 지정된 일차로 이동
     function moveDepartmentDay() {
-        const unit = document.getElementById('moveTargetUnit').value;
-        const dept = document.getElementById('moveTargetDept').value;
+        const activeUnits = Array.from(document.querySelectorAll('.unit-checkbox:checked')).map(el => el.value);
+        const activeDepts = Array.from(document.querySelectorAll('.dept-checkbox:checked')).map(el => el.value);
         const targetDay = parseInt(document.getElementById('moveTargetDay').value);
 
-        if(!unit) return alert("단위사업체를 선택하세요.");
-        if(!dept) return alert("이동할 부서명을 선택하세요.");
-        if(!targetDay) return;
+        if (activeUnits.length === 0) return showToast("단위사업체를 하나 이상 체크해주세요.", true);
+        if (activeDepts.length === 0) return showToast("이동할 부서명을 하나 이상 체크해주세요.", true);
+        if (!targetDay) return;
 
+        const isAll = activeDepts.includes('ALL');
         let movedCount = 0;
-        appData.units[unit].forEach(w => {
-            if(dept === 'ALL' || w.department === dept) { w.day = targetDay; movedCount++; }
+
+        activeUnits.forEach(unit => {
+            if (appData.units[unit]) {
+                appData.units[unit].forEach(w => {
+                    if (isAll || activeDepts.includes(w.department)) { 
+                        w.day = targetDay; 
+                        movedCount++; 
+                    }
+                });
+            }
         });
 
         if(movedCount > 0) {
-            alert(`${movedCount}건이 ${targetDay}일차로 이동되었습니다.`);
+            showToast(`체크된 대상 총 ${movedCount}건이 ${targetDay}일차로 일괄 이동되었습니다.`);
             appData.currentDay = targetDay;
-            if(appData.currentUnit !== 'ALL') appData.currentUnit = unit;
+            if(appData.currentUnit !== 'ALL' && !activeUnits.includes(appData.currentUnit)) {
+                appData.currentUnit = activeUnits[0]; // 이동 후 자연스러운 화면 전환
+            }
             recalculateNames();
             reRender();
+            
+            // 처리 완료 후 열려있던 드롭다운 깔끔하게 숨기기
+            document.getElementById('unitDropdownList').classList.add('hidden');
+            document.getElementById('deptDropdownList').classList.add('hidden');
+        } else {
+            showToast("선택한 조건에 해당하는 이동 대상이 없습니다.", true);
         }
     }
 
@@ -650,7 +766,7 @@
             const btn = document.createElement('button');
             const isActive = appData.currentDay === day;
             btn.className = `px-4 py-1.5 text-sm font-bold rounded-t-lg transition-colors border-t border-l border-r ${isActive ? 'bg-white text-amber-600 border-amber-200 border-b-white translate-y-[1px]' : 'bg-amber-100/50 text-amber-700/60 border-amber-200/50 hover:bg-amber-100'}`;
-            btn.innerText = `${day}일차`;
+            btn.innerText = getDayName(day);
             btn.onclick = () => { appData.currentDay = day; reRender(); };
             tabsContainer.appendChild(btn);
         });
@@ -705,7 +821,7 @@
           let dayHtml = `<div class="day-section ${displayClass} print:mb-8 ${pageBreakClass}">`;
           dayHtml += `<div class="print-unit-header flex flex-col md:flex-row md:justify-between md:items-end gap-2 mb-2 border-b pb-1 print:border-black print:mb-1 print:mt-4">
                         <h2 class="text-lg font-semibold text-gray-800 print:text-[12px] print:m-0 print:p-0 print:font-bold flex items-center flex-wrap">
-                            <span class="text-amber-600 mr-2 print:text-black">[ ${day}일차 ]</span>
+                            <span class="text-amber-600 mr-2 print:text-black">[ ${getDayName(day)} ]</span>
                             <span class="text-indigo-600 mr-2 print:text-black">${headerTitle}</span> 측정 대상 및 유해인자 목록
                             <span id="count-display-${day}" class="text-sm text-gray-600 print:text-[10px] print:text-black font-medium ml-2"></span>
                         </h2>
@@ -736,8 +852,8 @@
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">P</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">L</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">N</th>
-                            <th class="px-1 py-2 w-[120px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
-                            <th class="px-2 py-2 w-[100px] text-center border-b border-gray-200 print:hidden">관리</th>
+                            <th class="px-1 py-2 w-[60px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
+                            <th class="px-2 py-2 w-[160px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
                         </thead>`;
 
@@ -1000,7 +1116,7 @@
 
           if (hasAnyData) {
             const wsAll = XLSX.utils.aoa_to_sheet(allUnitsData);
-            let safeAllSheetName = `${day}일_전체사업체`.replace(/[\\/?*[\]]/g, '').substring(0, 31);
+            let safeAllSheetName = `${getDayName(day)}_전체사업체`.replace(/[\\/?*[\]]/g, '').substring(0, 31);
             XLSX.utils.book_append_sheet(wb, wsAll, safeAllSheetName);
             sheetCount++;
           }
@@ -1025,7 +1141,7 @@
               });
             });
             const ws = XLSX.utils.aoa_to_sheet(wsData);
-            let safeSheetName = `${day}일_${unitName}`.replace(/[\\/?*[\]]/g, '').substring(0, 31);
+            let safeSheetName = `${getDayName(day)}_${unitName}`.replace(/[\\/?*[\]]/g, '').substring(0, 31);
             XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
             sheetCount++;
           });
@@ -1570,6 +1686,70 @@
             showToast(`선택하신 ${checkboxes.length}개 항목이 성공적으로 삭제되었습니다.`);
         });
     }
+
+    let selectedTextareas = new Set();
+    let isDraggingTextarea = false;
+
+    document.addEventListener('mousedown', function(e) {
+        if (e.target.tagName === 'TEXTAREA' && e.target.hasAttribute('data-focus-id')) {
+            // 셀 내부 클릭 시 기존 다중 선택 초기화
+            selectedTextareas.forEach(ta => ta.style.backgroundColor = '');
+            selectedTextareas.clear();
+            selectedTextareas.add(e.target);
+            e.target.style.backgroundColor = '#eff6ff'; // 선택 대기 색상 (연한 파랑)
+            isDraggingTextarea = true;
+        } else {
+            // 표 바깥 클릭 시 선택 완벽 초기화
+            selectedTextareas.forEach(ta => ta.style.backgroundColor = '');
+            selectedTextareas.clear();
+            isDraggingTextarea = false;
+            document.body.style.userSelect = '';
+        }
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        // e.buttons === 1 은 좌클릭 유지 상태 (드래그)
+        if (isDraggingTextarea && e.buttons === 1) {
+            if (e.target.tagName === 'TEXTAREA' && e.target.hasAttribute('data-focus-id')) {
+                if (!selectedTextareas.has(e.target)) {
+                    // 마우스가 다른 셀로 넘어가는 순간 본격적인 다중 선택 모드 발동
+                    document.body.style.userSelect = 'none'; // 화면의 난잡한 텍스트 드래그 방지
+                    
+                    selectedTextareas.add(e.target);
+                    selectedTextareas.forEach(ta => ta.style.backgroundColor = '#dbeafe'); // 다중 선택 확정 색상 (진한 파랑)
+                }
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', function(e) {
+        isDraggingTextarea = false;
+        document.body.style.userSelect = ''; // 마우스 떼면 일반 텍스트 드래그 허용 복구
+    });
+
+    document.addEventListener('keydown', function(e) {
+        // 다중 선택된 상태에서 Delete나 Backspace를 누르면 일괄 삭제
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (selectedTextareas.size > 1) {
+                e.preventDefault(); // 뒤로가기 등 브라우저 기본 동작 방지
+                let clearedCount = 0;
+                
+                selectedTextareas.forEach(ta => {
+                    if (!ta.readOnly) { // 소음의 'V' 등 읽기 전용 셀은 안전하게 보호
+                        ta.value = '';
+                        ta.dispatchEvent(new Event('input')); // 데이터 저장 함수 강제 트리거하여 내부 데이터 동기화
+                        clearedCount++;
+                    }
+                });
+                
+                showToast(`${clearedCount}개 셀의 내용이 일괄 삭제되었습니다.`);
+            }
+        } else if (e.key === 'Escape') {
+            // Esc 누르면 다중 선택 깔끔하게 해제
+            selectedTextareas.forEach(ta => ta.style.backgroundColor = '');
+            selectedTextareas.clear();
+        }
+    });
 
     recalculateNames();
   </script>
