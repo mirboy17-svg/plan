@@ -276,6 +276,9 @@
           <button onclick="moveDepartmentDay()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded font-bold text-sm shadow-sm transition-colors whitespace-nowrap">
             이동 실행
           </button>
+          <button onclick="resetAllDays()" class="bg-slate-500 hover:bg-slate-600 text-white px-4 py-1.5 rounded font-bold text-sm shadow-sm transition-colors whitespace-nowrap ml-1" title="모든 대상을 1일차-1팀으로 되돌립니다.">
+            ↺ 전체 초기화
+          </button>
         </div>
       </section>
 
@@ -753,6 +756,29 @@
         } else {
             showToast("선택한 조건에 해당하는 이동 대상이 없습니다.", true);
         }
+    }
+
+    // 모든 데이터를 1일차-1팀으로 리셋
+    function resetAllDays() {
+        customConfirm("모든 부서와 단위사업체의 일차 설정을 초기화하고 전부 '1일차-1팀'으로 되돌리시겠습니까?", () => {
+            let resetCount = 0;
+            Object.keys(appData.units).forEach(unit => {
+                appData.units[unit].forEach(w => {
+                    if (w.day !== 1) {
+                        w.day = 1; // 1 = 1일차-1팀
+                        resetCount++;
+                    }
+                });
+            });
+            
+            if(resetCount > 0) {
+                appData.currentDay = 1;
+                reRender();
+                showToast(`총 ${resetCount}건의 항목이 1일차-1팀으로 완벽하게 초기화되었습니다.`);
+            } else {
+                showToast("이미 모든 항목이 1일차-1팀에 있습니다.");
+            }
+        });
     }
 
     function renderDayTabs() {
