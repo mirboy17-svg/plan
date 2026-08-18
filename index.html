@@ -1753,11 +1753,35 @@
         document.body.style.userSelect = ''; // 마우스 떼면 일반 텍스트 드래그 허용 복구
     });
 
+    // 일괄 삭제 실행 취소(Undo)를 위한 임시 데이터 백업 변수
+    let bulkDeleteSnapshot = null;
+
     document.addEventListener('keydown', function(e) {
-        // 다중 선택된 상태에서 Delete나 Backspace를 누르면 일괄 삭제
+        // 1. Ctrl+Z (또는 Cmd+Z) 감지 - 일괄 삭제 직후에만 작동하도록 설정
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            if (bulkDeleteSnapshot) {
+                e.preventDefault(); // 기본 되돌리기 방지 (충돌 방지)
+                appData = JSON.parse(bulkDeleteSnapshot); // 백업해둔 데이터로 통째로 롤백
+                bulkDeleteSnapshot = null; // 복구 완료 후 백업본 비우기
+                
+                // 파란색 선택 영역 초기화
+                selectedTextareas.forEach(ta => ta.style.backgroundColor = '');
+                selectedTextareas.clear();
+                
+                reRender(); // 화면 다시 그리기
+                showToast('일괄 삭제가 실행 취소(복구)되었습니다.');
+                return;
+            }
+        }
+
+        // 2. 다중 선택된 상태에서 Delete나 Backspace를 누르면 일괄 삭제
         if (e.key === 'Delete' || e.key === 'Backspace') {
             if (selectedTextareas.size > 1) {
                 e.preventDefault(); // 뒤로가기 등 브라우저 기본 동작 방지
+                
+                // ★ 지우기 직전의 완벽한 상태를 스냅샷으로 찰칵 저장 (Ctrl+Z 대비)
+                bulkDeleteSnapshot = JSON.stringify(appData);
+                
                 let clearedCount = 0;
                 
                 selectedTextareas.forEach(ta => {
@@ -1768,7 +1792,7 @@
                     }
                 });
                 
-                showToast(`${clearedCount}개 셀의 내용이 일괄 삭제되었습니다.`);
+                showToast(`${clearedCount}개 셀 일괄 삭제됨 (Ctrl+Z 로 복구 가능)`);
             }
         } else if (e.key === 'Escape') {
             // Esc 누르면 다중 선택 깔끔하게 해제
