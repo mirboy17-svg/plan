@@ -1525,12 +1525,18 @@
 
               const combinedCD = (targetColC + ' ' + targetColD).toUpperCase();
               
-              const regex = /(?:^|[^A-Z])([APL])(\d+)/g;
+              // 정규식에 'M' 추가 (A, P, L, M 모두 탐지)
+              const regex = /(?:^|[^A-Z])([APLM])(\d+)/g;
               let matchResult;
               let extractedPumps = [];
               
               while ((matchResult = regex.exec(combinedCD)) !== null) {
-                  extractedPumps.push({ type: matchResult[1].toLowerCase(), num: matchResult[2] });
+                  let pumpType = matchResult[1].toLowerCase();
+                  
+                  // M으로 시작하는 펌프 번호는 표의 A칸에 넣도록 타입 강제 변환
+                  if (pumpType === 'm') pumpType = 'a';
+                  
+                  extractedPumps.push({ type: pumpType, num: matchResult[2] });
               }
 
               if (extractedPumps.length === 0) continue; 
