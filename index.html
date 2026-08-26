@@ -1551,6 +1551,10 @@
                       if (isMatchedForThisRow) break;
 
                       const worker = workers[wIndex];
+                      
+                      // 🚀 추가된 핵심 로직: 현재 화면에 띄워진 일차(Day) 탭의 근로자에게만 매칭!
+                      if ((worker.day || 1) !== appData.currentDay) continue;
+
                       const wDept = clean(worker.department);
                       const wProc = clean(worker.process);
                       
@@ -1560,7 +1564,7 @@
                           for (let fIndex = 0; fIndex < worker.harmfulFactors.length; fIndex++) {
                               const factor = worker.harmfulFactors[fIndex];
                               
-                              // 🚀 1번 요구사항: [조정] 표시가 된 횟수조정 인자는 검사조차 하지 않고 무조건 건너뜀 (절대 연동 안 됨)
+                              // 1번 요구사항: [조정] 표시가 된 횟수조정 인자는 검사조차 하지 않고 무조건 건너뜀 (절대 연동 안 됨)
                               if (factor.isAdjusted) continue;
 
                               const fName = clean(factor.name);
@@ -1569,7 +1573,7 @@
                               
                               let isFactorMatch = false;
                               
-                              // 🚀 2번 요구사항 해결: 통째로 일치하지 않아도, 쉼표로 쪼갠 물질 중 단 1개라도 겹치면 매칭 성공으로 판정
+                              // 2번 요구사항 해결: 통째로 일치하지 않아도, 쉼표로 쪼갠 물질 중 단 1개라도 겹치면 매칭 성공으로 판정
                               if (fName !== '' && (fName === refColK || fName === refColL)) {
                                   isFactorMatch = true;
                               } else {
@@ -1600,12 +1604,12 @@
 
           if (matchCount > 0) {
               msg.className = 'text-sm font-medium text-emerald-600';
-              msg.innerText = `성공! 총 ${matchCount}개의 번호가 1:1로 순차 매칭되었습니다.`;
+              msg.innerText = `성공! 현재 화면(일차)에 총 ${matchCount}개의 번호가 매칭되었습니다.`;
               reRender(); 
               updateCountsUI(); 
           } else {
               msg.className = 'text-sm font-medium text-amber-600';
-              msg.innerText = '매칭된 항목이 없습니다. (부서/공정명 및 유해인자가 100% 동일한지 확인)';
+              msg.innerText = '현재 화면에서 조건에 매칭되는 항목이 없습니다.';
           }
 
       } catch (error) {
