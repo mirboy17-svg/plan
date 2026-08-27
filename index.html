@@ -862,11 +862,23 @@
     }
 
     function generateSampleSummaryForDay(day, unitNames) {
-        let pumpMap = new Map();
+        // 💡 1. 데이터 집계: Map<"부서명 [공정명]", Map<"시료조합", 카운트>>
+        let deptProcessMap = new Map();
 
         unitNames.forEach(unit => {
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
+            
             currentWorkers.forEach(worker => {
+                let deptName = (worker.department || '').trim() || '부서미지정';
+                let procName = (worker.process || '').trim() || '공정미지정';
+                let groupKey = `${deptName} [${procName}]`; // 부서명과 공정명을 하나로 묶어 키 생성
+
+                if (!deptProcessMap.has(groupKey)) {
+                    deptProcessMap.set(groupKey, new Map());
+                }
+                let combinationCounts = deptProcessMap.get(groupKey);
+
+                // 이 근로자의 펌프별 유해인자 추출 (기존 펌프 묶는 로직 재사용)
                 let factorsByPump = {};
 
                 worker.harmfulFactors.forEach(factor => {
@@ -875,29 +887,26 @@
                     let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
                     if (!rawName) return;
 
-                    // 1. 1,2-디클로로에틸렌 등 숫자 사이 쉼표 철통 방어!
+                    // 1,2-디클로로에틸렌 등 숫자 사이 쉼표 철통 방어!
                     let safeName = rawName.replace(/(\d),(\d)/g, '$1_COMMA_$2');
-                    
                     let nameTokens = safeName.split(',').map(s => s.replace(/_COMMA_/g, ',').trim()).filter(Boolean);
                     
+                    // 1개 물질을 띄우고 나머지는 '외 N종' 처리
                     let finalName = rawName;
-                    
-                    // 2. 2개 이상일 경우 무조건 "1개 + 외 N종" 으로 축약!
                     if (nameTokens.length >= 2) {
                         finalName = `${nameTokens[0]} 외 ${nameTokens.length - 1}종`;
                     } else {
                         finalName = nameTokens[0];
                     }
 
-                    // 🚀 3. 비고란 내용 결합 (가방 글자 제외 및 괄호 중복 방지)
+                    // 비고란 내용 결합 (가방 글자 제외 및 괄호 중복 방지)
                     let remarkStr = String(factor.remark || '').replace(/\[가방\]/g, '').trim();
                     if (remarkStr) {
-                        // 사용자가 이미 대괄호를 쳤을 경우를 대비해 양끝 대괄호 제거 후 씌움
                         remarkStr = remarkStr.replace(/^\[(.*)\]$/, '$1'); 
                         finalName = `${finalName}[${remarkStr}]`;
                     }
 
-                    // 4. 펌프 번호 추출 및 소음(V) 처리
+                    // 펌프 번호 추출 및 소음(V) 처리
                     let pNum = String(factor.a || factor.p || factor.l || factor.n || '').replace(/[^0-9Vv]/g, '');
                     if (!pNum && (rawName.includes('소음') || factor.n)) pNum = 'V';
                     if (!pNum) pNum = 'NONE_' + Math.random();
@@ -908,45 +917,61 @@
                     factorsByPump[pNum].push(finalName);
                 });
 
+                // 추출된 조합을 부서/공정별 카운트 맵에 누적
                 Object.keys(factorsByPump).forEach(pNum => {
                     if (pNum.startsWith('NONE_')) return;
 
                     let uniqueNames = Array.from(new Set(factorsByPump[pNum]));
-                    // 펌프 번호가 같아서 나뉘어진 줄이 합쳐질 때는 '+' 기호로 결합 (예: 에탄올아민[비고1] + 금속가공유[비고2])
                     let combinedName = uniqueNames.join(' + '); 
 
-                    if (!pumpMap.has(combinedName)) {
-                        pumpMap.set(combinedName, 0);
+                    if (!combinationCounts.has(combinedName)) {
+                        combinationCounts.set(combinedName, 0);
                     }
-                    pumpMap.set(combinedName, pumpMap.get(combinedName) + 1);
+                    combinationCounts.set(combinedName, combinationCounts.get(combinedName) + 1);
                 });
             });
         });
 
-        if (pumpMap.size === 0) return '';
+        if (deptProcessMap.size === 0) return '';
 
-        // 인쇄 시 2단 구성(columns-2) 적용으로 공간 대폭 압축
+        // 💡 2. HTML 렌더링 (카드 및 다단 레이아웃 형태)
         let html = `<div class="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:border-none print:shadow-none break-inside-avoid print:mb-0 mb-4 w-full page-break-after-always summary-section">`;
-        html += `<h3 class="font-bold text-lg text-indigo-700 mb-3 border-b border-indigo-100 pb-1 print:text-black print:border-black print:text-[14px]"><span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-sm font-bold border border-indigo-300 print:hidden mr-2">STEP 3</span>[${getDayName(day)}] 측정 시료 준비 요약표</h3>`;
-        html += `<ul class="space-y-2 print:space-y-0 print:columns-2 print:gap-x-8">`;
-
-        let sortedKeys = Array.from(pumpMap.keys()).sort((a, b) => {
-            let aIsNoise = a.includes('소음');
-            let bIsNoise = b.includes('소음');
-            if (aIsNoise && !bIsNoise) return -1;
-            if (!aIsNoise && bIsNoise) return 1;
-            return a.localeCompare(b);
-        });
-
-        sortedKeys.forEach(k => {
-            let cnt = pumpMap.get(k);
-            html += `<li class="flex justify-between items-center text-[13px] font-medium border-b border-dashed border-gray-200 pb-1.5 last:border-0 print:border-gray-400 print:text-[10px] print:py-1 print:break-inside-avoid">
-                        <span class="text-gray-800 break-words pr-2 print:text-black font-semibold tracking-tight">${k}</span> 
-                        <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-center print:bg-transparent print:text-black print:p-0 print:shadow-none shadow-sm">${cnt}개</span>
-                     </li>`;
-        });
+        html += `<h3 class="font-bold text-lg text-indigo-700 mb-4 border-b border-indigo-100 pb-2 print:text-black print:border-black print:text-[14px]"><span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-sm font-bold border border-indigo-300 print:hidden mr-2">STEP 3</span>[${getDayName(day)}] 부서·공정별 시료 준비 요약표</h3>`;
         
-        html += `</ul></div>`;
+        // 화면에서는 그리드 뷰, 인쇄 시에는 2단 레이아웃(columns-2) 적용
+        html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 print:block print:columns-2 print:gap-x-6">`;
+
+        let sortedGroupKeys = Array.from(deptProcessMap.keys()).sort();
+
+        sortedGroupKeys.forEach(groupKey => {
+            let combinationCounts = deptProcessMap.get(groupKey);
+            if (combinationCounts.size === 0) return;
+
+            // 부서/공정명 카드 시작 (인쇄 시 잘리지 않도록 break-inside-avoid 속성 부여)
+            html += `<div class="bg-gray-50 border border-gray-200 rounded-md p-3 print:bg-transparent print:border-gray-400 print:p-2 mb-4 break-inside-avoid shadow-sm print:shadow-none">`;
+            html += `<h4 class="font-bold text-sm text-gray-800 mb-2 border-b border-gray-200 pb-1 print:border-gray-400 print:text-[11px] print:text-black">🏢 ${groupKey}</h4>`;
+            html += `<ul class="space-y-1.5">`;
+
+            let sortedCombinations = Array.from(combinationCounts.keys()).sort((a, b) => {
+                let aIsNoise = a.includes('소음');
+                let bIsNoise = b.includes('소음');
+                if (aIsNoise && !bIsNoise) return -1;
+                if (!aIsNoise && bIsNoise) return 1;
+                return a.localeCompare(b);
+            });
+
+            sortedCombinations.forEach(combo => {
+                let count = combinationCounts.get(combo);
+                html += `<li class="flex justify-between items-start text-[12.5px] print:text-[9.5px] leading-snug">
+                            <span class="text-gray-700 pr-2 print:text-black break-words font-medium">${combo}</span> 
+                            <span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 border border-indigo-100 rounded font-bold whitespace-nowrap print:bg-transparent print:border-none print:p-0 print:text-black shadow-sm print:shadow-none">${count}건</span>
+                         </li>`;
+            });
+
+            html += `</ul></div>`;
+        });
+
+        html += `</div></div>`;
         return html;
     }
 
