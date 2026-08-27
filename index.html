@@ -1024,9 +1024,12 @@
                       // 8. 유해인자명
                       const nameLen = (factor.name || '').length;
                       let printFontSizeStyle = '';
-                      if (nameLen > 40) printFontSizeStyle = 'font-size: 6px !important; letter-spacing: -0.5px !important;';
-                      else if (nameLen > 30) printFontSizeStyle = 'font-size: 7px !important; letter-spacing: -0.3px !important;';
-                      else if (nameLen > 20) printFontSizeStyle = 'font-size: 8px !important; letter-spacing: -0.2px !important;';
+                      // 🖨️ 인쇄 시 칸 너비가 고정되므로, 폰트를 최대한 작게 줄여 많은 내용을 담되, 넘치면 과감하게 자름(...)
+                      if (nameLen > 60) printFontSizeStyle = 'font-size: 5px !important; letter-spacing: -0.6px !important;';
+                      else if (nameLen > 40) printFontSizeStyle = 'font-size: 5.5px !important; letter-spacing: -0.5px !important;';
+                      else if (nameLen > 30) printFontSizeStyle = 'font-size: 6px !important; letter-spacing: -0.4px !important;';
+                      else if (nameLen > 20) printFontSizeStyle = 'font-size: 7px !important; letter-spacing: -0.2px !important;';
+                      else printFontSizeStyle = 'font-size: 8px !important; letter-spacing: -0.1px !important;';
                       
                       let screenFontSizeStyle = '';
                       if (nameLen > 40) screenFontSizeStyle = 'font-size: 9px; letter-spacing: -0.5px;';
