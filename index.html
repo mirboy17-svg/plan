@@ -888,8 +888,8 @@
                             <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
                             <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">근로자수</th>
                             <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">노출주기</th>
-                            <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
-                            <th class="px-2 py-2 w-[300px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
+                            <th class="px-1 py-2 w-[30px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
+                            <th class="px-2 py-2 w-[310px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
                             <th class="px-1 py-2 w-[70px] border-r border-b border-gray-200 print:border-black text-center">근로자명</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">A</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">P</th>
@@ -1000,9 +1000,9 @@
                       </td>`;
 
                       if (isWorkerStart) {
-                          dayHtml += `<td class="border-r ${bClass} p-1 align-middle print:p-0.5" rowspan="${wSpan}">
-                            <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden" placeholder="이름" rows="1">${worker.name}</textarea></div>
-                            <div id="print-name-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-left">${worker.name}</div>
+                          dayHtml += `<td class="border-r ${bClass} p-1 align-middle print:p-0.5 worker-name-cell" rowspan="${wSpan}">
+                            <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden font-bold text-gray-800" placeholder="이름" rows="1">${worker.name}</textarea></div>
+                            <div id="print-name-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-left font-bold text-black">${worker.name}</div>
                           </td>`;
                       }
 
@@ -1124,7 +1124,7 @@
       allDays.forEach(day => {
           // --- 1. [전체사업체] 통합 시트 추가 ---
           let allUnitsData = [];
-          allUnitsData.push(["단위사업체", "No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "근로자명", "A", "P", "L", "N", "비고"]);
+          allUnitsData.push(["단위사업체", "No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "A", "P", "L", "N", "비고", "근로자명"]);
           let globalIndex = 1;
           let hasAnyData = false;
 
@@ -1138,7 +1138,7 @@
                   let hazardText = factor.name || '';
                   if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                   const isNoiseFactor = factor.name.trim().includes('소음');
-                  const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                  const nVal = (!factor.isAdjusted && isNoiseFactor && !factor.n) ? 'V' : (factor.n || '');
                   allUnitsData.push([
                     isFirst ? unitName : '', 
                     isFirst ? globalIndex++ : '', 
@@ -1149,8 +1149,8 @@
                     isFirst ? worker.exposureCycle || '' : '', 
                     isFirst ? worker.measurementCount || '' : '',
                     hazardText, 
-                    isFirst ? worker.name : '', 
-                    factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || ''
+                    factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || '',
+                    isFirst ? worker.name : ''
                   ]);
                 });
               });
@@ -1169,7 +1169,7 @@
             const currentWorkers = appData.units[unitName].filter(w => (w.day||1) === day);
             if(currentWorkers.length === 0) return;
             let wsData = [];
-            wsData.push(["No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "근로자명", "A", "P", "L", "N", "비고"]);
+            wsData.push(["No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "A", "P", "L", "N", "비고", "근로자명"]);
             currentWorkers.forEach((worker, index) => {
               worker.harmfulFactors.forEach((factor, fIndex) => {
                 const isFirst = fIndex === 0;
@@ -1179,7 +1179,7 @@
                 const nVal = (!factor.isAdjusted && isNoiseFactor && !factor.n) ? 'V' : (factor.n || '');
                 wsData.push([
                   isFirst ? index + 1 : '', isFirst ? worker.department || '' : '', isFirst ? worker.process || '' : '', isFirst ? worker.shiftSystem || '' : '', isFirst ? worker.workerCount || '' : '', isFirst ? worker.exposureCycle || '' : '', isFirst ? worker.measurementCount || '' : '',
-                  hazardText, isFirst ? worker.name : '', factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || ''
+                  hazardText, factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || '', isFirst ? worker.name : ''
                 ]);
               });
             });
