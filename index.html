@@ -968,8 +968,9 @@
                   worker.harmfulFactors.forEach((factor, fIndex) => {
                       const isGroupStart = (gSpan > 0 && fIndex === 0);
                       const isWorkerStart = (fIndex === 0);
+                      const hasMultiple = wSpan > 1;
                       const bClass = 'border-b border-gray-200 print:border-black';
-                      const rowPrintClass = isWorkerStart ? 'worker-start-row' : 'factor-inner-row';
+                      const rowPrintClass = isWorkerStart ? (hasMultiple ? 'worker-start-row has-multiple-factors' : 'worker-start-row') : 'factor-inner-row';
                       
                       const factorVal = String(factor.a || factor.p || factor.l || '').replace(/[^0-9]/g, '');
                       const factorBgClass = factorVal && colorMap[factorVal] ? `${colorMap[factorVal]} print:${colorMap[factorVal]}` : '';
@@ -1025,10 +1026,10 @@
                       else if (nameLen > 20) screenFontSizeStyle = 'font-size: 11.5px; letter-spacing: -0.2px;';
                       else screenFontSizeStyle = 'font-size: 13px;';
 
-                      dayHtml += `<td class="border-r ${bClass} ${factorBgClass} px-1 py-0.5 relative group/hazard align-middle">
+                      dayHtml += `<td class="border-r ${bClass} ${factorBgClass} px-1 py-0 relative group/hazard align-middle factor-cell">
                         <div class="flex items-center w-full">
                             ${badgeHtml}
-                            <div class="w-full print:hidden flex items-center"><textarea data-focus-id="fname-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'name', this.value)" class="w-full bg-transparent outline-none pr-[36px] resize-none overflow-hidden whitespace-nowrap text-ellipsis leading-none py-0.5 ${adjustedClasses}" style="${screenFontSizeStyle}" rows="1">${factor.name}</textarea></div>
+                            <div class="w-full print:hidden flex items-center"><textarea data-focus-id="fname-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'name', this.value)" class="w-full bg-transparent outline-none pr-[36px] resize-none overflow-hidden whitespace-nowrap text-ellipsis leading-none py-0" style="${screenFontSizeStyle}" rows="1">${factor.name}</textarea></div>
                             <div id="print-fname-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight whitespace-nowrap overflow-hidden text-ellipsis ${adjustedClasses}" style="${printFontSizeStyle}">${factor.name}</div>
                         </div>
                         <div class="absolute right-0.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 print:hidden bg-white/90 pl-1 py-0 rounded z-10 opacity-0 group-hover/hazard:opacity-100 transition-opacity">
@@ -1041,27 +1042,27 @@
 
                       // 9~12. A, P, L, N (여백 최소화 py-0)
                       dayHtml += `
-                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0.5" rows="1">${factor.a}</textarea></div>
+                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell">
+                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0" rows="1">${factor.a}</textarea></div>
                           <div id="print-fa-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.a}</div>
                         </td>
-                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0.5" rows="1">${factor.p}</textarea></div>
+                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell">
+                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0" rows="1">${factor.p}</textarea></div>
                           <div id="print-fp-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.p}</div>
                         </td>
-                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0.5" rows="1">${factor.l}</textarea></div>
+                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell">
+                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0" rows="1">${factor.l}</textarea></div>
                           <div id="print-fl-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.l}</div>
                         </td>
-                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0.5" rows="1">${factor.n}</textarea></div>
+                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell">
+                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0" rows="1">${factor.n}</textarea></div>
                           <div id="print-fn-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.n}</div>
                         </td>
                       `;
 
                       // 13. 비고
                       dayHtml += `
-                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 align-middle print:p-0.5 relative group/remark">
+                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 align-middle print:p-0.5 relative group/remark factor-cell">
                           <div class="w-full h-full print:hidden flex items-center relative">
                             <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full pl-1 pr-[28px] bg-transparent outline-none text-center resize-none overflow-hidden leading-tight py-0.5" placeholder="비고" rows="1">${factor.remark}</textarea>
                             <button tabindex="-1" type="button" onclick="addBagToRemark('${unitName}', ${worker.id}, ${fIndex})" class="absolute right-0.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-1 py-0.5 rounded shadow-sm transition-colors z-10" title="최상단 '[가방]' 기입">가방</button>
