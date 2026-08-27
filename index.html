@@ -1503,11 +1503,10 @@
 
           let matchCount = 0;
           
-          // 기존: 쉼표(,)까지 싹 다 지워버려서 통째로 비교하는 용도
+          // 텍스트 정제용 필터 함수들
           const clean = (str) => String(str || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase();
-          
-          // 신규: 쉼표(,)는 살려둬서, 각각의 물질을 쪼개서 비교할 수 있도록 만든 정제 필터
           const cleanToken = (str) => String(str || '').replace(/[\s\(\)\[\]\-\/]/g, '').toLowerCase();
+          const removeStel = (str) => str.replace(/stel/g, ''); // 2단계 매칭용 STEL 무시 함수
 
           const matchedSlots = new Set();
 
@@ -1519,13 +1518,13 @@
               const refColK = clean(row[10]); 
               const refColL = clean(row[11]); 
 
-              // K열, L열 데이터를 쉼표 기준으로 쪼개서 배열로 만듦 (여러 물질이 섞여 있어도 각각 인식)
+              // K열, L열 쪼개기
               const refColK_tokens = String(row[10] || '').split(',').map(cleanToken).filter(Boolean);
               const refColL_tokens = String(row[11] || '').split(',').map(cleanToken).filter(Boolean);
 
               const combinedCD = (targetColC + ' ' + targetColD).toUpperCase();
               
-              // 정규식에 'M' 추가 (A, P, L, M 모두 탐지)
+              // 정규식에 'M' 포함 (M201 등을 찾아내기 위함)
               const regex = /(?:^|[^A-Z])([APLM])(\d+)/g;
               let matchResult;
               let extractedPumps = [];
@@ -1552,7 +1551,7 @@
 
                       const worker = workers[wIndex];
                       
-                      // 🚀 추가된 핵심 로직: 현재 화면에 띄워진 일차(Day) 탭의 근로자에게만 매칭!
+                      // 화면에 켜진 일차(Day) 탭 근로자만 대상
                       if ((worker.day || 1) !== appData.currentDay) continue;
 
                       const wDept = clean(worker.department);
@@ -1561,41 +1560,71 @@
                       const isEColumnMatch = (wDept !== '' && refColE.includes(wDept)) || (wProc !== '' && refColE.includes(wProc));
 
                       if (isEColumnMatch) {
+                          let matchedFactorIndex = -1;
+
+                          // [1단계 탐색] STEL 유무까지 100% 똑같은 '엄격한' 짝꿍 찾기
                           for (let fIndex = 0; fIndex < worker.harmfulFactors.length; fIndex++) {
                               const factor = worker.harmfulFactors[fIndex];
+                              if (factor.isAdjusted) continue; // [조정] 항목 완전 무시
                               
-                              // 1번 요구사항: [조정] 표시가 된 횟수조정 인자는 검사조차 하지 않고 무조건 건너뜀 (절대 연동 안 됨)
-                              if (factor.isAdjusted) continue;
+                              const slotId = `${worker.id}-${fIndex}`;
+                              if (matchedSlots.has(slotId)) continue; // 이미 매칭된 슬롯 패스
 
                               const fName = clean(factor.name);
-                              // 표의 유해인자명도 쉼표 기준으로 쪼갬 (예: 산화철분진과흄, 이산화티타늄 -> ['산화철분진과흄', '이산화티타늄'])
                               const fName_tokens = String(factor.name || '').split(',').map(cleanToken).filter(Boolean);
                               
-                              let isFactorMatch = false;
-                              
-                              // 2번 요구사항 해결: 통째로 일치하지 않아도, 쉼표로 쪼갠 물질 중 단 1개라도 겹치면 매칭 성공으로 판정
+                              let isStrictMatch = false;
                               if (fName !== '' && (fName === refColK || fName === refColL)) {
-                                  isFactorMatch = true;
+                                  isStrictMatch = true;
                               } else {
-                                  // 표의 물질 중 하나라도 시료채취대장의 물질(K 또는 L)에 포함되어 있는지 확인 (교집합 찾기)
-                                  const hasIntersection = fName_tokens.some(token => refColK_tokens.includes(token) || refColL_tokens.includes(token));
-                                  if (hasIntersection) {
-                                      isFactorMatch = true;
-                                  }
+                                  isStrictMatch = fName_tokens.some(token => refColK_tokens.includes(token) || refColL_tokens.includes(token));
                               }
 
-                              const slotId = `${worker.id}-${fIndex}`;
+                              if (isStrictMatch) {
+                                  matchedFactorIndex = fIndex;
+                                  break; // 1단계에서 짝을 찾았으면 탐색 즉시 중단
+                              }
+                          }
 
-                              if (isFactorMatch && !matchedSlots.has(slotId)) {
-                                  extractedPumps.forEach(pump => {
-                                      factor[pump.type] = pump.num; 
+                          // [2단계 탐색] 1단계에서 못 찾은 경우에만, 양쪽에서 STEL을 떼버리고 '느슨한' 성분 짝꿍 찾기
+                          if (matchedFactorIndex === -1) {
+                              for (let fIndex = 0; fIndex < worker.harmfulFactors.length; fIndex++) {
+                                  const factor = worker.harmfulFactors[fIndex];
+                                  if (factor.isAdjusted) continue;
+                                  
+                                  const slotId = `${worker.id}-${fIndex}`;
+                                  if (matchedSlots.has(slotId)) continue;
+
+                                  const fName_tokens = String(factor.name || '').split(',').map(cleanToken).filter(Boolean);
+                                  
+                                  const hasLooseMatch = fName_tokens.some(token => {
+                                      // 표와 시트의 단어에서 각각 STEL 영문을 지우고 알맹이 비교
+                                      const looseToken = removeStel(token);
+                                      const looseK = refColK_tokens.map(removeStel);
+                                      const looseL = refColL_tokens.map(removeStel);
+                                      return looseK.includes(looseToken) || looseL.includes(looseToken);
                                   });
                                   
-                                  matchedSlots.add(slotId);
-                                  isMatchedForThisRow = true;
-                                  matchCount++;
-                                  break; 
+                                  if (hasLooseMatch) {
+                                      matchedFactorIndex = fIndex;
+                                      break;
+                                  }
                               }
+                          }
+
+                          // 최종적으로 짝을 찾았다면 해당 칸에 펌프 번호 기입
+                          if (matchedFactorIndex !== -1) {
+                              const factor = worker.harmfulFactors[matchedFactorIndex];
+                              const slotId = `${worker.id}-${matchedFactorIndex}`;
+                              
+                              extractedPumps.forEach(pump => {
+                                  factor[pump.type] = pump.num; 
+                              });
+                              
+                              matchedSlots.add(slotId); // 이 칸은 찼다고 도장 쾅!
+                              isMatchedForThisRow = true;
+                              matchCount++;
+                              break; // 해당 시트 데이터 처리가 끝났으므로 다음 줄(Row)로 넘어감
                           }
                       }
                   }
