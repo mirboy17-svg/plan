@@ -64,6 +64,17 @@
         border: 1px solid black !important; /* 테두리 확실하게 표시 */
       }
       
+      /* === 🖨️ 직관적인 인쇄 선(테두리) 디자인 적용 === */
+      /* 근로자 구분 굵은 선 (새로운 근로자 시작 시) */
+      tr.worker-start-row > td {
+        border-top: 1.5px solid #000 !important;
+      }
+      /* 동일 근로자의 내부 유해인자들 사이의 옅은 점선 */
+      tr.factor-inner-row > td {
+        border-top: 1px dashed #9ca3af !important;
+        border-bottom: 1px dashed #9ca3af !important;
+      }
+      
       /* 글자 잘림 방지 */
       .nowrap-col { white-space: nowrap !important; }
       .break-all { word-break: break-all !important; white-space: pre-wrap !important; }
@@ -102,17 +113,13 @@
 <body class="bg-[#FAFAFA] font-sans min-h-screen p-0 m-0">
 
   <div id="loginScreen" class="fixed inset-0 bg-[#F8FAFC] flex flex-col items-center justify-center z-50 overflow-hidden px-4">
-    <!-- 모던 그라데이션 배경 장식 (크기 약간 축소) -->
     <div class="absolute top-[-5%] left-[-5%] w-[30%] h-[30%] rounded-full bg-emerald-400/20 blur-[80px] pointer-events-none"></div>
     <div class="absolute bottom-[-5%] right-[-5%] w-[30%] h-[30%] rounded-full bg-blue-400/20 blur-[80px] pointer-events-none"></div>
 
-    <!-- 메인 로그인 카드 (패딩, 마진 대폭 축소) -->
     <div class="relative bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white/60 w-full max-w-[380px] text-center flex flex-col items-center z-10">
       
-      <!-- 상단 포인트 컬러 바 -->
       <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-b-full opacity-80"></div>
 
-      <!-- Lock Icon (크기 축소) -->
       <div class="w-12 h-12 bg-gradient-to-br from-emerald-50 to-teal-100 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-emerald-100/50 group hover:-rotate-6 transition-transform duration-300">
         <svg class="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -142,7 +149,6 @@
       </form>
     </div>
 
-    <!-- Footer info (절대 위치에서 상대 위치로 변경하여 카드 밑에 촘촘하게 붙임) -->
     <div class="relative z-10 mt-5 w-full flex flex-col items-center justify-center space-y-1.5">
       <p class="text-[12px] font-semibold text-slate-700">시스템 오류 및 사용 문의</p>
       <div class="flex items-center gap-2.5 text-slate-500 text-[11px] bg-white/60 px-4 py-1.5 rounded-full border border-slate-200/50 shadow-sm backdrop-blur-sm">
@@ -213,6 +219,7 @@
         </div>
       </section>
 
+      <!-- 구글 스프레드시트 데이터 연동 UI -->
       <section class="bg-blue-50 p-5 rounded-lg border border-blue-100 print:hidden">
         <div class="flex items-center gap-2 mb-3">
           <h2 class="text-base font-semibold text-blue-800">구글 스프레드시트 데이터 연동</h2>
@@ -236,7 +243,7 @@
           <span id="syncMessage" class="text-sm font-medium text-blue-600"></span>
         </div>
 
-        <!-- 신규: 시료채취대장 A, P, L 매칭 UI -->
+        <!-- 시료채취대장 A, P, L 매칭 UI -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-2">
             <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold border border-emerald-300">STEP 2</span>
@@ -262,23 +269,19 @@
         </div>
         <div class="flex flex-wrap items-center gap-2">
           
-          <!-- 단위사업체 다중 선택 드롭다운 -->
           <div class="relative">
             <button id="unitDropdownBtn" onclick="toggleCustomDropdown('unitDropdownList')" class="w-[180px] text-left bg-white border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 flex justify-between items-center shadow-sm">
               단위사업체 선택 <span class="text-xs text-gray-400">▼</span>
             </button>
             <div id="unitDropdownList" class="hidden absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
-              <!-- JS로 채워짐 -->
             </div>
           </div>
 
-          <!-- 부서명 다중 선택 드롭다운 -->
           <div class="relative">
             <button id="deptDropdownBtn" onclick="toggleCustomDropdown('deptDropdownList')" class="w-[180px] text-left bg-white border border-gray-300 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 flex justify-between items-center shadow-sm">
               부서명 선택 <span class="text-xs text-gray-400">▼</span>
             </button>
             <div id="deptDropdownList" class="hidden absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
-              <!-- JS로 채워짐 -->
             </div>
           </div>
 
@@ -410,7 +413,7 @@
                       if (factor.l && String(factor.l).trim() !== '') uniqueL.add(String(factor.l).trim());
                       
                       const isNoiseFactor = String(factor.name).trim().includes('소음');
-                      const nValue = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                      const nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
                       if (nValue && String(nValue).trim() !== '') countN++;
                   });
               });
@@ -423,26 +426,36 @@
       });
     }
 
+    // 일차(Day)가 바뀔 때마다 *1, *2 부터 새롭게 넘버링되도록 변경된 함수
     function recalculateNames() {
-      let currentSeq = 1;
-      const allDays = getActiveDays();
       const unitNames = Object.keys(appData.units);
-      
-      allDays.forEach(day => {
-          unitNames.forEach(unitName => {
-              const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
-              currentWorkers.forEach(worker => {
-                  let val = (worker.name || '').trim();
-                  
-                  if (worker.isManual && val.match(/^\*\d+$/)) {
-                      currentSeq = parseInt(val.substring(1), 10) + 1;
-                  } else {
-                      if (!worker.isManual || val === '') {
-                          worker.name = '*' + currentSeq;
-                          worker.isManual = false;
+      const dayGroups = [
+          [1, 2, 3],       // 1일차 그룹
+          [4, 5, 6],       // 2일차 그룹
+          [7, 8, 9],       // 3일차 그룹
+          [10, 11, 12],    // 4일차 그룹
+          [13, 14, 15]     // 5일차 그룹
+      ];
+
+      dayGroups.forEach(groupDays => {
+          let currentSeq = 1; // 일차 그룹이 바뀔 때마다 시퀀스를 1로 리셋
+          
+          groupDays.forEach(day => {
+              unitNames.forEach(unitName => {
+                  const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
+                  currentWorkers.forEach(worker => {
+                      let val = (worker.name || '').trim();
+                      
+                      if (worker.isManual && val.match(/^\*\d+$/)) {
+                          currentSeq = parseInt(val.substring(1), 10) + 1;
+                      } else {
+                          if (!worker.isManual || val === '') {
+                              worker.name = '*' + currentSeq;
+                              worker.isManual = false;
+                          }
+                          currentSeq++;
                       }
-                      currentSeq++;
-                  }
+                  });
               });
           });
       });
@@ -639,13 +652,11 @@
         return valid;
     }
 
-    // 커스텀 드롭다운 열기/닫기 토글 함수
     function toggleCustomDropdown(id) {
         const el = document.getElementById(id);
         if(el) el.classList.toggle('hidden');
     }
 
-    // 바깥 공간을 클릭하면 열려있던 드롭다운 닫기
     document.addEventListener('click', function(event) {
         const uBtn = document.getElementById('unitDropdownBtn');
         const uList = document.getElementById('unitDropdownList');
@@ -660,19 +671,16 @@
         }
     });
 
-    // 연동 직후 및 데이터 변경 시 체크박스 리스트 자동 업데이트
     function updateDayManageDropdowns() {
         const unitList = document.getElementById('unitDropdownList');
         const deptList = document.getElementById('deptDropdownList');
         if(!unitList || !deptList) return;
 
-        // 기존에 체크되어 있던 항목 보존
         const checkedUnits = Array.from(unitList.querySelectorAll('input:checked')).map(el => el.value);
         const checkedDepts = Array.from(deptList.querySelectorAll('input:checked')).map(el => el.value);
 
         const currentUnits = Object.keys(appData.units);
         
-        // 단위사업체 체크박스 렌더링
         let unitOptions = '';
         currentUnits.forEach(u => {
             const isChecked = checkedUnits.includes(u) ? 'checked' : '';
@@ -680,7 +688,6 @@
         });
         unitList.innerHTML = unitOptions || '<div class="px-4 py-3 text-sm text-gray-500 text-center">사업체 데이터가 없습니다.</div>';
 
-        // 선택된 단위사업체를 기준으로 부서명 리스트 추출
         const activeUnits = Array.from(unitList.querySelectorAll('input:checked')).map(el => el.value);
         
         let deptOptions = '';
@@ -734,7 +741,6 @@
         updateDayManageDropdowns(); 
     }
 
-    // 선택된 여러 단위사업체/부서명들을 한 번에 지정된 일차로 이동
     function moveDepartmentDay() {
         const activeUnits = Array.from(document.querySelectorAll('.unit-checkbox:checked')).map(el => el.value);
         const activeDepts = Array.from(document.querySelectorAll('.dept-checkbox:checked')).map(el => el.value);
@@ -762,12 +768,11 @@
             showToast(`체크된 대상 총 ${movedCount}건이 ${targetDay}일차로 일괄 이동되었습니다.`);
             appData.currentDay = targetDay;
             if(appData.currentUnit !== 'ALL' && !activeUnits.includes(appData.currentUnit)) {
-                appData.currentUnit = activeUnits[0]; // 이동 후 자연스러운 화면 전환
+                appData.currentUnit = activeUnits[0];
             }
             recalculateNames();
             reRender();
             
-            // 처리 완료 후 열려있던 드롭다운 깔끔하게 숨기기
             document.getElementById('unitDropdownList').classList.add('hidden');
             document.getElementById('deptDropdownList').classList.add('hidden');
         } else {
@@ -775,14 +780,13 @@
         }
     }
 
-    // 모든 데이터를 1일차-1팀으로 리셋
     function resetAllDays() {
         customConfirm("모든 부서와 단위사업체의 일차 설정을 초기화하고 전부 '1일차-1팀'으로 되돌리시겠습니까?", () => {
             let resetCount = 0;
             Object.keys(appData.units).forEach(unit => {
                 appData.units[unit].forEach(w => {
                     if (w.day !== 1) {
-                        w.day = 1; // 1 = 1일차-1팀
+                        w.day = 1;
                         resetCount++;
                     }
                 });
@@ -846,7 +850,7 @@
       const allDays = getActiveDays();
       const unitNames = Object.keys(appData.units);
       
-      let printedDayCount = 0; // 인쇄 시 출력된 일차 카운트
+      let printedDayCount = 0; 
       
       allDays.forEach(day => {
           let hasDataForDay = false;
@@ -857,7 +861,6 @@
           const displayClass = isActiveDay ? 'block' : 'hidden print:block';
           let headerTitle = appData.currentUnit === 'ALL' ? '전체 사업체' : `[단위사업체] : ${appData.currentUnit}`;
 
-          // 2일차, 3일차 등 첫 출력 일차 이후부터 강제 페이지 나눔 클래스 추가
           const pageBreakClass = printedDayCount > 0 ? 'page-break-before' : '';
           printedDayCount++;
 
@@ -883,19 +886,19 @@
                         <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black print:text-[9px]">
                           <tr>
                             <th class="px-1 py-2 w-[25px] text-center border-r border-b border-gray-200 print:border-black nowrap-col">No.</th>
-                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">부서명</th>
-                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">공정명</th>
-                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
+                            <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">부서명</th>
+                            <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">공정명</th>
+                            <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
                             <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">근로자수</th>
                             <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">노출주기</th>
-                            <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
-                            <th class="px-2 py-2 w-[300px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
-                            <th class="px-1 py-2 w-[70px] border-r border-b border-gray-200 print:border-black text-center">근로자명</th>
+                            <th class="px-1 py-2 w-[30px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
+                            <th class="px-2 py-2 w-[325px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">A</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">P</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">L</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">N</th>
                             <th class="px-1 py-2 w-[110px] border-r border-b border-gray-200 print:border-black text-center">비고</th>
+                            <th class="px-1 py-2 w-[70px] border-r border-b border-gray-200 print:border-black text-center">근로자명</th>
                             <th class="px-2 py-2 w-[110px] text-center border-b border-gray-200 print:hidden">관리</th>
                           </tr>
                         </thead>`;
@@ -940,14 +943,17 @@
                   if (worker.pageBreak && index > 0) {
                     dayHtml += `<tr class="print:hidden"><td colspan="15" class="text-center py-1.5 text-xs text-indigo-500 font-bold border-t-2 border-b-2 border-indigo-200 border-dashed bg-indigo-50/50">✂️ 인쇄 시 여기서부터 다음 페이지 첫 줄로 출력됩니다 ✂️</td></tr>`;
                   }
+                  
                   const pageBreakClass = worker.pageBreak ? 'page-break-before' : '';
 
                   worker.harmfulFactors.forEach((factor, fIndex) => {
                       const isGroupStart = (gSpan > 0 && fIndex === 0);
                       const isWorkerStart = (fIndex === 0);
                       const bClass = 'border-b border-gray-200 print:border-black';
+                      // 인쇄용 실선 및 점선 처리를 위한 클래스 주입
+                      const rowPrintClass = isWorkerStart ? 'worker-start-row' : 'factor-inner-row';
 
-                      dayHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${isWorkerStart ? pageBreakClass : ''}">`;
+                      dayHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${rowPrintClass} ${isWorkerStart ? pageBreakClass : ''}">`;
                       
                       if (isWorkerStart) {
                           dayHtml += `<td class="px-2 py-2 text-center text-gray-500 border-r ${bClass} align-middle print:p-0.5 print:pt-1 nowrap-col" rowspan="${wSpan}">${displayIndex}</td>`;
@@ -983,8 +989,9 @@
                       const adjustedClasses = factor.isAdjusted ? 'text-gray-400 line-through decoration-gray-400' : '';
                       const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[10px] print:text-[8px] shrink-0 flex items-center">[조정]</span>` : '';
                       const isNoiseFactor = factor.name.trim().includes('소음');
-                      const nValue = (!factor.isAdjusted && isNoiseFactor) ? '(    )' : (factor.n || '');
+                      const nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
 
+                      // 유해인자 그리기
                       dayHtml += `<td class="border-r ${bClass} p-1 relative group/hazard align-middle">
                         <div class="flex items-center w-full">
                             ${badgeHtml}
@@ -999,13 +1006,7 @@
                         </div>
                       </td>`;
 
-                      if (isWorkerStart) {
-                          dayHtml += `<td class="border-r ${bClass} p-1 align-middle print:p-0.5 worker-name-cell" rowspan="${wSpan}">
-                            <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden font-bold text-gray-800" placeholder="이름" rows="1">${worker.name}</textarea></div>
-                            <div id="print-name-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-left font-bold text-black">${worker.name}</div>
-                          </td>`;
-                      }
-
+                      // A, P, L, N, 비고 그리기
                       dayHtml += `
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
                           <div class="w-full h-full print:hidden"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.a}</textarea></div>
@@ -1020,7 +1021,7 @@
                           <div id="print-fl-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.l}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1" ${isNoiseFactor && !factor.isAdjusted ? 'readonly style="background-color: #f8fafc;" title="소음은 V"' : ''}>${nValue}</textarea></div>
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${nValue}</textarea></div>
                           <div id="print-fn-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${nValue}</div>
                         </td>
                         <td class="border-r ${bClass} p-1 align-middle print:p-0.5 relative group/remark">
@@ -1032,6 +1033,15 @@
                         </td>
                       `;
 
+                      // 근로자명 그리기 (비고 우측으로 이동됨!)
+                      if (isWorkerStart) {
+                          dayHtml += `<td class="border-r ${bClass} p-1 align-middle print:p-0.5 print:bg-gray-100/50 worker-name-cell" rowspan="${wSpan}">
+                            <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden font-bold text-gray-800" placeholder="이름" rows="1">${worker.name}</textarea></div>
+                            <div id="print-name-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-left font-bold text-black">${worker.name}</div>
+                          </td>`;
+                      }
+
+                      // 관리버튼
                       if (isWorkerStart) {
                           dayHtml += `<td class="px-1 py-1 text-center align-middle print:hidden whitespace-nowrap ${bClass}" rowspan="${wSpan}">
                             <div class="flex items-center justify-center gap-1 w-full h-full">
@@ -1082,6 +1092,7 @@
 
     async function copyTableToClipboard() {
       try {
+        // 복사 시에도 근로자명이 우측 끝에 위치하도록 정렬
         let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t유해인자\tA\tP\tL\tN\t비고\t근로자명\n";
         let targetWorkers = [];
         if (appData.currentUnit === 'ALL') {
@@ -1097,7 +1108,7 @@
                 let hazardText = factor.name || '';
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                 const isNoiseFactor = factor.name.trim().includes('소음');
-                const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
+                const nVal = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
                 tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${nVal}\t${factor.remark || ''}\t${isFirst ? worker.name || '' : ''}\n`;
               });
             });
@@ -1122,7 +1133,6 @@
       let sheetCount = 0;
       
       allDays.forEach(day => {
-          // --- 1. [전체사업체] 통합 시트 추가 ---
           let allUnitsData = [];
           allUnitsData.push(["단위사업체", "No.", "부서명", "공정명", "교대제", "근로자수", "노출주기", "측정건수", "유해인자", "A", "P", "L", "N", "비고", "근로자명"]);
           let globalIndex = 1;
@@ -1138,7 +1148,7 @@
                   let hazardText = factor.name || '';
                   if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                   const isNoiseFactor = factor.name.trim().includes('소음');
-                  const nVal = (!factor.isAdjusted && isNoiseFactor && !factor.n) ? 'V' : (factor.n || '');
+                  const nVal = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
                   allUnitsData.push([
                     isFirst ? unitName : '', 
                     isFirst ? globalIndex++ : '', 
@@ -1164,7 +1174,6 @@
             sheetCount++;
           }
 
-          // --- 2. 개별 단위사업체 시트 추가 ---
           unitNames.forEach(unitName => {
             const currentWorkers = appData.units[unitName].filter(w => (w.day||1) === day);
             if(currentWorkers.length === 0) return;
@@ -1176,7 +1185,7 @@
                 let hazardText = factor.name || '';
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                 const isNoiseFactor = factor.name.trim().includes('소음');
-                const nVal = (!factor.isAdjusted && isNoiseFactor && !factor.n) ? 'V' : (factor.n || '');
+                const nVal = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
                 wsData.push([
                   isFirst ? index + 1 : '', isFirst ? worker.department || '' : '', isFirst ? worker.process || '' : '', isFirst ? worker.shiftSystem || '' : '', isFirst ? worker.workerCount || '' : '', isFirst ? worker.exposureCycle || '' : '', isFirst ? worker.measurementCount || '' : '',
                   hazardText, factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || '', isFirst ? worker.name : ''
@@ -1331,7 +1340,7 @@
                   workerCount: '', exposureCycle: '', measurementCount: '', name: '', 
                   pageBreak: false, factorGroups: [], hasPValue: false,
                   firstFactor: null, autoCount: 0,
-                  rawFactorCounts: {} // 모든 물질의 카운트를 빈틈없이 기록
+                  rawFactorCounts: {} 
               };
             }
 
@@ -1346,7 +1355,6 @@
               let isTrigger = (pValue !== '') || isAdjusted;
 
               if (factor !== '') {
-                  // 🚀 완벽한 카운트 매칭을 위해 공백 제거 버전도 동시 추적
                   let cleanFactor = factor.replace(/\s+/g, '');
                   mergedGroup.rawFactorCounts[factor] = (mergedGroup.rawFactorCounts[factor] || 0) + 1;
                   if (cleanFactor !== factor) {
@@ -1410,7 +1418,6 @@
                 uniqueFactorsMap.forEach((isAdjusted, name) => { 
                   let autoRemark = factorMapping.get(name) || '';
                   
-                  // 🚀 강화된 측정건수 상이 체크 로직 (단어 전체 or 공백제거 or 쪼개서 찾기)
                   let maxCount = group.rawFactorCounts[name] || group.rawFactorCounts[name.replace(/\s+/g, '')] || 0;
                   
                   if (maxCount === 0) {
@@ -1421,7 +1428,6 @@
                       });
                   }
 
-                  // 🚀 주(Main) 측정건수와 다를 경우 비고란에 'OO건' 추가 (확실히 다를 때만)
                   if (maxCount > 0 && group.autoCount > 0 && maxCount !== group.autoCount) {
                       let diffStr = `${maxCount}건`;
                       autoRemark = autoRemark ? `${autoRemark} / ${diffStr}` : diffStr;
@@ -1464,7 +1470,6 @@
         syncBtn.innerText = '데이터 연동하기'; 
         reRender(); 
         
-        // 연동 직후 측정건수가 2 이상인 행을 자동으로 찾아 체크박스 선택 (일괄 행복사 연계용)
         setTimeout(() => {
           document.querySelectorAll('input[type="checkbox"][class*="worker-checkbox-"]').forEach(cb => {
             const uName = cb.getAttribute('data-unit');
@@ -1473,15 +1478,14 @@
               const worker = appData.units[uName].find(w => w.id === id);
               if (worker && worker.measurementCount) {
                 const count = parseInt(String(worker.measurementCount).replace(/[^0-9]/g, ''), 10);
-                if (count >= 2) cb.checked = true; // 2 이상일 때 자동 체크
+                if (count >= 2) cb.checked = true;
               }
             }
           });
-        }, 150); // 렌더링 직후 안전하게 체크되도록 약간의 딜레이
+        }, 150);
       }
     }
 
-    // [신규 기능] 시료채취대장 CSV를 읽어와서 표의 A, P, L 칸에 번호를 매칭해주는 로직
     async function matchAPLNumbers() {
       const sampleUrl = document.getElementById('sampleUrl').value;
       const btn = document.getElementById('matchAPLBtn');
@@ -1503,10 +1507,8 @@
 
           let matchCount = 0;
           
-          // 텍스트 정제용 필터 함수들
-          const clean = (str) => String(str || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase();
           const cleanToken = (str) => String(str || '').replace(/[\s\(\)\[\]\-\/]/g, '').toLowerCase();
-          const removeStel = (str) => str.replace(/stel/g, ''); // 2단계 매칭용 STEL 무시 함수
+          const removeStel = (str) => str.replace(/stel/g, ''); 
 
           const matchedSlots = new Set();
 
@@ -1514,27 +1516,20 @@
               const row = rows[i];
               const targetColC = row[2] || '';
               const targetColD = row[3] || '';
-              const refColE = clean(row[4]); 
-              const refColK = clean(row[10]); 
-              const refColL = clean(row[11]); 
-
-              // K열, L열 쪼개기
+              const refColE = String(row[4] || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase(); 
+              
               const refColK_tokens = String(row[10] || '').split(',').map(cleanToken).filter(Boolean);
               const refColL_tokens = String(row[11] || '').split(',').map(cleanToken).filter(Boolean);
 
               const combinedCD = (targetColC + ' ' + targetColD).toUpperCase();
               
-              // 정규식에 'M' 포함 (M201 등을 찾아내기 위함)
               const regex = /(?:^|[^A-Z])([APLM])(\d+)/g;
               let matchResult;
               let extractedPumps = [];
               
               while ((matchResult = regex.exec(combinedCD)) !== null) {
                   let pumpType = matchResult[1].toLowerCase();
-                  
-                  // M으로 시작하는 펌프 번호는 표의 A칸에 넣도록 타입 강제 변환
                   if (pumpType === 'm') pumpType = 'a';
-                  
                   extractedPumps.push({ type: pumpType, num: matchResult[2] });
               }
 
@@ -1551,42 +1546,33 @@
 
                       const worker = workers[wIndex];
                       
-                      // 화면에 켜진 일차(Day) 탭 근로자만 대상
                       if ((worker.day || 1) !== appData.currentDay) continue;
 
-                      const wDept = clean(worker.department);
-                      const wProc = clean(worker.process);
+                      const wDept = String(worker.department || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase();
+                      const wProc = String(worker.process || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase();
                       
                       const isEColumnMatch = (wDept !== '' && refColE.includes(wDept)) || (wProc !== '' && refColE.includes(wProc));
 
                       if (isEColumnMatch) {
                           let matchedFactorIndex = -1;
 
-                          // [1단계 탐색] STEL 유무까지 100% 똑같은 '엄격한' 짝꿍 찾기
                           for (let fIndex = 0; fIndex < worker.harmfulFactors.length; fIndex++) {
                               const factor = worker.harmfulFactors[fIndex];
-                              if (factor.isAdjusted) continue; // [조정] 항목 완전 무시
+                              if (factor.isAdjusted) continue; 
                               
                               const slotId = `${worker.id}-${fIndex}`;
-                              if (matchedSlots.has(slotId)) continue; // 이미 매칭된 슬롯 패스
+                              if (matchedSlots.has(slotId)) continue; 
 
-                              const fName = clean(factor.name);
                               const fName_tokens = String(factor.name || '').split(',').map(cleanToken).filter(Boolean);
                               
-                              let isStrictMatch = false;
-                              if (fName !== '' && (fName === refColK || fName === refColL)) {
-                                  isStrictMatch = true;
-                              } else {
-                                  isStrictMatch = fName_tokens.some(token => refColK_tokens.includes(token) || refColL_tokens.includes(token));
-                              }
+                              let isStrictMatch = fName_tokens.some(token => refColK_tokens.includes(token) || refColL_tokens.includes(token));
 
                               if (isStrictMatch) {
                                   matchedFactorIndex = fIndex;
-                                  break; // 1단계에서 짝을 찾았으면 탐색 즉시 중단
+                                  break;
                               }
                           }
 
-                          // [2단계 탐색] 1단계에서 못 찾은 경우에만, 양쪽에서 STEL을 떼버리고 '느슨한' 성분 짝꿍 찾기
                           if (matchedFactorIndex === -1) {
                               for (let fIndex = 0; fIndex < worker.harmfulFactors.length; fIndex++) {
                                   const factor = worker.harmfulFactors[fIndex];
@@ -1598,7 +1584,6 @@
                                   const fName_tokens = String(factor.name || '').split(',').map(cleanToken).filter(Boolean);
                                   
                                   const hasLooseMatch = fName_tokens.some(token => {
-                                      // 표와 시트의 단어에서 각각 STEL 영문을 지우고 알맹이 비교
                                       const looseToken = removeStel(token);
                                       const looseK = refColK_tokens.map(removeStel);
                                       const looseL = refColL_tokens.map(removeStel);
@@ -1612,7 +1597,6 @@
                               }
                           }
 
-                          // 최종적으로 짝을 찾았다면 해당 칸에 펌프 번호 기입
                           if (matchedFactorIndex !== -1) {
                               const factor = worker.harmfulFactors[matchedFactorIndex];
                               const slotId = `${worker.id}-${matchedFactorIndex}`;
@@ -1621,10 +1605,10 @@
                                   factor[pump.type] = pump.num; 
                               });
                               
-                              matchedSlots.add(slotId); // 이 칸은 찼다고 도장 쾅!
+                              matchedSlots.add(slotId);
                               isMatchedForThisRow = true;
                               matchCount++;
-                              break; // 해당 시트 데이터 처리가 끝났으므로 다음 줄(Row)로 넘어감
+                              break; 
                           }
                       }
                   }
@@ -1650,7 +1634,6 @@
       }
     }
 
-    // 엑셀 스타일 상하좌우 방향키 내비게이션 기능
     document.addEventListener('keydown', function(e) {
       const current = e.target;
       if (current.tagName !== 'TEXTAREA' || !current.hasAttribute('data-focus-id')) return;
@@ -1662,7 +1645,6 @@
       
       if (!isUp && !isDown && !isLeft && !isRight) return;
 
-      // 텍스트 내부 커서 이동 방해 금지 (맨 앞/맨 끝에서만 옆칸 이동)
       if (isLeft && current.selectionStart > 0) return;
       if (isRight && current.selectionEnd < current.value.length) return;
       if (isUp || isDown) {
@@ -1671,10 +1653,9 @@
           if(isDown && lines.length < current.value.split("\n").length) return;
       }
       
-      e.preventDefault(); // 기본 스크롤 동작 방지
+      e.preventDefault(); 
 
       const currentRect = current.getBoundingClientRect();
-      // 보이는 화면의 모든 입력창 수집
       const inputs = Array.from(document.querySelectorAll('#tables-container .block textarea:not([type="hidden"]):not([readonly])'));
       
       let bestMatch = null; 
@@ -1682,7 +1663,6 @@
       const cx = currentRect.left + currentRect.width / 2; 
       const cy = currentRect.top + currentRect.height / 2;
 
-      // 가장 가까운 방향의 텍스트창을 기하학적으로 계산
       inputs.forEach(input => {
         if (input === current) return;
         const rect = input.getBoundingClientRect();
@@ -1694,13 +1674,11 @@
         const xOverlap = Math.max(0, Math.min(currentRect.right, rect.right) - Math.max(currentRect.left, rect.left));
         const yOverlap = Math.max(0, Math.min(currentRect.bottom, rect.bottom) - Math.max(currentRect.top, rect.top));
 
-        // 직진(위아래 동일 라인) 우선
         if (isUp && iy < cy && xOverlap > 0) { isEligible = true; distance = cy - iy; }
         else if (isDown && iy > cy && xOverlap > 0) { isEligible = true; distance = iy - cy; }
         else if (isLeft && ix < cx && yOverlap > 0) { isEligible = true; distance = cx - ix; }
         else if (isRight && ix > cx && yOverlap > 0) { isEligible = true; distance = ix - cx; }
 
-        // 대각선(병합셀 등 인접 라인) 차선
         if (!isEligible) {
              if (isUp && rect.bottom <= currentRect.top + 5) { isEligible = true; distance = (currentRect.top - rect.bottom)*10 + Math.abs(cx - ix); } 
              else if (isDown && rect.top >= currentRect.bottom - 5) { isEligible = true; distance = (rect.top - currentRect.bottom)*10 + Math.abs(cx - ix); } 
@@ -1716,39 +1694,32 @@
 
       if (bestMatch) {
         bestMatch.focus();
-        // 왼쪽으로 가면 끝부분, 오른쪽으로 가면 첫부분, 위아래는 전체선택 (엑셀 느낌)
         if (isLeft) bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
         else if (isRight) bestMatch.setSelectionRange(0, 0);
         else bestMatch.setSelectionRange(bestMatch.value.length, bestMatch.value.length);
 
-        // 🚀 스마트 자동 스크롤 (화면 끄트머리에 커서가 가면 자연스럽게 중앙으로 끌어올림/내림)
         const scrollContainer = document.getElementById('mainAppContent');
         if (scrollContainer) {
             const matchRect = bestMatch.getBoundingClientRect();
             const containerRect = scrollContainer.getBoundingClientRect();
             
-            // 화면 상/하단 시야 확보를 위한 임계값 (하단은 다음 줄들을 미리 보기 위해 넉넉히 250px)
             const bottomThreshold = 250; 
             const topThreshold = 150;    
             
             if (isDown && matchRect.bottom > containerRect.bottom - bottomThreshold) {
-                // 아래로 내려갈 때 하단 시야가 좁아지면 부드럽게 위로 끌어올림 (+50px 여유 추가)
                 scrollContainer.scrollBy({ top: matchRect.bottom - (containerRect.bottom - bottomThreshold) + 50, behavior: 'smooth' });
             } else if (isUp && matchRect.top < containerRect.top + topThreshold) {
-                // 위로 올라갈 때 상단 시야가 좁아지면 부드럽게 아래로 내림
                 scrollContainer.scrollBy({ top: matchRect.top - (containerRect.top + topThreshold) - 50, behavior: 'smooth' });
             }
         }
       }
     });
 
-    // 해당 일차(Day) 화면의 전체 체크박스 토글
     function toggleAllCheckboxesDay(day, isChecked) {
         const checkboxes = document.querySelectorAll(`.worker-checkbox-${day}`);
         checkboxes.forEach(cb => { cb.checked = isChecked; });
     }
 
-    // 커스텀 알림(Toast) 및 확인(Confirm) 모달창 함수 추가
     function showToast(msg, isError = false) {
        let toast = document.getElementById('custom-toast');
        if(!toast) {
@@ -1787,13 +1758,11 @@
         document.getElementById('custom-confirm-ok').onclick = () => { modal.classList.add('hidden'); onConfirm(); };
     }
 
-    // 선택 항목 일괄 행복사 (개별 행복사와 동일하게 바로 밑에 복사)
     function duplicateCheckedWorkersDay(day) {
         const checkboxes = document.querySelectorAll(`.worker-checkbox-${day}:checked`);
         if (checkboxes.length === 0) return showToast('복사할 항목을 체크박스로 먼저 선택해주세요.', true);
 
         const grouped = {};
-        // 선택된 항목들을 사업체(unit)별로 묶음
         checkboxes.forEach(cb => {
             const uName = cb.getAttribute('data-unit');
             const id = Number(cb.value);
@@ -1807,14 +1776,10 @@
             const idsToDuplicate = grouped[unitName];
             let currentWorkers = appData.units[unitName];
             
-            // 역순(뒤에서부터)으로 처리하여 원본 바로 아래에 splice로 찔러넣음 (인덱스 밀림 완벽 방지)
             for (let i = currentWorkers.length - 1; i >= 0; i--) {
                 const worker = currentWorkers[i];
                 
-                // 소수점 포함 정확한 ID 매칭
                 if (idsToDuplicate.includes(Number(worker.id))) {
-                    
-                    // 측정건수 유무에 따른 복사 횟수 계산 (기본 1회, 기입 시 n-1회 복사하여 총 n개로 맞춤)
                     let dupCount = 1;
                     if (worker.measurementCount && String(worker.measurementCount).trim() !== '') {
                         const parsed = parseInt(String(worker.measurementCount).replace(/[^0-9]/g, ''), 10);
@@ -1823,10 +1788,8 @@
                         }
                     }
 
-                    // 현재 최고 ID 값을 한 번만 구해서 복사할 때마다 1씩 더해줌
                     let currentMaxId = currentWorkers.length > 0 ? Math.max(...currentWorkers.map(w => Number(w.id))) : 0;
                     
-                    // 산정된 횟수(dupCount)만큼 반복해서 원본 바로 아래에 차곡차곡 삽입
                     for (let k = 0; k < dupCount; k++) {
                         currentMaxId++;
                         const clonedWorker = {
@@ -1834,12 +1797,11 @@
                             id: currentMaxId,
                             day: worker.day || 1,
                             pageBreak: false,
-                            name: '', // 이름은 복사 시 초기화
+                            name: '',
                             isManual: false,
                             harmfulFactors: worker.harmfulFactors.map(factor => ({ ...factor }))
                         };
                         
-                        // i+1 위치부터 순서대로 밀어넣기
                         currentWorkers.splice(i + 1 + k, 0, clonedWorker);
                         totalDuplicatedCount++;
                     }
@@ -1847,18 +1809,15 @@
             }
         });
 
-        // 이름 자동 순번 재계산 및 화면 렌더링
         recalculateNames();
         reRender();
         
-        // 일괄 처리 후 전체선택 체크박스 해제
         const selectAllCb = document.querySelector(`input[onchange="toggleAllCheckboxesDay(${day}, this.checked)"]`);
         if(selectAllCb) selectAllCb.checked = false;
         
         showToast(`선택하신 항목들이 측정건수에 따라 총 ${totalDuplicatedCount}건 복사되었습니다.`);
     }
 
-    // 선택 항목 일괄 행삭제
     function deleteCheckedWorkersDay(day) {
         const checkboxes = document.querySelectorAll(`.worker-checkbox-${day}:checked`);
         if (checkboxes.length === 0) return showToast('삭제할 항목을 체크박스로 먼저 선택해주세요.', true);
@@ -1867,7 +1826,6 @@
             const grouped = {};
             checkboxes.forEach(cb => {
                 const uName = cb.getAttribute('data-unit');
-                // 핵심 수정: parseInt 대신 Number 사용
                 const id = Number(cb.value);
                 if (!grouped[uName]) grouped[uName] = [];
                 grouped[uName].push(id);
@@ -1876,10 +1834,8 @@
             Object.keys(grouped).forEach(unitName => {
                 const idsToDelete = grouped[unitName];
                 let currentWorkers = appData.units[unitName];
-                // 소수점 포함 정확한 ID 매칭으로 필터링
                 currentWorkers = currentWorkers.filter(w => !idsToDelete.includes(Number(w.id)));
                 
-                // 모두 삭제되어 빈 배열이 되면 기본 빈 행 하나 생성
                 if (currentWorkers.length === 0) {
                      currentWorkers.push({
                         id: 1, day: day, department: '', process: '', shiftSystem: '', workerCount: '', exposureCycle: '', measurementCount: '', name: '', isManual: false, pageBreak: false,
@@ -1904,14 +1860,12 @@
 
     document.addEventListener('mousedown', function(e) {
         if (e.target.tagName === 'TEXTAREA' && e.target.hasAttribute('data-focus-id')) {
-            // 셀 내부 클릭 시 기존 다중 선택 초기화
             selectedTextareas.forEach(ta => ta.style.backgroundColor = '');
             selectedTextareas.clear();
             selectedTextareas.add(e.target);
-            e.target.style.backgroundColor = '#eff6ff'; // 선택 대기 색상 (연한 파랑)
+            e.target.style.backgroundColor = '#eff6ff';
             isDraggingTextarea = true;
         } else {
-            // 표 바깥 클릭 시 선택 완벽 초기화
             selectedTextareas.forEach(ta => ta.style.backgroundColor = '');
             selectedTextareas.clear();
             isDraggingTextarea = false;
@@ -1920,15 +1874,12 @@
     });
 
     document.addEventListener('mousemove', function(e) {
-        // e.buttons === 1 은 좌클릭 유지 상태 (드래그)
         if (isDraggingTextarea && e.buttons === 1) {
             if (e.target.tagName === 'TEXTAREA' && e.target.hasAttribute('data-focus-id')) {
                 if (!selectedTextareas.has(e.target)) {
-                    // 마우스가 다른 셀로 넘어가는 순간 본격적인 다중 선택 모드 발동
-                    document.body.style.userSelect = 'none'; // 화면의 난잡한 텍스트 드래그 방지
-                    
+                    document.body.style.userSelect = 'none';
                     selectedTextareas.add(e.target);
-                    selectedTextareas.forEach(ta => ta.style.backgroundColor = '#dbeafe'); // 다중 선택 확정 색상 (진한 파랑)
+                    selectedTextareas.forEach(ta => ta.style.backgroundColor = '#dbeafe');
                 }
             }
         }
@@ -1936,20 +1887,19 @@
 
     document.addEventListener('mouseup', function(e) {
         isDraggingTextarea = false;
-        document.body.style.userSelect = ''; // 마우스 떼면 일반 텍스트 드래그 허용 복구
+        document.body.style.userSelect = '';
     });
 
     document.addEventListener('keydown', function(e) {
-        // 다중 선택된 상태에서 Delete나 Backspace를 누르면 일괄 삭제
         if (e.key === 'Delete' || e.key === 'Backspace') {
             if (selectedTextareas.size > 1) {
-                e.preventDefault(); // 뒤로가기 등 브라우저 기본 동작 방지
+                e.preventDefault(); 
                 let clearedCount = 0;
                 
                 selectedTextareas.forEach(ta => {
-                    if (!ta.readOnly) { // 소음의 'V' 등 읽기 전용 셀은 안전하게 보호
+                    if (!ta.readOnly) {
                         ta.value = '';
-                        ta.dispatchEvent(new Event('input')); // 데이터 저장 함수 강제 트리거하여 내부 데이터 동기화
+                        ta.dispatchEvent(new Event('input'));
                         clearedCount++;
                     }
                 });
@@ -1957,7 +1907,6 @@
                 showToast(`${clearedCount}개 셀의 내용이 일괄 삭제되었습니다.`);
             }
         } else if (e.key === 'Escape') {
-            // Esc 누르면 다중 선택 깔끔하게 해제
             selectedTextareas.forEach(ta => ta.style.backgroundColor = '');
             selectedTextareas.clear();
         }
