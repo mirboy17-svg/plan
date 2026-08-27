@@ -1433,7 +1433,8 @@
                       autoRemark = autoRemark ? `${autoRemark} / ${diffStr}` : diffStr;
                   }
 
-                  formattedFactors.push({ name: name, a: '', p: '', l: '', n: '', remark: autoRemark, isAdjusted: isAdjusted }); 
+                  let initialN = (name.includes('소음') && !isAdjusted) ? 'V' : '';
+                  formattedFactors.push({ name: name, a: '', p: '', l: '', n: initialN, remark: autoRemark, isAdjusted: isAdjusted }); 
                 });
                 
                 formattedFactors.sort((a, b) => {
