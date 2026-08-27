@@ -886,13 +886,13 @@
                         <thead class="bg-gray-100 text-gray-700 uppercase font-semibold border-b border-gray-200 print:bg-gray-200 print:border-black print:text-black print:text-[9px]">
                           <tr>
                             <th class="px-1 py-2 w-[25px] text-center border-r border-b border-gray-200 print:border-black nowrap-col">No.</th>
-                            <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">부서명</th>
-                            <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">공정명</th>
-                            <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
+                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">부서명</th>
+                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black nowrap-col text-center">공정명</th>
+                            <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
                             <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">근로자수</th>
                             <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">노출주기</th>
-                            <th class="px-1 py-2 w-[30px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
-                            <th class="px-2 py-2 w-[325px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
+                            <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
+                            <th class="px-2 py-2 w-[300px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">A</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">P</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">L</th>
@@ -935,6 +935,27 @@
                   const gSpan = groupSpans[index]; 
                   const wSpan = worker.harmfulFactors.length;
 
+                  // === 펌프 번호별 개별 색상 부여 로직 ===
+                  // 1. 현재 근로자의 유해인자 중 어떤 번호가 몇 번 쓰였는지 카운트합니다.
+                  const numCounts = {};
+                  worker.harmfulFactors.forEach(f => {
+                      const val = String(f.a || f.p || f.l || '').replace(/[^0-9]/g, '');
+                      if (val) numCounts[val] = (numCounts[val] || 0) + 1;
+                  });
+
+                  const colorPalette = ['bg-blue-50', 'bg-emerald-50', 'bg-amber-50', 'bg-purple-50', 'bg-rose-50', 'bg-cyan-50'];
+                  let colorMap = {};
+                  let colorIdx = 0;
+                  
+                  worker.harmfulFactors.forEach(f => {
+                      const val = String(f.a || f.p || f.l || '').replace(/[^0-9]/g, '');
+                      // 2. 펌프 번호가 존재하고, 그 번호가 '2개 이상'일 때만 색상을 부여합니다.
+                      if (val && numCounts[val] >= 2 && !colorMap[val]) {
+                          colorMap[val] = colorPalette[colorIdx % colorPalette.length];
+                          colorIdx++;
+                      }
+                  });
+
                   if (originalRowSpan > 0) {
                       currentGroupEndIndex = index + originalRowSpan - 1;
                       dayHtml += `<tbody class="print:border-black group-tbody">`;
@@ -950,15 +971,23 @@
                       const isGroupStart = (gSpan > 0 && fIndex === 0);
                       const isWorkerStart = (fIndex === 0);
                       const bClass = 'border-b border-gray-200 print:border-black';
-                      // 인쇄용 실선 및 점선 처리를 위한 클래스 주입
                       const rowPrintClass = isWorkerStart ? 'worker-start-row' : 'factor-inner-row';
+                      
+                      // 배경색(factorBgClass) 적용
+                      const factorVal = String(factor.a || factor.p || factor.l || '').replace(/[^0-9]/g, '');
+                      const factorBgClass = factorVal && colorMap[factorVal] ? `${colorMap[factorVal]} print:${colorMap[factorVal]}` : '';
 
+                      const adjustedClasses = factor.isAdjusted ? 'text-gray-400 line-through decoration-gray-400' : '';
+                      const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[10px] print:text-[8px] shrink-0 flex items-center">[조정]</span>` : '';
+                      
                       dayHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent transition-colors group ${rowPrintClass} ${isWorkerStart ? pageBreakClass : ''}">`;
                       
+                      // 1. 번호
                       if (isWorkerStart) {
                           dayHtml += `<td class="px-2 py-2 text-center text-gray-500 border-r ${bClass} align-middle print:p-0.5 print:pt-1 nowrap-col" rowspan="${wSpan}">${displayIndex}</td>`;
                       }
                       
+                      // 2~7. 부서명, 공정명 등 그룹 병합 칸
                       if (isGroupStart) {
                           dayHtml += `<td class="px-2 py-2 border-r ${bClass} align-middle print:p-0.5 print:pt-1" rowspan="${gSpan}">
                                     <div class="print:hidden"><textarea data-focus-id="dept-${worker.id}" oninput="smartResize(this); updateGroupField('${unitName}', ${day}, ${index}, ${originalRowSpan}, 'department', this.value)" class="w-full h-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden" rows="1">${worker.department}</textarea></div>
@@ -986,13 +1015,8 @@
                                    </td>`;
                       }
 
-                      const adjustedClasses = factor.isAdjusted ? 'text-gray-400 line-through decoration-gray-400' : '';
-                      const badgeHtml = factor.isAdjusted ? `<span class="text-red-500 font-bold mr-1 text-[10px] print:text-[8px] shrink-0 flex items-center">[조정]</span>` : '';
-                      const isNoiseFactor = factor.name.trim().includes('소음');
-                      const nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
-
-                      // 유해인자 그리기
-                      dayHtml += `<td class="border-r ${bClass} p-1 relative group/hazard align-middle">
+                      // 8. 유해인자명 (배경색 적용)
+                      dayHtml += `<td class="border-r ${bClass} ${factorBgClass} p-1 relative group/hazard align-middle">
                         <div class="flex items-center w-full">
                             ${badgeHtml}
                             <div class="w-full print:hidden"><textarea data-focus-id="fname-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'name', this.value)" class="w-full bg-transparent outline-none pr-[40px] resize-none overflow-hidden ${adjustedClasses}" rows="1">${factor.name}</textarea></div>
@@ -1006,25 +1030,25 @@
                         </div>
                       </td>`;
 
-                      // A, P, L, N, 비고 그리기
+                      // 9~13. A, P, L, N, 비고 (배경색 적용)
                       dayHtml += `
-                        <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
+                        <td class="border-r ${bClass} ${factorBgClass} p-1 text-center align-middle print:p-0.5">
                           <div class="w-full h-full print:hidden"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.a}</textarea></div>
                           <div id="print-fa-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.a}</div>
                         </td>
-                        <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
+                        <td class="border-r ${bClass} ${factorBgClass} p-1 text-center align-middle print:p-0.5">
                           <div class="w-full h-full print:hidden"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.p}</textarea></div>
                           <div id="print-fp-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.p}</div>
                         </td>
-                        <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
+                        <td class="border-r ${bClass} ${factorBgClass} p-1 text-center align-middle print:p-0.5">
                           <div class="w-full h-full print:hidden"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.l}</textarea></div>
                           <div id="print-fl-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.l}</div>
                         </td>
-                        <td class="border-r ${bClass} p-1 text-center align-middle print:p-0.5">
-                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${nValue}</textarea></div>
-                          <div id="print-fn-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${nValue}</div>
+                        <td class="border-r ${bClass} ${factorBgClass} p-1 text-center align-middle print:p-0.5">
+                          <div class="w-full h-full print:hidden"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full h-full text-center bg-transparent outline-none uppercase resize-none overflow-hidden" rows="1">${factor.n}</textarea></div>
+                          <div id="print-fn-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${factor.n}</div>
                         </td>
-                        <td class="border-r ${bClass} p-1 align-middle print:p-0.5 relative group/remark">
+                        <td class="border-r ${bClass} ${factorBgClass} p-1 align-middle print:p-0.5 relative group/remark">
                           <div class="w-full h-full print:hidden flex relative">
                             <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full h-full pl-1 pr-[36px] bg-transparent outline-none text-center resize-none overflow-hidden" placeholder="비고" rows="1">${factor.remark}</textarea>
                             <button tabindex="-1" type="button" onclick="addBagToRemark('${unitName}', ${worker.id}, ${fIndex})" class="absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-1 py-1 rounded shadow-sm transition-colors z-10" title="최상단 '[가방]' 기입">가방</button>
@@ -1033,7 +1057,7 @@
                         </td>
                       `;
 
-                      // 근로자명 그리기 (비고 우측으로 이동됨!)
+                      // 14. 근로자명 (비고 우측으로 완벽히 이동됨)
                       if (isWorkerStart) {
                           dayHtml += `<td class="border-r ${bClass} p-1 align-middle print:p-0.5 print:bg-gray-100/50 worker-name-cell" rowspan="${wSpan}">
                             <div class="w-full h-full print:hidden"><textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full h-full text-left bg-transparent outline-none resize-none overflow-hidden font-bold text-gray-800" placeholder="이름" rows="1">${worker.name}</textarea></div>
@@ -1041,7 +1065,7 @@
                           </td>`;
                       }
 
-                      // 관리버튼
+                      // 15. 관리버튼
                       if (isWorkerStart) {
                           dayHtml += `<td class="px-1 py-1 text-center align-middle print:hidden whitespace-nowrap ${bClass}" rowspan="${wSpan}">
                             <div class="flex items-center justify-center gap-1 w-full h-full">
@@ -1053,8 +1077,10 @@
                             </div>
                            </td>`;
                       }
+                      
                       dayHtml += `</tr>`;
                   });
+                  
                   if (index === currentGroupEndIndex) dayHtml += `</tbody>`;
               });
 
@@ -1617,6 +1643,58 @@
           }
 
           if (matchCount > 0) {
+              // 💡 매칭 완료 후 그룹화 및 정렬 로직 (순서 유지 기능 포함)
+              Object.keys(appData.units).forEach(unitName => {
+                  appData.units[unitName].forEach(worker => {
+                      if ((worker.day || 1) === appData.currentDay) {
+                          // 1. 현재의 원래 순서(index)를 임시로 기억해둡니다.
+                          worker.harmfulFactors.forEach((f, idx) => f._originalIndex = idx);
+
+                          // 2. 각 펌프 번호가 몇 번씩 등장하는지 카운트합니다.
+                          const numCounts = {};
+                          worker.harmfulFactors.forEach(f => {
+                              const num = String(f.a || f.p || f.l || '').replace(/[^0-9]/g, '');
+                              if (num) numCounts[num] = (numCounts[num] || 0) + 1;
+                          });
+
+                          // 3. 지능형 정렬 시작
+                          worker.harmfulFactors.sort((a, b) => {
+                              // [1순위] 소음은 무조건 맨 위로 고정
+                              const aIsNoise = (a.name || '').includes('소음');
+                              const bIsNoise = (b.name || '').includes('소음');
+                              if (aIsNoise && !bIsNoise) return -1;
+                              if (!aIsNoise && bIsNoise) return 1;
+
+                              const numA = String(a.a || a.p || a.l || '').replace(/[^0-9]/g, '');
+                              const numB = String(b.a || b.p || b.l || '').replace(/[^0-9]/g, '');
+
+                              // 이 항목이 2개 이상 모인 '그룹'인지 판별
+                              const aIsGrouped = numA && numCounts[numA] >= 2;
+                              const bIsGrouped = numB && numCounts[numB] >= 2;
+
+                              // [2순위] 2개 이상 묶인 그룹을 우선적으로 위(소음 밑)로 끌어올림
+                              if (aIsGrouped && !bIsGrouped) return -1;
+                              if (!aIsGrouped && bIsGrouped) return 1;
+
+                              // [3순위] 둘 다 그룹이라면, 같은 번호끼리 딱 붙도록 번호순 정렬
+                              if (aIsGrouped && bIsGrouped) {
+                                  const parsedA = parseInt(numA, 10);
+                                  const parsedB = parseInt(numB, 10);
+                                  if (parsedA !== parsedB) {
+                                      return parsedA - parsedB; 
+                                  }
+                              }
+
+                              // [4순위] 단독 항목이거나, 번호가 없거나, 같은 그룹 내에서의 순서는 '무조건 기존 순서 유지'
+                              return a._originalIndex - b._originalIndex;
+                          });
+
+                          // 임시 저장했던 순서표 삭제 (청소)
+                          worker.harmfulFactors.forEach(f => delete f._originalIndex);
+                      }
+                  });
+              });
+
               msg.className = 'text-sm font-medium text-emerald-600';
               msg.innerText = `성공! 현재 화면(일차)에 총 ${matchCount}개의 번호가 매칭되었습니다.`;
               reRender(); 
