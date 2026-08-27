@@ -268,6 +268,9 @@
         </div>
       </section>
 
+      <!-- 🚀 STEP 3 측정 시료 준비 요약표가 들어갈 공간 (여기에 요약표가 생성됩니다!) -->
+      <div id="summary-dashboard-container" class="mb-4 mt-2"></div>
+
       <section class="bg-amber-50 p-4 rounded-lg border border-amber-200 print:hidden flex flex-col lg:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2">
           <h2 class="text-base font-bold text-amber-800 flex items-center gap-1">
@@ -852,11 +855,105 @@
         });
     }
 
+    function generateSampleSummaryHTML(allDays, unitNames) {
+        let html = '<div class="print:block page-break-after-summary w-full">';
+        html += '<h2 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-800 pb-2 flex items-center gap-2 print:text-black print:border-black print:mt-4 print:text-2xl"><span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-sm font-bold border border-indigo-300 print:border-black print:bg-white print:text-black">STEP 3</span> 측정 시료 준비 요약표</h2>';
+        html += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">';
+
+        let hasAnyData = false;
+
+        allDays.forEach(day => {
+            let pumpMap = new Map();
+
+            unitNames.forEach(unit => {
+                const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
+                currentWorkers.forEach(worker => {
+                    let factorsByPump = {};
+
+                    worker.harmfulFactors.forEach(factor => {
+                        if (factor.isAdjusted) return;
+
+                        // 1. (혼합물질평가) 단어 깔끔하게 삭제
+                        let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
+                        if (!rawName) return;
+
+                        let nameTokens = rawName.split(',').map(s => s.trim()).filter(Boolean);
+                        let finalName = rawName;
+                        
+                        // 2. 오직 "한 행(줄)"에 콤마(,)로 여러 개가 묶여 있을 때만 "A 외 n종"으로 축약
+                        if (nameTokens.length > 1) {
+                            finalName = `${nameTokens[0]} 외 ${nameTokens.length - 1}종`;
+                        }
+
+                        // 3. 펌프 번호 추출 (A, P, L, N 중 번호가 있는 것을 기준)
+                        let pNum = String(factor.a || factor.p || factor.l || factor.n || '').replace(/[^0-9Vv]/g, '');
+                        if (!pNum && (rawName.includes('소음') || factor.n)) pNum = 'V';
+                        if (!pNum) pNum = 'NONE_' + Math.random();
+
+                        if (pNum.toUpperCase() === 'V') pNum = 'NOISE';
+
+                        if (!factorsByPump[pNum]) factorsByPump[pNum] = [];
+                        factorsByPump[pNum].push(finalName);
+                    });
+
+                    Object.keys(factorsByPump).forEach(pNum => {
+                        if (pNum.startsWith('NONE_')) return;
+
+                        // 4. 행이 나뉘어져 있는데 펌프가 같은 경우 "+" 기호로 결합 (A 외 n종으로 합치지 않음!)
+                        let uniqueNames = Array.from(new Set(factorsByPump[pNum]));
+                        let combinedName = uniqueNames.join('+');
+
+                        if (!pumpMap.has(combinedName)) {
+                            pumpMap.set(combinedName, 0);
+                        }
+                        pumpMap.set(combinedName, pumpMap.get(combinedName) + 1);
+                    });
+                });
+            });
+
+            if (pumpMap.size > 0) {
+                hasAnyData = true;
+                html += `<div class="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:border-black print:shadow-none break-inside-avoid">`;
+                html += `<h3 class="font-bold text-lg text-indigo-700 mb-3 border-b border-indigo-100 pb-1 print:text-black print:border-black">${getDayName(day)}</h3>`;
+                html += `<ul class="space-y-2">`;
+                
+                // 소음을 리스트 맨 위로 정렬
+                let sortedKeys = Array.from(pumpMap.keys()).sort((a, b) => {
+                    let aIsNoise = a.includes('소음');
+                    let bIsNoise = b.includes('소음');
+                    if (aIsNoise && !bIsNoise) return -1;
+                    if (!aIsNoise && bIsNoise) return 1;
+                    return a.localeCompare(b);
+                });
+
+                sortedKeys.forEach(k => {
+                    let cnt = pumpMap.get(k);
+                    html += `<li class="flex justify-between items-center text-[13px] font-medium border-b border-dashed border-gray-200 pb-1.5 last:border-0 print:border-black"><span class="text-gray-800 break-words pr-2 print:text-black font-semibold tracking-tight">${k}</span> <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md font-bold whitespace-nowrap text-center print:bg-white print:text-black print:border print:border-black shadow-sm">${cnt}개</span></li>`;
+                });
+                
+                html += `</ul></div>`;
+            }
+        });
+
+        if (!hasAnyData) {
+            html += `<div class="col-span-full text-center py-8 text-gray-500 font-medium bg-gray-50 rounded-lg border border-gray-200">배정된 펌프 번호 또는 시료가 없습니다.</div>`;
+        }
+
+        html += '</div></div>';
+        return html;
+    }
+
     function renderTables() {
       const container = document.getElementById('tables-container');
       let html = '';
       const allDays = getActiveDays();
       const unitNames = Object.keys(appData.units);
+      
+      // 🚀 요약 대시보드를 STEP 3 컨테이너에 독립적으로 렌더링
+      const summaryContainer = document.getElementById('summary-dashboard-container');
+      if (summaryContainer && typeof generateSampleSummaryHTML === 'function') {
+          summaryContainer.innerHTML = generateSampleSummaryHTML(allDays, unitNames);
+      }
       
       let printedDayCount = 0; 
       
@@ -1160,7 +1257,8 @@
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                 const isNoiseFactor = factor.name.trim().includes('소음');
                 const nVal = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
-                tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${nVal}\t${factor.remark || ''}\t${isFirst ? worker.name || '' : ''}\n`;
+                const workerNameWithBag = isFirst ? ((worker.hasBag ? '[가방] ' : '') + (worker.name || '')) : '';
+                tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${nVal}\t${factor.remark || ''}\t${workerNameWithBag}\n`;
               });
             });
         }
@@ -1200,6 +1298,8 @@
                   if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                   const isNoiseFactor = factor.name.trim().includes('소음');
                   const nVal = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
+                  
+                  const workerNameWithBag = isFirst ? ((worker.hasBag ? '[가방] ' : '') + (worker.name || '')) : '';
                   allUnitsData.push([
                     isFirst ? unitName : '', 
                     isFirst ? globalIndex++ : '', 
@@ -1211,7 +1311,7 @@
                     isFirst ? worker.measurementCount || '' : '',
                     hazardText, 
                     factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || '',
-                    isFirst ? worker.name : ''
+                    workerNameWithBag
                   ]);
                 });
               });
@@ -1237,9 +1337,11 @@
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                 const isNoiseFactor = factor.name.trim().includes('소음');
                 const nVal = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
+                
+                const workerNameWithBag = isFirst ? ((worker.hasBag ? '[가방] ' : '') + (worker.name || '')) : '';
                 wsData.push([
                   isFirst ? index + 1 : '', isFirst ? worker.department || '' : '', isFirst ? worker.process || '' : '', isFirst ? worker.shiftSystem || '' : '', isFirst ? worker.workerCount || '' : '', isFirst ? worker.exposureCycle || '' : '', isFirst ? worker.measurementCount || '' : '',
-                  hazardText, factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || '', isFirst ? worker.name : ''
+                  hazardText, factor.a || '', factor.p || '', factor.l || '', nVal, factor.remark || '', workerNameWithBag
                 ]);
               });
             });
