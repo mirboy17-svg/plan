@@ -888,8 +888,8 @@
                             <th class="px-1 py-2 w-[55px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">교대제</th>
                             <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">근로자수</th>
                             <th class="px-1 py-2 w-[50px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">노출주기</th>
-                            <th class="px-1 py-2 w-[30px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
-                            <th class="px-2 py-2 w-[310px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
+                            <th class="px-1 py-2 w-[40px] border-r border-b border-gray-200 print:border-black text-center nowrap-col">측정건수</th>
+                            <th class="px-2 py-2 w-[300px] border-r border-b border-gray-200 print:border-black text-center">유해인자 (발생물질 등)</th>
                             <th class="px-1 py-2 w-[70px] border-r border-b border-gray-200 print:border-black text-center">근로자명</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">A</th>
                             <th class="px-1 py-2 w-[37px] border-r border-b border-gray-200 print:border-black text-center">P</th>
@@ -1082,7 +1082,7 @@
 
     async function copyTableToClipboard() {
       try {
-        let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t유해인자\t근로자명\tA\tP\tL\tN\t비고\n";
+        let tsvData = "No.\t부서명\t공정명\t교대제\t근로자수\t노출주기\t측정건수\t유해인자\tA\tP\tL\tN\t비고\t근로자명\n";
         let targetWorkers = [];
         if (appData.currentUnit === 'ALL') {
             Object.keys(appData.units).forEach(unitName => { targetWorkers = targetWorkers.concat(appData.units[unitName].filter(w => (w.day || 1) === appData.currentDay)); });
@@ -1098,7 +1098,7 @@
                 if (factor.isAdjusted) hazardText = "[횟수조정] " + hazardText;
                 const isNoiseFactor = factor.name.trim().includes('소음');
                 const nVal = (!factor.isAdjusted && isNoiseFactor) ? 'V' : (factor.n || '');
-                tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${isFirst ? worker.name || '' : ''}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${nVal}\t${factor.remark || ''}\n`;
+                tsvData += `${isFirst ? index + 1 : ''}\t${isFirst ? worker.department || '' : ''}\t${isFirst ? worker.process || '' : ''}\t${isFirst ? worker.shiftSystem || '' : ''}\t${isFirst ? worker.workerCount || '' : ''}\t${isFirst ? worker.exposureCycle || '' : ''}\t${isFirst ? worker.measurementCount || '' : ''}\t${hazardText}\t${factor.a || ''}\t${factor.p || ''}\t${factor.l || ''}\t${nVal}\t${factor.remark || ''}\t${isFirst ? worker.name || '' : ''}\n`;
               });
             });
         }
