@@ -870,7 +870,7 @@
         let uniqueL = new Set();
         let countN = 0;
 
-        // 1. 각 근로자(행)별 조합 계산 및 대시보드 통계 수집
+        // 1. 각 근로자(행)별 조합 계산 및 대시보드 통계 수집 (기존 로직 절대 유지)
         unitNames.forEach(unit => {
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
             if(currentWorkers.length > 0) hasData = true;
@@ -879,7 +879,7 @@
                 let factorsByPump = {};
                 let pumpToAPLN = {};
                 
-                // 해당 근로자의 A, P, L, N 펌프 카운트 수집 (대시보드용)
+                // 해당 근로자의 A, P, L, N 펌프 카운트 수집
                 worker.harmfulFactors.forEach(factor => {
                     if (factor.a && String(factor.a).trim() !== '') uniqueA.add(String(factor.a).trim());
                     if (factor.p && String(factor.p).trim() !== '') uniqueP.add(String(factor.p).trim());
@@ -895,7 +895,6 @@
                     let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
                     if (!rawName) return;
 
-                    // 1,2-디클로로에틸렌 등의 숫자 사이 쉼표 보호
                     let safeName = rawName.replace(/(\d),(\d)/g, '$1_COMMA_$2');
                     let nameTokens = safeName.split(',').map(s => s.replace(/_COMMA_/g, ',').trim()).filter(Boolean);
                     
@@ -953,16 +952,16 @@
                     combinations.push({name: '', a: '', p: '', l: '', n: ''});
                 }
 
-                // [핵심] '소음'이 포함된 조합을 무조건 배열의 최상단(Index 0)으로 정렬
+                // '소음'이 포함된 조합을 무조건 배열의 최상단(Index 0)으로 정렬
                 combinations.sort((a, b) => {
                     const aIsNoise = (a.name || '').includes('소음');
                     const bIsNoise = (b.name || '').includes('소음');
                     if (aIsNoise && !bIsNoise) return -1;
                     if (!aIsNoise && bIsNoise) return 1;
-                    return 0; // 둘 다 소음이거나 둘 다 아니면 원래 순서 유지
+                    return 0; 
                 });
 
-                // 대시보드 통계를 위해 방금 정렬된 조합들과 펌프 기호(A/P/L/N)를 수집
+                // 대시보드 통계를 위해 펌프 기호(A/P/L/N)를 수집
                 combinations.forEach(combo => {
                     if (combo.name && combo.name.trim() !== '') {
                         if (!comboStats[combo.name]) {
@@ -970,7 +969,6 @@
                         }
                         comboStats[combo.name].count++;
                         
-                        // 해당 조합에 쓰인 펌프(A, P, L, N)를 Set에 추가
                         if (combo.a && String(combo.a).trim() !== '') comboStats[combo.name].pumps.add('A');
                         if (combo.p && String(combo.p).trim() !== '') comboStats[combo.name].pumps.add('P');
                         if (combo.l && String(combo.l).trim() !== '') comboStats[combo.name].pumps.add('L');
@@ -985,7 +983,7 @@
 
         if (!hasData) return '';
 
-        // 2. 대시보드 통계 배열 생성 및 (+) 기호 개수 기준 내림차순 정렬 (펌프 배열 추가)
+        // 2. 대시보드 통계 배열 생성 및 (+) 기호 개수 기준 내림차순 정렬 (기존 로직 유지)
         let statsArray = Object.keys(comboStats).map(name => ({ 
             name, 
             count: comboStats[name].count,
@@ -1000,11 +998,11 @@
 
             const plusCountA = (a.name.match(/\+/g) || []).length;
             const plusCountB = (b.name.match(/\+/g) || []).length;
-            if (plusCountB !== plusCountA) return plusCountB - plusCountA; // 1순위: + 기호 많은 순
-            return b.count - a.count; // 2순위: 갯수 많은 순
+            if (plusCountB !== plusCountA) return plusCountB - plusCountA; 
+            return b.count - a.count; 
         });
 
-        // 3. 대시보드 HTML 블록 구성 (h-screen 제거 및 줄간격 압축)
+        // 3. 대시보드 HTML 블록 구성 (🚀 엑셀 스타일 표 렌더링으로 변경)
         let statsHtml = `<div class="mb-4 p-4 bg-indigo-50/40 rounded-lg border border-indigo-200 print:bg-transparent print:border-none print:p-0 text-[14px] print:text-[10px] page-break-after-always">
             <div class="font-bold text-indigo-900 print:text-black mb-3 print:mb-1.5 flex justify-between items-end border-b-2 border-indigo-300 print:border-black pb-2 print:pb-1">
                 <span class="flex items-center gap-2 text-lg print:text-base">
@@ -1015,22 +1013,33 @@
                     A : ${uniqueA.size}개 &nbsp;|&nbsp; P : ${uniqueP.size}개 &nbsp;|&nbsp; L : ${uniqueL.size}개 &nbsp;|&nbsp; N : ${countN}개
                 </span>
             </div>
-            <div class="block w-full text-gray-800 print:text-black font-medium pl-1">`;
+            
+            <table class="w-full text-left border-collapse border border-gray-300 print:border-black print:border-2 text-[13px] print:text-[10.5px]">
+                <thead class="bg-indigo-50 print:bg-gray-200 text-indigo-900 print:text-black">
+                    <tr>
+                        <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[5%] font-bold">NO.</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[75%] font-bold">시료매체 (유해인자 조합)</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[10%] font-bold">건수</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[10%] font-bold">펌프</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white print:bg-transparent">`;
         
         if (statsArray.length > 0) {
             statsArray.forEach((stat, index) => {
-                // 펌프 기호 문자열 조립 (예: [ A, L ])
-                let pumpStr = stat.pumps.length > 0 ? ` <span class="text-indigo-600 print:text-black font-bold ml-1.5 text-[13px] print:text-[10.5px]">[ ${stat.pumps.join(', ')} ]</span>` : '';
+                let pumpStr = stat.pumps.length > 0 ? `[ ${stat.pumps.join(', ')} ]` : '';
                 
-                statsHtml += `<div class="block w-full print:mb-0.5 leading-relaxed print:leading-snug">
-                    <span class="inline-block w-[22px] font-bold text-gray-500 print:text-gray-700">${index + 1}.</span> 
-                    ${stat.name} = <span class="text-indigo-700 print:text-black font-extrabold text-[15px] print:text-[12px]">${stat.count}건</span>${pumpStr}
-                </div>`;
+                statsHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent">
+                    <td class="border border-gray-300 print:border-black px-2 py-1 text-center font-bold text-gray-600 print:text-black">${index + 1}</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 text-gray-800 print:text-black font-medium break-all whitespace-pre-wrap">${stat.name}</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 text-center text-indigo-700 print:text-black font-extrabold">${stat.count}건</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 text-center text-indigo-600 print:text-black font-bold">${pumpStr}</td>
+                </tr>`;
             });
         } else {
-            statsHtml += `<div class="text-gray-500 italic block w-full">등록된 유해인자가 없습니다.</div>`;
+            statsHtml += `<tr><td colspan="4" class="border border-gray-300 print:border-black px-2 py-3 text-center text-gray-500 italic">등록된 유해인자가 없습니다.</td></tr>`;
         }
-        statsHtml += `</div></div>`;
+        statsHtml += `</tbody></table></div>`;
 
         // 4. 요약표 컨테이너 및 엑셀 스타일 표 렌더링
         let html = `<div class="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:border-none print:shadow-none break-inside-avoid print:mb-0 mb-4 w-full page-break-after-always summary-section print:p-0">`;
@@ -1042,23 +1051,24 @@
                     <span class="text-xs font-normal text-amber-600 print:hidden bg-amber-50 px-2 py-1 rounded border border-amber-200 mt-1 sm:mt-0 shadow-sm">※ 인쇄 직전 표 안의 글자를 클릭해 수기로 수정할 수 있습니다.</span>
                  </h3>`;
         
-        html += statsHtml; // 대시보드를 요약표 바로 위에 주입
+        html += statsHtml; // 대시보드를 요약표 상단(별도 페이지)에 주입
 
+        // 🚀 요약표 칸 너비(Width) 최적화 적용
         html += `<div class="w-full overflow-x-auto print:overflow-visible">
                     <table class="w-full text-left border-collapse border border-gray-300 print:border-black print:border-2 text-[13px] print:text-[9.5px]">
                         <thead class="bg-gray-100 print:bg-gray-200">
                             <tr>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[3%] font-bold text-gray-700 print:text-black">NO.</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[13%] font-bold text-gray-700 print:text-black">부서명</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[13%] font-bold text-gray-700 print:text-black">공정명</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[7%] font-bold text-gray-700 print:text-black">교대제</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">근로자수</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">근로자명</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[46%] font-bold text-gray-700 print:text-black">시료 유해인자 조합 (비고 포함)</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[2%] font-bold text-gray-700 print:text-black">A</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[2%] font-bold text-gray-700 print:text-black">P</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[2%] font-bold text-gray-700 print:text-black">L</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[2%] font-bold text-gray-700 print:text-black">N</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[10%] font-bold text-gray-700 print:text-black">부서명</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[10%] font-bold text-gray-700 print:text-black">공정명</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[6%] font-bold text-gray-700 print:text-black">교대제</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[4%] font-bold text-gray-700 print:text-black">근로자수</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[9%] font-bold text-gray-700 print:text-black">근로자명</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[38%] font-bold text-gray-700 print:text-black">시료 유해인자 조합 (비고 포함)</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">A</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">P</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">L</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">N</th>
                             </tr>
                         </thead>
                         <tbody class="print:border-black">`;
@@ -1069,12 +1079,12 @@
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
             if(currentWorkers.length === 0) return;
             
-            // 🚀 [신규 추가] 부서명, 공정명, 교대제, 근로자수가 같은 행들을 시각적으로 병합하기 위한 계산 로직
+            // 🚀 부서명, 공정명, 교대제, 근로자수가 같은 행들을 시각적으로 병합하기 위한 계산 로직
             const groupSpans = new Array(currentWorkers.length).fill(0);
             for (let i = 0; i < currentWorkers.length; i++) {
-                if (groupSpans[i] !== 0) continue; // 이미 앞선 그룹에 병합된 경우 패스
+                if (groupSpans[i] !== 0) continue; 
                 
-                let totalRowSpan = currentWorkers[i]._wSpan; // 현재 근로자의 유해인자 조합 줄 수
+                let totalRowSpan = currentWorkers[i]._wSpan; 
                 for (let j = i + 1; j < currentWorkers.length; j++) {
                     const isSameGroup = 
                         currentWorkers[i].department === currentWorkers[j].department &&
@@ -1083,13 +1093,13 @@
                         currentWorkers[i].workerCount === currentWorkers[j].workerCount;
 
                     if (isSameGroup) {
-                        totalRowSpan += currentWorkers[j]._wSpan; // 병합될 그룹의 줄 수를 계속 더함
-                        groupSpans[j] = -1; // 병합 처리되었음을 표시
+                        totalRowSpan += currentWorkers[j]._wSpan; 
+                        groupSpans[j] = -1; 
                     } else {
-                        break; // 연속되지 않으면 그룹핑 중단
+                        break; 
                     }
                 }
-                groupSpans[i] = totalRowSpan; // 첫 행에 총 병합 줄 수 입력
+                groupSpans[i] = totalRowSpan; 
             }
             
             currentWorkers.forEach((worker, wIdx) => {
@@ -1100,8 +1110,8 @@
                 let wCount = (worker.workerCount || '').trim();
                 let wName = (worker.name || '').trim();
 
-                const wSpan = worker._wSpan; // 해당 근로자 개별 병합 수
-                const gSpan = groupSpans[wIdx]; // 부서 그룹 전체 병합 수
+                const wSpan = worker._wSpan; 
+                const gSpan = groupSpans[wIdx]; 
                 
                 worker._summaryCombinations.forEach((combo, comboIdx) => {
                     html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent group" style="page-break-inside: avoid;">`;
@@ -1131,7 +1141,7 @@
                                  </td>`;
                     }
                     
-                    // 2. 근로자명은 행(Worker) 단위로만 병합
+                    // 2. 근로자명은 행(Worker) 단위로만 병합 (좌측 정렬 적용)
                     if (comboIdx === 0) {
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left" rowspan="${wSpan}">
                                     <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea></div>
@@ -1140,7 +1150,7 @@
                     }
 
                     // 3. 개별 유해인자 조합 정보
-                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug w-[46%]">
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug w-[38%]">
                                 <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight text-[13px]" rows="1">${combo.name}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${combo.name}</div>
                              </td>`;
