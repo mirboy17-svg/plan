@@ -2407,7 +2407,7 @@
                         if (!rawNum) rawNum = String(pVal).trim(); // 숫자 없이 문자만 쓴 예외 상황 대비
                         let displayVal = `${type.toUpperCase()} ${rawNum}`;
 
-                        // 유해인자 줄마다 펌프가 있으면 각각 따로 Push 함
+                        // 유해인자 줄마다 펌프가 있으면 각각 따로 Push 함 (동일 펌프번호 중복 허용)
                         labels.push({ dept, displayVal, type, rawNum });
                     });
                 });
@@ -2418,43 +2418,62 @@
             return showToast('현재 선택된 일차(팀)에 출력할 라벨지가 없습니다. 메인 표에 A, P, L 펌프 번호를 기입해주세요.', true);
         }
 
-        // 🚀 인쇄 방향(세로) 및 여백 강제 적용용 동적 스타일 주입 (메인 표의 가로인쇄 설정 무력화)
+        // 🚀 인쇄 방향(세로) 및 여백 0을 강제 적용하는 동적 스타일 주입
         let styleEl = document.getElementById('label-print-style');
         if (!styleEl) {
             styleEl = document.createElement('style');
             styleEl.id = 'label-print-style';
             document.head.appendChild(styleEl);
         }
-        styleEl.innerHTML = `@media print { @page { size: A4 portrait !important; margin: 0 !important; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`;
+        styleEl.innerHTML = `@media print { @page { size: A4 portrait !important; margin: 0 !important; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; } }`;
 
-        // 🚀 145칸 규격으로 데이터를 쪼개어(Chunking) 1, 2페이지 규격이 틀어지는 브라우저 버그 완벽 차단
+        // 🚀 145칸 규격(Formtec LS-3145) 완벽 호환을 위한 절대 규격(Absolute Layout) 설정
+        // A4: 210 x 297mm. 라벨: 30x9mm, 5열 29행. 
         const LABELS_PER_PAGE = 145;
         let pagesHtml = '';
+        const totalPages = Math.ceil(labels.length / LABELS_PER_PAGE);
 
-        for (let i = 0; i < labels.length; i += LABELS_PER_PAGE) {
-            const chunk = labels.slice(i, i + LABELS_PER_PAGE);
+        for (let p = 0; p < totalPages; p++) {
             let chunkHtml = '';
             
-            chunk.forEach(label => {
-                let bgClass = 'bg-white';
-                let textClass = 'text-black';
+            // 💡 무조건 1페이지당 145개의 블록을 생성 (데이터가 모자란 빈 칸은 투명 더미 블록으로 채움)
+            // 이렇게 해야 페이지가 넘어가도 브라우저가 그리드를 망가뜨리지 않습니다.
+            for (let i = 0; i < LABELS_PER_PAGE; i++) {
+                const dataIndex = p * LABELS_PER_PAGE + i;
+                const isLastInRow = (i + 1) % 5 === 0;
+                const marginRight = isLastInRow ? '0' : '2.5mm';
                 
-                if (label.type === 'a') { bgClass = 'bg-[#fef9c3]'; textClass = 'text-[#1e3a8a]'; }
-                else if (label.type === 'p') { bgClass = 'bg-[#dcfce7]'; textClass = 'text-black'; }
-                else if (label.type === 'l') { bgClass = 'bg-[#dbeafe]'; textClass = 'text-[#14532d]'; }
+                if (dataIndex < labels.length) {
+                    const label = labels[dataIndex];
+                    let bgClass = 'bg-white';
+                    let textClass = 'text-black';
+                    
+                    if (label.type === 'a') { bgClass = 'bg-[#fef9c3]'; textClass = 'text-[#1e3a8a]'; }
+                    else if (label.type === 'p') { bgClass = 'bg-[#dcfce7]'; textClass = 'text-black'; }
+                    else if (label.type === 'l') { bgClass = 'bg-[#dbeafe]'; textClass = 'text-[#14532d]'; }
 
-                chunkHtml += `
-                    <div class="border-[0.5px] border-gray-400 flex flex-col justify-center items-center shadow-sm box-border overflow-hidden ${bgClass}" style="width: 30mm; height: 9mm; padding: 0.2mm; page-break-inside: avoid; break-inside: avoid;">
-                        <div class="text-[6.5px] font-extrabold text-black w-full text-center truncate leading-none mb-[1px] tracking-tight">${label.dept}</div>
-                        <div class="text-[12.5px] font-black tracking-tighter ${textClass} leading-none truncate">${label.displayVal}</div>
-                    </div>
-                `;
-            });
+                    chunkHtml += `
+                        <div class="border-[0.5px] border-gray-400 flex flex-col justify-center items-center box-border overflow-hidden ${bgClass}" 
+                             style="width: 30mm; height: 9mm; margin-right: ${marginRight}; margin-bottom: 0; padding: 0.2mm;">
+                            <div class="text-[6.5px] font-extrabold text-black w-full text-center truncate leading-none mb-[1px] tracking-tight">${label.dept}</div>
+                            <div class="text-[12.5px] font-black tracking-tighter ${textClass} leading-none truncate">${label.displayVal}</div>
+                        </div>
+                    `;
+                } else {
+                    // 레이아웃이 무너지지 않도록 투명한 더미(Dummy) 칸 생성
+                    chunkHtml += `
+                        <div style="width: 30mm; height: 9mm; margin-right: ${marginRight}; margin-bottom: 0; box-sizing: border-box; border: 1px solid transparent;"></div>
+                    `;
+                }
+            }
 
-            // A4 한 장(210x297mm) 단위의 절대 규격 래퍼 (이 래퍼 단위로 페이지가 넘어감)
+            // 마지막 페이지에는 강제 페이지 넘김(page-break-after)을 적용하지 않음
+            const pbStyle = (p === totalPages - 1) ? '' : 'break-after: page; page-break-after: always;';
+            
+            // A4 한 장(210x297mm) 단위의 절대 래퍼 (상단 여백 18mm, 좌측 여백 25mm 고정)
             pagesHtml += `
-                <div class="page-break-after-always" style="width: 210mm; height: 297mm; box-sizing: border-box; padding-top: 18mm; margin: 0 auto; break-after: page; page-break-after: always; position: relative;">
-                    <div style="display: grid; grid-template-columns: repeat(5, 30mm); grid-auto-rows: 9mm; gap: 0mm 2.5mm; width: 160mm; margin: 0 auto; align-content: start;">
+                <div style="width: 210mm; height: 297mm; box-sizing: border-box; padding-top: 18mm; padding-left: 25mm; margin: 0 auto; background: white; ${pbStyle} page-break-inside: avoid; overflow: hidden; position: relative;">
+                    <div style="display: flex; flex-wrap: wrap; width: 161mm; height: 261mm; align-content: flex-start;">
                         ${chunkHtml}
                     </div>
                 </div>
