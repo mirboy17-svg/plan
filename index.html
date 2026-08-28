@@ -870,14 +870,16 @@
         let uniqueL = new Set();
         let countN = 0;
 
-        let processedWorkers = [];
-
-        // 1. 각 근로자(행)별 독립적 데이터 수집 및 조합 계산
+        // 1. 각 근로자(행)별 조합 계산 및 대시보드 통계 수집
         unitNames.forEach(unit => {
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
             if(currentWorkers.length > 0) hasData = true;
             
             currentWorkers.forEach(worker => {
+                let factorsByPump = {};
+                let pumpToAPLN = {};
+                
+                // 해당 근로자의 A, P, L, N 펌프 카운트 수집 (대시보드용)
                 worker.harmfulFactors.forEach(factor => {
                     if (factor.a && String(factor.a).trim() !== '') uniqueA.add(String(factor.a).trim());
                     if (factor.p && String(factor.p).trim() !== '') uniqueP.add(String(factor.p).trim());
@@ -888,15 +890,26 @@
                     if (nValue && String(nValue).trim() !== '') countN++;
                 });
 
-                let combinations = [];
-
                 worker.harmfulFactors.forEach(factor => {
                     if (factor.isAdjusted) return;
                     let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
                     if (!rawName) return;
 
+                    // 1,2-디클로로에틸렌 등의 숫자 사이 쉼표 보호
                     let safeName = rawName.replace(/(\d),(\d)/g, '$1_COMMA_$2');
                     let nameTokens = safeName.split(',').map(s => s.replace(/_COMMA_/g, ',').trim()).filter(Boolean);
+                    
+                    let pNum = String(factor.a || factor.p || factor.l || factor.n || '').replace(/[^0-9Vv]/g, '');
+                    let nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && rawName.includes('소음')) ? 'V' : '');
+                    
+                    if (!pNum && (rawName.includes('소음') || nValue)) pNum = 'V';
+                    if (!pNum) pNum = 'NONE_' + Math.random();
+                    if (pNum.toUpperCase() === 'V') pNum = 'NOISE';
+
+                    if (!factorsByPump[pNum]) {
+                        factorsByPump[pNum] = [];
+                        pumpToAPLN[pNum] = { a: '', p: '', l: '', n: '' };
+                    }
                     
                     let cellName = '';
                     if (nameTokens.length > 1) {
@@ -911,15 +924,28 @@
                         cellName += `[${remarkStr}]`;
                     }
 
-                    let nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && rawName.includes('소음')) ? 'V' : '');
+                    if (cellName) {
+                        factorsByPump[pNum].push(cellName);
+                    }
+
+                    if(factor.a) pumpToAPLN[pNum].a = factor.a;
+                    if(factor.p) pumpToAPLN[pNum].p = factor.p;
+                    if(factor.l) pumpToAPLN[pNum].l = factor.l;
+                    if(factor.n || nValue) pumpToAPLN[pNum].n = factor.n || nValue;
+                });
+
+                let combinations = [];
+                Object.keys(factorsByPump).forEach(pNum => {
+                    if (pNum.startsWith('NONE_')) return;
+                    let uniqueCellNames = Array.from(new Set(factorsByPump[pNum]));
+                    let combinedName = uniqueCellNames.join(' + ');
                     
                     combinations.push({
-                        name: cellName,
-                        a: factor.a || '',
-                        p: factor.p || '',
-                        l: factor.l || '',
-                        n: factor.n || nValue || '',
-                        _originalIndex: combinations.length // 정렬을 위한 기존 인덱스 저장
+                        name: combinedName,
+                        a: pumpToAPLN[pNum].a,
+                        p: pumpToAPLN[pNum].p,
+                        l: pumpToAPLN[pNum].l,
+                        n: pumpToAPLN[pNum].n,
                     });
                 });
 
@@ -927,115 +953,72 @@
                     combinations.push({name: '', a: '', p: '', l: '', n: ''});
                 }
 
-                // 소음 최우선 및 그룹 정렬 로직 (이전 요청사항 유지)
-                const numCounts = {};
-                combinations.forEach(f => {
-                    const num = String(f.a || f.p || f.l || '').replace(/[^0-9]/g, '');
-                    if (num) numCounts[num] = (numCounts[num] || 0) + 1;
-                });
-
+                // 💡 [핵심] '소음'이 포함된 조합을 무조건 배열의 최상단(Index 0)으로 정렬
                 combinations.sort((a, b) => {
                     const aIsNoise = (a.name || '').includes('소음');
                     const bIsNoise = (b.name || '').includes('소음');
                     if (aIsNoise && !bIsNoise) return -1;
                     if (!aIsNoise && bIsNoise) return 1;
-
-                    const numA = String(a.a || a.p || a.l || '').replace(/[^0-9]/g, '');
-                    const numB = String(b.a || b.p || b.l || '').replace(/[^0-9]/g, '');
-
-                    const aIsGrouped = numA && numCounts[numA] >= 2;
-                    const bIsGrouped = numB && numCounts[numB] >= 2;
-
-                    if (aIsGrouped && !bIsGrouped) return -1;
-                    if (!aIsGrouped && bIsGrouped) return 1;
-
-                    if (aIsGrouped && bIsGrouped) {
-                        const parsedA = parseInt(numA, 10);
-                        const parsedB = parseInt(numB, 10);
-                        if (parsedA !== parsedB) return parsedA - parsedB; 
-                    }
-
-                    return a._originalIndex - b._originalIndex;
+                    return 0; // 둘 다 소음이거나 둘 다 아니면 원래 순서 유지
                 });
 
-                // (핵심) 이제 펌프 번호가 같아도 행이 다르면 '+ ' 기호로 무조건 결합하여 하나의 완성된 장비 세트로 생성
-                let finalCombinedNameParts = [];
+                // 대시보드 통계를 위해 방금 정렬된 조합들을 comboStats에 합산
                 combinations.forEach(combo => {
-                    if(combo.name && combo.name.trim() !== '') {
-                        finalCombinedNameParts.push(combo.name.trim());
+                    if (combo.name && combo.name.trim() !== '') {
+                        comboStats[combo.name] = (comboStats[combo.name] || 0) + 1;
                     }
                 });
-                
-                let combinedStr = finalCombinedNameParts.join(' + ');
-                
-                if (combinedStr !== '') {
-                    comboStats[combinedStr] = (comboStats[combinedStr] || 0) + 1;
-                }
 
-                processedWorkers.push({
-                    unit: unit,
-                    department: (worker.department || '').trim() || '부서미지정',
-                    process: (worker.process || '').trim() || '공정미지정',
-                    shiftSystem: (worker.shiftSystem || '').trim(),
-                    workerCount: (worker.workerCount || '').trim(),
-                    name: (worker.name || '').trim(),
-                    combinedStr: combinedStr,
-                    rawCombinations: combinations
-                });
+                worker._summaryCombinations = combinations;
+                worker._wSpan = combinations.length;
             });
         });
 
         if (!hasData) return '';
 
-        // 2. 대시보드 통계 배열 생성 및 정렬 (1. 소음 우선, 2. 복잡도 내림차순, 3. 갯수 내림차순)
+        // 2. 대시보드 통계 배열 생성 및 (+) 기호 개수 기준 내림차순 정렬
         let statsArray = Object.keys(comboStats).map(name => ({ name, count: comboStats[name] }));
         statsArray.sort((a, b) => {
             const aIsNoise = (a.name || '').includes('소음');
             const bIsNoise = (b.name || '').includes('소음');
-            
             if (aIsNoise && !bIsNoise) return -1;
             if (!aIsNoise && bIsNoise) return 1;
 
             const plusCountA = (a.name.match(/\+/g) || []).length;
             const plusCountB = (b.name.match(/\+/g) || []).length;
-            if (plusCountB !== plusCountA) return plusCountB - plusCountA; 
-            return b.count - a.count; 
+            if (plusCountB !== plusCountA) return plusCountB - plusCountA; // 1순위: + 기호 많은 순
+            return b.count - a.count; // 2순위: 갯수 많은 순
         });
 
-        // 3. 대시보드 HTML 블록 구성 (리스트 형태 및 순번 추가)
-        let statsHtml = `
-            <div class="font-bold text-xl text-indigo-900 print:text-black mb-4 print:mb-3 flex justify-between items-end border-b-2 border-indigo-300 print:border-black pb-2">
-                <span>[${getDayName(day)}] 시료 채취 필요 장비 전체 통계</span>
-                <span class="bg-indigo-600 text-white print:bg-transparent print:text-black px-3 py-1 rounded text-sm print:text-sm font-extrabold print:border-2 print:border-black shadow-inner tracking-wide">
+        // 3. 대시보드 HTML 블록 구성 (인쇄 시 첫 장에 단독 출력되도록 page-break 설정 유지)
+        let statsHtml = `<div class="mb-4 p-4 bg-indigo-50/40 rounded-lg border border-indigo-200 print:bg-transparent print:border-none print:p-0 text-[14px] print:text-[11px] page-break-after-always print:h-screen print:flex print:flex-col print:justify-start">
+            <div class="font-bold text-indigo-900 print:text-black mb-4 flex justify-between items-end border-b-2 border-indigo-300 print:border-black pb-2">
+                <span class="flex items-center gap-2 text-lg print:text-base">
+                    <svg class="w-5 h-5 print:hidden text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    [${getDayName(day)}] 시료 채취 필요 장비 전체 통계 (대시보드)
+                </span>
+                <span class="bg-indigo-600 text-white print:bg-transparent print:text-black px-3 py-1 rounded-md text-sm font-extrabold print:border-2 print:border-black shadow-sm tracking-wide">
                     A : ${uniqueA.size}개 &nbsp;|&nbsp; P : ${uniqueP.size}개 &nbsp;|&nbsp; L : ${uniqueL.size}개 &nbsp;|&nbsp; N : ${countN}개
                 </span>
             </div>
-            <div class="flex flex-col gap-3 text-gray-800 print:text-black font-semibold text-base print:text-[13px] leading-snug pl-2">`;
+            <!-- flex-col을 사용하여 한 줄에 하나씩 떨어지도록 설정 -->
+            <div class="flex flex-col gap-2.5 text-gray-800 print:text-black font-medium leading-relaxed pl-1">`;
         
         if (statsArray.length > 0) {
-            statsArray.forEach((stat, idx) => {
-                statsHtml += `
-                <div class="flex items-start gap-3 border-b border-indigo-100 print:border-gray-300 pb-2 last:border-0" style="page-break-inside: avoid;">
-                    <span class="font-bold text-indigo-600 print:text-black min-w-[28px] text-right">${idx + 1}.</span>
-                    <span class="flex-1 break-words">${stat.name}</span>
-                    <span class="text-indigo-800 print:text-black font-extrabold whitespace-nowrap text-lg print:text-[14px]"> = ${stat.count}건</span>
+            statsArray.forEach((stat, index) => {
+                // w-full과 block 속성으로 한 줄 전체를 차지하게 만듦
+                statsHtml += `<div class="block w-full">
+                    <span class="inline-block w-[22px] font-bold text-gray-500 print:text-gray-700">${index + 1}.</span> 
+                    ${stat.name} = <span class="text-indigo-700 print:text-black font-extrabold text-[15px] print:text-[13px]">${stat.count}건</span>
                 </div>`;
             });
         } else {
-            statsHtml += `<div class="text-gray-500 italic py-2">등록된 유해인자가 없습니다.</div>`;
+            statsHtml += `<div class="text-gray-500 italic block w-full">등록된 유해인자가 없습니다.</div>`;
         }
-        statsHtml += `</div>`;
+        statsHtml += `</div></div>`;
 
-        // 4. 독립된 페이지 컨테이너에 각각 담아 렌더링 (대시보드 페이지 + 요약표 페이지 완벽 분리)
-        let html = ``;
-        
-        // [페이지 1] 통계 대시보드 영역 (무조건 다음 페이지로 넘기기)
-        html += `<div class="bg-indigo-50/40 p-6 rounded-lg border border-indigo-200 print:bg-transparent print:border-none shadow-sm print:shadow-none break-inside-avoid print:mb-0 mb-6 w-full page-break-after-always print:p-4">`;
-        html += statsHtml;
-        html += `</div>`;
-
-        // [페이지 2] 시료 준비 요약표 영역 (이후 메인표와 분리하기 위해 page-break-after-always 적용)
-        html += `<div class="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:border-none print:shadow-none break-inside-avoid print:mb-0 mb-4 w-full page-break-after-always summary-section print:p-0">`;
+        // 4. 요약표 컨테이너 및 엑셀 스타일 표 렌더링 (인쇄 시 통계 다음 장에 출력)
+        let html = `<div class="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:border-none print:shadow-none break-inside-avoid print:mb-0 mb-4 w-full page-break-after-always summary-section print:p-0">`;
         html += `<h3 class="font-bold text-lg text-indigo-700 mb-3 border-b border-indigo-100 pb-2 print:text-black print:border-black print:text-[14px] print:mb-1 print:pb-1 flex flex-wrap items-center justify-between">
                     <div class="flex items-center">
                         <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-sm font-bold border border-indigo-300 print:hidden mr-2">STEP 3</span>
@@ -1043,6 +1026,8 @@
                     </div>
                     <span class="text-xs font-normal text-amber-600 print:hidden bg-amber-50 px-2 py-1 rounded border border-amber-200 mt-1 sm:mt-0 shadow-sm">※ 인쇄 직전 표 안의 글자를 클릭해 수기로 수정할 수 있습니다.</span>
                  </h3>`;
+        
+        html += statsHtml; // 대시보드를 요약표 바로 위에 주입!
 
         html += `<div class="w-full overflow-x-auto print:overflow-visible">
                     <table class="w-full text-left border-collapse border border-gray-300 print:border-black print:border-2 text-[13px] print:text-[9.5px]">
@@ -1064,63 +1049,78 @@
 
         let noIndex = 1;
 
-        // 부서/공정별로 그룹핑
-        let groupedByDeptProc = {};
-        processedWorkers.forEach(pw => {
-            let groupKey = `${pw.department} [${pw.process}]`;
-            if (!groupedByDeptProc[groupKey]) {
-                groupedByDeptProc[groupKey] = [];
-            }
-            groupedByDeptProc[groupKey].push(pw);
-        });
-
-        // 가나다 정렬
-        let sortedGroupKeys = Object.keys(groupedByDeptProc).sort();
-
-        sortedGroupKeys.forEach(groupKey => {
-            let workersInGroup = groupedByDeptProc[groupKey];
+        unitNames.forEach(unit => {
+            const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
+            if(currentWorkers.length === 0) return;
             
-            // 그룹 내 총 조합(행) 개수 계산
-            let totalGroupRows = 0;
-            workersInGroup.forEach(w => {
-                totalGroupRows += w.rawCombinations.length;
-            });
-
-            workersInGroup.forEach((worker, wIndex) => {
-                let wSpan = worker.rawCombinations.length;
-                let isGroupStart = (wIndex === 0);
+            // 🚀 [신규 추가] 부서명, 교대제, 근로자수가 같은 행들을 시각적으로 병합하기 위한 계산 로직
+            const groupSpans = new Array(currentWorkers.length).fill(0);
+            for (let i = 0; i < currentWorkers.length; i++) {
+                if (groupSpans[i] !== 0) continue; // 이미 앞선 그룹에 병합된 경우 패스
                 
-                worker.rawCombinations.forEach((combo, comboIdx) => {
-                    let isWorkerStart = (comboIdx === 0);
-                    
+                let totalRowSpan = currentWorkers[i]._wSpan; // 현재 근로자의 유해인자 조합 줄 수
+                for (let j = i + 1; j < currentWorkers.length; j++) {
+                    const isSameGroup = 
+                        currentWorkers[i].department === currentWorkers[j].department &&
+                        currentWorkers[i].process === currentWorkers[j].process &&
+                        currentWorkers[i].shiftSystem === currentWorkers[j].shiftSystem &&
+                        currentWorkers[i].workerCount === currentWorkers[j].workerCount;
+
+                    if (isSameGroup) {
+                        totalRowSpan += currentWorkers[j]._wSpan; // 병합될 그룹의 줄 수를 계속 더함
+                        groupSpans[j] = -1; // 병합 처리되었음을 표시
+                    } else {
+                        break; // 연속되지 않으면 그룹핑 중단
+                    }
+                }
+                groupSpans[i] = totalRowSpan; // 첫 행에 총 병합 줄 수 입력
+            }
+            
+            currentWorkers.forEach((worker, wIdx) => {
+                let deptName = (worker.department || '').trim() || '부서미지정';
+                let procName = (worker.process || '').trim() || '공정미지정';
+                let groupKey = `${deptName} [${procName}]`;
+                
+                let shift = (worker.shiftSystem || '').trim();
+                let wCount = (worker.workerCount || '').trim();
+                let wName = (worker.name || '').trim();
+
+                const wSpan = worker._wSpan; // 해당 근로자 개별 병합 수
+                const gSpan = groupSpans[wIdx]; // 부서 그룹 전체 병합 수
+                
+                worker._summaryCombinations.forEach((combo, comboIdx) => {
                     html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent group" style="page-break-inside: avoid;">`;
                     
-                    if (isGroupStart && isWorkerStart) {
-                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold align-middle text-gray-600 print:text-black" rowspan="${totalGroupRows}">${noIndex++}</td>`;
-                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center" rowspan="${totalGroupRows}">
+                    // 🚀 1. 부서/공정 등 그룹별 공통 사항 병합 (같은 부서행의 가장 첫 줄일 때만 렌더링)
+                    if (gSpan > 0 && comboIdx === 0) {
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold align-middle text-gray-600 print:text-black" rowspan="${gSpan}">${noIndex++}</td>`;
+                        
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center" rowspan="${gSpan}">
                                     <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${groupKey}</textarea></div>
                                     <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${groupKey}</div>
                                  </td>`;
+                                 
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-center" rowspan="${gSpan}">
+                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${shift}</textarea></div>
+                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${shift}</div>
+                                 </td>`;
+
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-indigo-700 print:text-black text-center bg-indigo-50/30 print:bg-transparent" rowspan="${gSpan}">
+                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wCount}</textarea></div>
+                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${wCount}</div>
+                                 </td>`;
                     }
                     
-                    if (isWorkerStart) {
-                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-center" rowspan="${wSpan}">
-                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${worker.shiftSystem}</textarea></div>
-                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${worker.shiftSystem}</div>
-                                 </td>`;
-
-                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-indigo-700 print:text-black text-center bg-indigo-50/30 print:bg-transparent" rowspan="${wSpan}">
-                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${worker.workerCount}</textarea></div>
-                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${worker.workerCount}</div>
-                                 </td>`;
-                                 
+                    // 🚀 2. 근로자명은 행(Worker) 단위로만 병합 (각 근로자의 첫 번째 유해인자 줄일 때만 렌더링)
+                    if (comboIdx === 0) {
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left" rowspan="${wSpan}">
-                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${worker.name}</textarea></div>
-                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${worker.name}</div>
+                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea></div>
+                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${wName}</div>
                                  </td>`;
                     }
 
-                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug align-middle">
+                    // 🚀 3. 개별 유해인자 조합 정보
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug w-[46%]">
                                 <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight text-[13px]" rows="1">${combo.name}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${combo.name}</div>
                              </td>`;
