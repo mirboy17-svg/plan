@@ -862,176 +862,203 @@
     }
 
     function generateSampleSummaryForDay(day, unitNames) {
-        // 💡 1. 데이터 집계: Map<"부서명 [공정명]", { combinations: Map, shifts: Set, workerCounts: Set }>
-        let deptProcessMap = new Map();
-
-        unitNames.forEach(unit => {
-            const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
-            
-            currentWorkers.forEach(worker => {
-                let deptName = (worker.department || '').trim() || '부서미지정';
-                let procName = (worker.process || '').trim() || '공정미지정';
-                let groupKey = `${deptName} [${procName}]`;
-
-                // 🚀 교대제 및 근로자수 데이터 분리 추출
-                let shift = (worker.shiftSystem || '').trim();
-                let wCount = (worker.workerCount || '').trim();
-
-                if (!deptProcessMap.has(groupKey)) {
-                    deptProcessMap.set(groupKey, {
-                        combinations: new Map(),
-                        shifts: new Set(),
-                        workerCounts: new Set()
-                    });
-                }
-                
-                let groupData = deptProcessMap.get(groupKey);
-                // 교대제, 근로자수 각각 중복 없이 수집
-                if (shift) groupData.shifts.add(shift);
-                if (wCount) groupData.workerCounts.add(wCount);
-                
-                let combinationCounts = groupData.combinations;
-
-                // 이 근로자의 펌프별 유해인자 추출 (기존 펌프 묶는 로직 재사용)
-                let factorsByPump = {};
-
-                worker.harmfulFactors.forEach(factor => {
-                    if (factor.isAdjusted) return;
-
-                    let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
-                    if (!rawName) return;
-
-                    // 1,2-디클로로에틸렌 등 숫자 사이 쉼표 철통 방어!
-                    let safeName = rawName.replace(/(\d),(\d)/g, '$1_COMMA_$2');
-                    let nameTokens = safeName.split(',').map(s => s.replace(/_COMMA_/g, ',').trim()).filter(Boolean);
-                    
-                    // 1개 물질을 띄우고 나머지는 '외 N종' 처리 (요청사항 반영)
-                    let finalName = rawName;
-                    if (nameTokens.length >= 2) {
-                        finalName = `${nameTokens[0]} 외 ${nameTokens.length - 1}종`;
-                    } else {
-                        finalName = nameTokens[0];
-                    }
-
-                    // 비고란 내용 결합 (가방 글자 제외 및 괄호 중복 방지)
-                    let remarkStr = String(factor.remark || '').replace(/\[가방\]/g, '').trim();
-                    if (remarkStr) {
-                        remarkStr = remarkStr.replace(/^\[(.*)\]$/, '$1'); 
-                        finalName = `${finalName}[${remarkStr}]`;
-                    }
-
-                    // 펌프 번호 추출 및 소음(V) 처리
-                    let pNum = String(factor.a || factor.p || factor.l || factor.n || '').replace(/[^0-9Vv]/g, '');
-                    if (!pNum && (rawName.includes('소음') || factor.n)) pNum = 'V';
-                    if (!pNum) pNum = 'NONE_' + Math.random();
-
-                    if (pNum.toUpperCase() === 'V') pNum = 'NOISE';
-
-                    if (!factorsByPump[pNum]) factorsByPump[pNum] = [];
-                    factorsByPump[pNum].push(finalName);
-                });
-
-                // 추출된 조합을 부서/공정별 카운트 맵에 누적
-                Object.keys(factorsByPump).forEach(pNum => {
-                    if (pNum.startsWith('NONE_')) return;
-
-                    let uniqueNames = Array.from(new Set(factorsByPump[pNum]));
-                    let combinedName = uniqueNames.join(' + '); 
-
-                    if (!combinationCounts.has(combinedName)) {
-                        combinationCounts.set(combinedName, 0);
-                    }
-                    combinationCounts.set(combinedName, combinationCounts.get(combinedName) + 1);
-                });
-            });
-        });
-
-        if (deptProcessMap.size === 0) return '';
-
-        // 💡 2. HTML 렌더링 (엑셀 형태의 압축된 표 레이아웃)
+        let hasData = false;
+        
         let html = `<div class="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:border-none print:shadow-none break-inside-avoid print:mb-0 mb-4 w-full page-break-after-always summary-section print:p-0">`;
         html += `<h3 class="font-bold text-lg text-indigo-700 mb-3 border-b border-indigo-100 pb-2 print:text-black print:border-black print:text-[14px] print:mb-1 print:pb-1 flex flex-wrap items-center justify-between">
                     <div class="flex items-center">
                         <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-sm font-bold border border-indigo-300 print:hidden mr-2">STEP 3</span>
-                        [${getDayName(day)}] 부서·공정별 시료 준비 요약표
+                        [${getDayName(day)}] 부서/근로자별 시료 준비 요약표
                     </div>
                     <span class="text-xs font-normal text-amber-600 print:hidden bg-amber-50 px-2 py-1 rounded border border-amber-200 mt-1 sm:mt-0">※ 인쇄 직전 표 안의 글자를 클릭해 수기로 수정할 수 있습니다.</span>
                  </h3>`;
         
-        // 엑셀 스타일의 표 시작 (인쇄 시 여백 최소화 및 폰트 축소 적용, 열 분리!)
         html += `<div class="w-full overflow-x-auto print:overflow-visible">
                     <table class="w-full text-left border-collapse border border-gray-300 print:border-black print:border-2 text-[13px] print:text-[9.5px]">
                         <thead class="bg-gray-100 print:bg-gray-200">
                             <tr>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">NO.</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[22%] font-bold text-gray-700 print:text-black">부서명 [공정명]</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[11%] font-bold text-gray-700 print:text-black">교대제</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[7%] font-bold text-gray-700 print:text-black">근로자수</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[45%] font-bold text-gray-700 print:text-black">시료 유해인자 조합 (비고 포함)</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[10%] font-bold text-gray-700 print:text-black">수량</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[3%] font-bold text-gray-700 print:text-black">NO.</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[15%] font-bold text-gray-700 print:text-black">부서명 [공정명]</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[7%] font-bold text-gray-700 print:text-black">교대제</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[7%] font-bold text-gray-700 print:text-black">근로자수[건수]</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[10%] font-bold text-gray-700 print:text-black">근로자명</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[46%] font-bold text-gray-700 print:text-black">시료 유해인자 조합 (비고 포함)</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[3%] font-bold text-gray-700 print:text-black">A</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[3%] font-bold text-gray-700 print:text-black">P</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[3%] font-bold text-gray-700 print:text-black">L</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[3%] font-bold text-gray-700 print:text-black">N</th>
                             </tr>
                         </thead>
                         <tbody class="print:border-black">`;
 
-        let sortedGroupKeys = Array.from(deptProcessMap.keys()).sort();
         let noIndex = 1;
 
-        sortedGroupKeys.forEach(groupKey => {
-            let groupData = deptProcessMap.get(groupKey);
-            let combinationCounts = groupData.combinations;
-            // 🚀 추출한 교대제 및 근로자수 데이터를 각각 쉼표로 연결
-            let shiftsStr = Array.from(groupData.shifts).join(', ');
-            let workerCountsStr = Array.from(groupData.workerCounts).join(', ');
-
-            if (combinationCounts.size === 0) return;
-
-            let sortedCombinations = Array.from(combinationCounts.keys()).sort((a, b) => {
-                let aIsNoise = a.includes('소음');
-                let bIsNoise = b.includes('소음');
-                if (aIsNoise && !bIsNoise) return -1;
-                if (!aIsNoise && bIsNoise) return 1;
-                return a.localeCompare(b);
-            });
-
-            let rowSpan = sortedCombinations.length;
-
-            sortedCombinations.forEach((combo, idx) => {
-                let count = combinationCounts.get(combo);
+        unitNames.forEach(unit => {
+            const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
+            if(currentWorkers.length > 0) hasData = true;
+            
+            // 1. 각 근로자(행)별로 펌프 유해인자 조합 미리 계산
+            currentWorkers.forEach(worker => {
+                let factorsByPump = {};
+                let pumpToAPLN = {};
                 
-                // 표의 행이 페이지 중간에서 잘리지 않도록 강제 (page-break-inside: avoid)
-                html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent group" style="page-break-inside: avoid;">`;
+                worker.harmfulFactors.forEach(factor => {
+                    if (factor.isAdjusted) return;
+                    let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
+                    if (!rawName) return;
 
-                // 첫 번째 줄에만 순번, 부서명, 교대제, 근로자수를 셀 병합(rowspan)하여 표시
-                if (idx === 0) {
-                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold align-middle text-gray-600 print:text-black" rowspan="${rowSpan}">${noIndex++}</td>`;
+                    let safeName = rawName.replace(/(\d),(\d)/g, '$1_COMMA_$2');
+                    let nameTokens = safeName.split(',').map(s => s.replace(/_COMMA_/g, ',').trim()).filter(Boolean);
                     
-                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-800 print:text-black" rowspan="${rowSpan}">
-                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${groupKey}</textarea></div>
-                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${groupKey}</div>
-                             </td>`;
-                             
-                    // 🚀 교대제 독립 셀
-                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-center" rowspan="${rowSpan}">
-                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${shiftsStr}</textarea></div>
-                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${shiftsStr}</div>
-                             </td>`;
+                    let pNum = String(factor.a || factor.p || factor.l || factor.n || '').replace(/[^0-9Vv]/g, '');
+                    let nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && rawName.includes('소음')) ? 'V' : '');
+                    
+                    if (!pNum && (rawName.includes('소음') || nValue)) pNum = 'V';
+                    if (!pNum) pNum = 'NONE_' + Math.random();
+                    if (pNum.toUpperCase() === 'V') pNum = 'NOISE';
 
-                    // 🚀 근로자수 독립 셀
-                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-center" rowspan="${rowSpan}">
-                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${workerCountsStr}</textarea></div>
-                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${workerCountsStr}</div>
-                             </td>`;
+                    if (!factorsByPump[pNum]) {
+                        factorsByPump[pNum] = [];
+                        pumpToAPLN[pNum] = { a: '', p: '', l: '', n: '' };
+                    }
+                    
+                    // 💡 핵심 법칙 1 & 2: "하나의 칸(행)" 안에서만 '외 N종'을 적용
+                    let cellName = '';
+                    if (nameTokens.length > 1) {
+                        cellName = `${nameTokens[0]} 외 ${nameTokens.length - 1}종`;
+                    } else if (nameTokens.length === 1) {
+                        cellName = nameTokens[0];
+                    }
+
+                    // 💡 비고 내용을 해당 칸의 유해인자명 바로 옆에 독립적으로 붙임
+                    let remarkStr = String(factor.remark || '').replace(/\[가방\]/g, '').trim();
+                    if (remarkStr) {
+                        remarkStr = remarkStr.replace(/^\[(.*)\]$/, '$1'); 
+                        cellName += `[${remarkStr}]`;
+                    }
+
+                    if (cellName) {
+                        factorsByPump[pNum].push(cellName);
+                    }
+
+                    if(factor.a) pumpToAPLN[pNum].a = factor.a;
+                    if(factor.p) pumpToAPLN[pNum].p = factor.p;
+                    if(factor.l) pumpToAPLN[pNum].l = factor.l;
+                    if(factor.n || nValue) pumpToAPLN[pNum].n = factor.n || nValue;
+                });
+
+                let combinations = [];
+                Object.keys(factorsByPump).forEach(pNum => {
+                    if (pNum.startsWith('NONE_')) return;
+                    
+                    // 💡 핵심 법칙 3: 같은 펌프를 공유하는 "다른 행"의 유해인자들은 ' + ' 기호로 무조건 연결 (병합하여 외 N종 처리 금지)
+                    let uniqueCellNames = Array.from(new Set(factorsByPump[pNum]));
+                    let combinedName = uniqueCellNames.join(' + ');
+                    
+                    combinations.push({
+                        name: combinedName,
+                        a: pumpToAPLN[pNum].a,
+                        p: pumpToAPLN[pNum].p,
+                        l: pumpToAPLN[pNum].l,
+                        n: pumpToAPLN[pNum].n,
+                    });
+                });
+
+                if (combinations.length === 0) {
+                    combinations.push({name: '', a: '', p: '', l: '', n: ''});
                 }
 
-                html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug">
-                            <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight text-[13px]" rows="1">${combo}</textarea></div>
-                            <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${combo}</div>
-                         </td>`;
-                html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold text-indigo-700 print:text-black align-middle bg-indigo-50/30 print:bg-transparent">
-                            <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-indigo-700 text-[13px]" rows="1">${count}건</textarea></div>
-                            <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${count}건</div>
-                         </td>`;
-                html += `</tr>`;
+                worker._summaryCombinations = combinations;
+                worker._wSpan = combinations.length;
+            });
+
+            // 2. 메인 표와 완벽히 동일한 그룹핑 스팬(Span) 계산 (동일한 부서, 공정 등은 하나로 묶임)
+            const spans = calculateSpansForWorkers(currentWorkers);
+            const groupSpans = [];
+            for(let i=0; i<currentWorkers.length; i++) {
+                if (spans[i] > 0) {
+                    let sum = 0;
+                    for(let j=i; j<i+spans[i]; j++) {
+                        sum += currentWorkers[j]._wSpan;
+                    }
+                    groupSpans[i] = sum;
+                } else {
+                    groupSpans[i] = 0;
+                }
+            }
+
+            // 3. 실제 렌더링: 텍스트에 의한 가짜 복사를 없애고 진짜 행만큼만 그리기
+            currentWorkers.forEach((worker, index) => {
+                let deptName = (worker.department || '').trim() || '부서미지정';
+                let procName = (worker.process || '').trim() || '공정미지정';
+                let groupKey = `${deptName} [${procName}]`;
+                
+                let shift = (worker.shiftSystem || '').trim();
+                let wCount = (worker.workerCount || '').trim();
+                let mCountStr = (worker.measurementCount || '').trim();
+                let mCount = parseInt(mCountStr.replace(/[^0-9]/g, ''), 10) || 1;
+                let wName = (worker.name || '').trim();
+                let workerCountDisp = wCount ? `${wCount}[${mCount}건]` : `[${mCount}건]`;
+
+                const originalRowSpan = spans[index]; // 그룹 시작점 판별 (1 이상이면 그룹 시작)
+                const gSpan = groupSpans[index]; // 묶일 그룹의 전체 높이 (좌측 병합용)
+                const wSpan = worker._wSpan; // 해당 근로자 칸의 높이 (우측 분할용)
+                
+                worker._summaryCombinations.forEach((combo, comboIdx) => {
+                    html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent group" style="page-break-inside: avoid;">`;
+                    
+                    // 그룹핑된 좌측 데이터 (부서명, 교대제, 근로자수)
+                    if (originalRowSpan > 0 && comboIdx === 0) {
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold align-middle text-gray-600 print:text-black" rowspan="${gSpan}">${noIndex++}</td>`;
+                        
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-800 print:text-black" rowspan="${gSpan}">
+                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${groupKey}</textarea></div>
+                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${groupKey}</div>
+                                 </td>`;
+                                 
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-center" rowspan="${gSpan}">
+                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${shift}</textarea></div>
+                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${shift}</div>
+                                 </td>`;
+
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-indigo-700 print:text-black text-center bg-indigo-50/30 print:bg-transparent" rowspan="${gSpan}">
+                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${workerCountDisp}</textarea></div>
+                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${workerCountDisp}</div>
+                                 </td>`;
+                    }
+
+                    // 개별로 찢어지는 근로자명 데이터
+                    if (comboIdx === 0) {
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left" rowspan="${wSpan}">
+                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea></div>
+                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${wName}</div>
+                                 </td>`;
+                    }
+
+                    // 가장 끝단의 개별 유해인자 조합 데이터
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug">
+                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight text-[13px]" rows="1">${combo.name}</textarea></div>
+                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${combo.name}</div>
+                             </td>`;
+                             
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold text-gray-700 print:text-black align-middle">
+                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${combo.a}</textarea></div>
+                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${combo.a}</div>
+                             </td>`;
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold text-gray-700 print:text-black align-middle">
+                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${combo.p}</textarea></div>
+                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${combo.p}</div>
+                             </td>`;
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold text-gray-700 print:text-black align-middle">
+                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${combo.l}</textarea></div>
+                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${combo.l}</div>
+                             </td>`;
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold text-gray-700 print:text-black align-middle">
+                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${combo.n}</textarea></div>
+                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${combo.n}</div>
+                             </td>`;
+                    html += `</tr>`;
+                });
             });
         });
 
@@ -1040,6 +1067,7 @@
                  </div>
               </div>`;
               
+        if (!hasData) return '';
         return html;
     }
 
