@@ -920,28 +920,80 @@
         let uniqueL = new Set();
         let countN = 0;
 
-        // 1. 각 근로자(행)별 조합 계산 및 대시보드 통계 수집 (기존 로직 절대 유지)
+        let heatCountTracker = new Set(); // 🚀 부서별 고열 중복 건수 표기 방지용 트래커
+
+        // 🚀 [핵심 추가] 대시보드(전체 통계)용 고열(HEAT) 건수 완벽 사전 집계 로직
+        // 오직 "단위사업체 + 부서명" 기준으로 가장 높은 측정건수(Max)를 찾아 1회만 합산합니다.
+        // 일괄 행복사로 행이 100개가 되더라도 부서가 같으면 건수는 절대 뻥튀기되지 않습니다.
+        let dashboardHeatCount = 0;
+        let heatCountByDept = {};
+
         unitNames.forEach(unit => {
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
-            if(currentWorkers.length > 0) hasData = true;
+            currentWorkers.forEach(worker => {
+                worker.harmfulFactors.forEach(factor => {
+                    if (factor.isAdjusted || String(factor.name).includes('횟수')) return;
+                    
+                    const rawName = String(factor.name || '');
+                    if (rawName.includes('고열')) {
+                        let deptKey = `${unit}|${(worker.department || '').trim()}`;
+                        
+                        let remark = String(factor.remark || '');
+                        // 대괄호 안의 숫자(건수) 추출 (공백 허용)
+                        let match = remark.match(/\[\s*(\d+)\s*건\s*\]/);
+                        let count = 0;
+                        
+                        if (match) {
+                            count = parseInt(match[1], 10);
+                        } else {
+                            // 명시적 건수가 없으면 기본 1건
+                            count = 1;
+                        }
+                        
+                        // 부서명 기준으로 가장 큰 건수(Max)만 추출하여 덮어쓰기
+                        if (!heatCountByDept[deptKey]) {
+                            heatCountByDept[deptKey] = count;
+                        } else {
+                            if (count > heatCountByDept[deptKey]) {
+                                heatCountByDept[deptKey] = count;
+                            }
+                        }
+                    }
+                });
+            });
+        });
+
+        // 추출된 부서별 최대 건수들을 모두 더하여 최종 대시보드 고열 통계 확정!
+        Object.values(heatCountByDept).forEach(count => {
+            dashboardHeatCount += count;
+        });
+
+        // 1. 각 근로자(행)별 조합 계산 및 대시보드 통계 수집
+        unitNames.forEach(unit => {
+            const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
             
             currentWorkers.forEach(worker => {
                 let factorsByPump = {};
                 let pumpToAPLN = {};
+                let strippedHeatPumps = new Set(); 
                 
-                // 해당 근로자의 A, P, L, N 펌프 카운트 수집
                 worker.harmfulFactors.forEach(factor => {
+                    const isCountAdjustment = factor.isAdjusted || String(factor.name).includes('횟수');
+                    if (isCountAdjustment) return;
+
                     if (factor.a && String(factor.a).trim() !== '') uniqueA.add(String(factor.a).trim());
                     if (factor.p && String(factor.p).trim() !== '') uniqueP.add(String(factor.p).trim());
                     if (factor.l && String(factor.l).trim() !== '') uniqueL.add(String(factor.l).trim());
                     
                     const isNoiseFactor = String(factor.name).trim().includes('소음');
-                    const nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && isNoiseFactor) ? 'V' : '');
+                    const nValue = factor.n !== undefined && factor.n !== null ? factor.n : (isNoiseFactor ? 'V' : '');
                     if (nValue && String(nValue).trim() !== '') countN++;
                 });
 
                 worker.harmfulFactors.forEach(factor => {
-                    if (factor.isAdjusted) return;
+                    const isCountAdjustment = factor.isAdjusted || String(factor.name).includes('횟수');
+                    if (isCountAdjustment) return;
+
                     let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
                     if (!rawName) return;
 
@@ -949,9 +1001,11 @@
                     let nameTokens = safeName.split(',').map(s => s.replace(/_COMMA_/g, ',').trim()).filter(Boolean);
                     
                     let pNum = String(factor.a || factor.p || factor.l || factor.n || '').replace(/[^0-9Vv]/g, '');
-                    let nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!factor.isAdjusted && rawName.includes('소음')) ? 'V' : '');
+                    let nValue = factor.n !== undefined && factor.n !== null ? factor.n : (rawName.includes('소음') ? 'V' : '');
                     
-                    if (!pNum && (rawName.includes('소음') || nValue)) pNum = 'V';
+                    if (!pNum && (rawName.includes('소음') || nValue)) pNum = 'NOISE';
+                    if (!pNum && rawName.includes('고열')) pNum = 'HEAT';
+                    
                     if (!pNum) pNum = 'NONE_' + Math.random();
                     if (pNum.toUpperCase() === 'V') pNum = 'NOISE';
 
@@ -968,6 +1022,23 @@
                     }
 
                     let remarkStr = String(factor.remark || '').replace(/\[가방\]/g, '').trim();
+                    let hasStrippedHeat = false; 
+
+                    // 🚀 고열 건수 "오직 부서명 기준"으로 최초 1회만 표기하는 로직 (요약표 전용)
+                    if (rawName.includes('고열')) {
+                        let deptTrackerKey = `${unit}|${(worker.department || '').trim()}`;
+                        let match = remarkStr.match(/\[\s*(\d+)\s*건\s*\]/);
+                        if (match) {
+                            if (heatCountTracker.has(deptTrackerKey)) {
+                                // 이미 해당 부서의 첫 번째 근로자에서 [N건]을 표기했으므로 건수 텍스트를 제거
+                                remarkStr = remarkStr.replace(/\[\s*\d+\s*건\s*\]/g, '').trim(); 
+                                hasStrippedHeat = true;
+                            } else {
+                                heatCountTracker.add(deptTrackerKey); 
+                            }
+                        }
+                    }
+
                     if (remarkStr) {
                         remarkStr = remarkStr.replace(/^\[(.*)\]$/, '$1'); 
                         cellName += `[${remarkStr}]`;
@@ -975,6 +1046,7 @@
 
                     if (cellName) {
                         factorsByPump[pNum].push(cellName);
+                        if (hasStrippedHeat) strippedHeatPumps.add(pNum); 
                     }
 
                     if(factor.a) pumpToAPLN[pNum].a = factor.a;
@@ -995,14 +1067,10 @@
                         p: pumpToAPLN[pNum].p,
                         l: pumpToAPLN[pNum].l,
                         n: pumpToAPLN[pNum].n,
+                        isStrippedHeat: strippedHeatPumps.has(pNum) 
                     });
                 });
 
-                if (combinations.length === 0) {
-                    combinations.push({name: '', a: '', p: '', l: '', n: ''});
-                }
-
-                // '소음'이 포함된 조합을 무조건 배열의 최상단(Index 0)으로 정렬
                 combinations.sort((a, b) => {
                     const aIsNoise = (a.name || '').includes('소음');
                     const bIsNoise = (b.name || '').includes('소음');
@@ -1011,29 +1079,53 @@
                     return 0; 
                 });
 
-                // 대시보드 통계를 위해 펌프 기호(A/P/L/N)를 수집
+                // 대시보드 통계를 위해 펌프 기호(A/P/L/N) 및 정확한 건수 수집
                 combinations.forEach(combo => {
                     if (combo.name && combo.name.trim() !== '') {
-                        if (!comboStats[combo.name]) {
-                            comboStats[combo.name] = { count: 0, pumps: new Set() };
-                        }
-                        comboStats[combo.name].count++;
+                        let statKey = combo.name;
                         
-                        if (combo.a && String(combo.a).trim() !== '') comboStats[combo.name].pumps.add('A');
-                        if (combo.p && String(combo.p).trim() !== '') comboStats[combo.name].pumps.add('P');
-                        if (combo.l && String(combo.l).trim() !== '') comboStats[combo.name].pumps.add('L');
-                        if (combo.n && String(combo.n).trim() !== '') comboStats[combo.name].pumps.add('N');
+                        if (statKey.includes('고열')) {
+                            statKey = '고열';
+                        }
+                        
+                        // 건수 추출 로직
+                        let addedCount = 1;
+                        if (statKey === '고열') {
+                            // 🚀 고열 건수는 상단의 heatCountByDept에서 부서명 기준으로 
+                            // 완벽하게 사전 집계했으므로, 근로자 수(행)만큼 뻥튀기되는 것을 철저히 차단(0)합니다!
+                            addedCount = 0; 
+                        } else {
+                            let match = combo.name.match(/\[(\d+)건\]/);
+                            if (match) addedCount = parseInt(match[1], 10);
+                        }
+                        
+                        if (!comboStats[statKey]) {
+                            comboStats[statKey] = { count: 0, pumps: new Set() };
+                        }
+                        comboStats[statKey].count += addedCount;
+                        
+                        if (combo.a && String(combo.a).trim() !== '') comboStats[statKey].pumps.add('A');
+                        if (combo.p && String(combo.p).trim() !== '') comboStats[statKey].pumps.add('P');
+                        if (combo.l && String(combo.l).trim() !== '') comboStats[statKey].pumps.add('L');
+                        if (combo.n && String(combo.n).trim() !== '') comboStats[statKey].pumps.add('N');
                     }
                 });
 
                 worker._summaryCombinations = combinations;
                 worker._wSpan = combinations.length;
+                if (combinations.length > 0) hasData = true;
             });
         });
 
+        // 🚀 최종적으로 고열 통계 항목이 존재한다면, 부서별 합산된 완벽한 총합(Max의 합)을 강제로 덮어씌움
+        if (comboStats['고열']) {
+            comboStats['고열'].count = dashboardHeatCount;
+        }
+
+        // 🚀 만약 모든 근로자가 '횟수' 항목만 가지고 있어 출력할 데이터가 0건이라면 여기서 종료
         if (!hasData) return '';
 
-        // 2. 대시보드 통계 배열 생성 및 (+) 기호 개수 기준 내림차순 정렬 (기존 로직 유지)
+        // 2. 대시보드 통계 배열 생성
         let statsArray = Object.keys(comboStats).map(name => ({ 
             name, 
             count: comboStats[name].count,
@@ -1052,7 +1144,7 @@
             return b.count - a.count; 
         });
 
-        // 3. 대시보드 HTML 블록 구성 (🚀 엑셀 스타일 표 렌더링으로 변경)
+        // 3. 대시보드 HTML 블록 구성
         let statsHtml = `<div class="print-target-dashboard mb-4 p-4 bg-indigo-50/40 rounded-lg border border-indigo-200 print:bg-transparent print:border-none print:p-0 text-[14px] print:text-[10px] page-break-after-always">
             <div class="font-bold text-indigo-900 print:text-black mb-3 print:mb-1.5 flex justify-between items-end border-b-2 border-indigo-300 print:border-black pb-2 print:pb-1">
                 <span class="flex items-center gap-2 text-lg print:text-base">
@@ -1079,7 +1171,6 @@
         if (statsArray.length > 0) {
             statsArray.forEach((stat, index) => {
                 let pumpStr = stat.pumps.length > 0 ? `[ ${stat.pumps.join(', ')} ]` : '';
-                // 🚀 새롭게 추가된 함수 호출로 간략한 코드를 받아옵니다.
                 let simplifiedCombo = simplifyHazardCombination(stat.name);
                 
                 statsHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent">
@@ -1105,9 +1196,9 @@
                     <span class="text-xs font-normal text-amber-600 print:hidden bg-amber-50 px-2 py-1 rounded border border-amber-200 mt-1 sm:mt-0 shadow-sm">※ 인쇄 직전 표 안의 글자를 클릭해 수기로 수정할 수 있습니다.</span>
                  </h3>`;
         
-        html += statsHtml; // 대시보드를 요약표 상단(별도 페이지)에 주입
+        // 🚀 대시보드를 요약표 상단에 안전하게 결합
+        html += statsHtml; 
 
-        // 🚀 요약표 칸 너비(Width) 최적화 적용
         html += `<div class="w-full overflow-x-auto print:overflow-visible">
                     <table class="w-full text-left border-collapse border border-gray-300 print:border-black print:border-2 text-[13px] print:text-[9.5px]">
                         <thead class="bg-gray-100 print:bg-gray-200">
@@ -1116,7 +1207,7 @@
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[8%] font-bold text-gray-700 print:text-black">부서명</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[8%] font-bold text-gray-700 print:text-black">공정명</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">교대제</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[8%] font-bold text-gray-700 print:text-black leading-tight">근로자수<br><span class="whitespace-nowrap">[측정건수]</span></th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[8%] font-bold text-gray-700 print:text-black leading-tight whitespace-nowrap">근로자수<br>[측정건수]</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[9%] font-bold text-gray-700 print:text-black">근로자명</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[33%] font-bold text-gray-700 print:text-black">시료 유해인자 조합 (비고 포함)</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[6%] font-bold text-gray-700 print:text-black">A</th>
@@ -1133,13 +1224,15 @@
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
             if(currentWorkers.length === 0) return;
             
-            // 🚀 부서명, 공정명, 교대제, 근로자수(측정건수)가 같은 행들을 시각적으로 병합하기 위한 계산 로직
+            // 병합(Span) 계산 시, 횟수조정(제외 대상) 근로자는 무시하고 계산
             const groupSpans = new Array(currentWorkers.length).fill(0);
             for (let i = 0; i < currentWorkers.length; i++) {
-                if (groupSpans[i] !== 0) continue; 
+                if (groupSpans[i] !== 0 || currentWorkers[i]._wSpan === 0) continue; 
                 
                 let totalRowSpan = currentWorkers[i]._wSpan; 
                 for (let j = i + 1; j < currentWorkers.length; j++) {
+                    if (currentWorkers[j]._wSpan === 0) continue; // 횟수조정만 있는 근로자는 병합 계산에서도 제외
+
                     const isSameGroup = 
                         currentWorkers[i].department === currentWorkers[j].department &&
                         currentWorkers[i].process === currentWorkers[j].process &&
@@ -1158,6 +1251,9 @@
             }
             
             currentWorkers.forEach((worker, wIdx) => {
+                // 🚀 핵심: 횟수조정만 있는(출력할 조합이 없는) 근로자는 렌더링에서 통째로 건너뜀!
+                if(worker._wSpan === 0) return; 
+
                 let deptName = (worker.department || '').trim();
                 let procName = (worker.process || '').trim();
                 let shift = (worker.shiftSystem || '').trim();
@@ -1168,37 +1264,30 @@
                 const wSpan = worker._wSpan; 
                 const gSpan = groupSpans[wIdx]; 
                 
-                // 🚀 근로자수 [건수] 동일한 글자 크기로 렌더링, 건수만 파란색 굵게
                 let displayCount = mCount ? `${wCount} <span class="text-blue-600 font-bold print:text-black">[${mCount}건]</span>` : wCount;
 
                 worker._summaryCombinations.forEach((combo, comboIdx) => {
                     html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent group" style="page-break-inside: avoid;">`;
                     
-                    // 1. 공통 사항 병합 (같은 부서행의 가장 첫 줄일 때만 렌더링)
                     if (gSpan > 0 && comboIdx === 0) {
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold align-middle text-gray-600 print:text-black" rowspan="${gSpan}">${noIndex++}</td>`;
-                        
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center" rowspan="${gSpan}">
                                     <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${deptName}</textarea></div>
                                     <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${deptName}</div>
                                  </td>`;
-                                 
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center" rowspan="${gSpan}">
                                     <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${procName}</textarea></div>
                                     <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${procName}</div>
                                  </td>`;
-                                 
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-center" rowspan="${gSpan}">
                                     <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${shift}</textarea></div>
                                     <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${shift}</div>
                                  </td>`;
-
                         html += `<td class="border border-gray-300 print:border-black px-1 py-1 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center bg-indigo-50/30 print:bg-transparent" rowspan="${gSpan}">
                                     ${displayCount}
                                  </td>`;
                     }
                     
-                    // 2. 근로자명은 행(Worker) 단위로만 병합 (좌측 정렬 적용)
                     if (comboIdx === 0) {
                         let bagBadgeMain = worker.hasBag ? `<div class="text-red-600 font-bold text-[11px] print:text-[9px] leading-tight mb-0.5 print:mb-0.5">[가방]</div>` : '';
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left relative" rowspan="${wSpan}">
@@ -1214,7 +1303,6 @@
                                  </td>`;
                     }
 
-                    // 3. 개별 유해인자 조합 정보
                     html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug w-[38%]">
                                 <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight text-[13px]" rows="1">${combo.name}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${combo.name}</div>
@@ -1256,6 +1344,7 @@
                  </div>
               </div>`;
               
+        // 🚀 정상적으로 결합된 단일 문자열 html을 반환하여 렌더링 에러 차단
         return html;
     }
 
@@ -1926,9 +2015,16 @@
                       });
                   }
 
-                  if (maxCount > 0 && group.autoCount > 0 && maxCount !== group.autoCount) {
+                  let needsCountDisplay = false;
+                  if (name.includes('고열')) {
+                      needsCountDisplay = true;
+                  } else if (maxCount > 0 && group.autoCount > 0 && maxCount !== group.autoCount) {
+                      needsCountDisplay = true;
+                  }
+
+                  if (needsCountDisplay && maxCount > 0) {
                       let diffStr = `${maxCount}건`;
-                      autoRemark = autoRemark ? `${autoRemark} / ${diffStr}` : diffStr;
+                      autoRemark = autoRemark ? `${autoRemark}[${diffStr}]` : diffStr;
                   }
 
                   let initialN = (name.includes('소음') && !isAdjusted) ? 'V' : '';
@@ -2350,7 +2446,14 @@
                             pageBreak: false,
                             name: '',
                             isManual: false,
-                            harmfulFactors: worker.harmfulFactors.map(factor => ({ ...factor }))
+                            harmfulFactors: worker.harmfulFactors.map(factor => {
+                                let newRemark = factor.remark || '';
+                                // 🚀 일괄 복사된 행에서도 고열 측정건수 뻥튀기 방지
+                                if (String(factor.name).includes('고열')) {
+                                    newRemark = newRemark.replace(/\[\s*\d+\s*건\s*\]/g, '').trim();
+                                }
+                                return { ...factor, remark: newRemark };
+                            })
                         };
                         
                         currentWorkers.splice(i + 1 + k, 0, clonedWorker);
