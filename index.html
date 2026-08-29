@@ -204,8 +204,8 @@
           <input type="file" accept=".json" class="hidden" onchange="loadData(event)">
         </label>
         <button onclick="printCurrentDayLabels()" class="flex items-center gap-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-sm border border-rose-800">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-          <span>현재일차 라벨지 출력</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+          <span>현재일차 라벨지 엑셀 저장</span>
         </button>
         <button onclick="printAllUnits()" class="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white px-3 py-2 rounded-lg transition-colors text-sm shadow-md border border-violet-800">
           <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -624,6 +624,14 @@
       }
     }
 
+    function toggleWorkerBag(unitName, workerId) {
+      const target = appData.units[unitName].find(w => w.id === workerId);
+      if (target) {
+          target.hasBag = !target.hasBag;
+          reRender();
+      }
+    }
+
     function calculateSpansForWorkers(workers) {
       if (!workers) return [];
       const groupFields = ['department', 'process', 'shiftSystem', 'workerCount', 'exposureCycle', 'measurementCount'];
@@ -665,6 +673,18 @@
             if(appData.units[unit].some(w => (w.day || 1) === day)) valid.push(unit);
         });
         return valid;
+    }
+
+    function simplifyHazardCombination(comboName) {
+        if (!comboName) return '';
+        return comboName.split('+').map(part => {
+            let p = part.trim();
+            // [가방] 등 부가적인 설명 괄호 제거
+            p = p.replace(/\[.*?\]/g, '').trim(); 
+            // "외 X종" 등의 텍스트 제거하여 핵심 물질명만 남김
+            p = p.replace(/\s*외\s*\d+종/g, '').trim(); 
+            return p;
+        }).join(' + ');
     }
 
     function toggleCustomDropdown(id) {
@@ -1016,7 +1036,8 @@
                 <thead class="bg-indigo-50 print:bg-gray-200 text-indigo-900 print:text-black">
                     <tr>
                         <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[5%] font-bold">NO.</th>
-                        <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[75%] font-bold">시료매체 (유해인자 조합)</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[45%] font-bold">시료매체 (유해인자 조합)</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[30%] font-bold">조합</th>
                         <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[10%] font-bold">건수</th>
                         <th class="border border-gray-300 print:border-black px-2 py-1.5 text-center w-[10%] font-bold">펌프</th>
                     </tr>
@@ -1026,16 +1047,19 @@
         if (statsArray.length > 0) {
             statsArray.forEach((stat, index) => {
                 let pumpStr = stat.pumps.length > 0 ? `[ ${stat.pumps.join(', ')} ]` : '';
+                // 🚀 새롭게 추가된 함수 호출로 간략한 코드를 받아옵니다.
+                let simplifiedCombo = simplifyHazardCombination(stat.name);
                 
                 statsHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent">
                     <td class="border border-gray-300 print:border-black px-2 py-1 text-center font-bold text-gray-600 print:text-black">${index + 1}</td>
                     <td class="border border-gray-300 print:border-black px-2 py-1 text-gray-800 print:text-black font-medium break-all whitespace-pre-wrap">${stat.name}</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 text-center text-indigo-700 print:text-black font-extrabold break-all whitespace-pre-wrap">${simplifiedCombo}</td>
                     <td class="border border-gray-300 print:border-black px-2 py-1 text-center text-indigo-700 print:text-black font-extrabold">${stat.count}건</td>
                     <td class="border border-gray-300 print:border-black px-2 py-1 text-center text-indigo-600 print:text-black font-bold">${pumpStr}</td>
                 </tr>`;
             });
         } else {
-            statsHtml += `<tr><td colspan="4" class="border border-gray-300 print:border-black px-2 py-3 text-center text-gray-500 italic">등록된 유해인자가 없습니다.</td></tr>`;
+            statsHtml += `<tr><td colspan="5" class="border border-gray-300 print:border-black px-2 py-3 text-center text-gray-500 italic">등록된 유해인자가 없습니다.</td></tr>`;
         }
         statsHtml += `</tbody></table></div>`;
 
@@ -1060,9 +1084,9 @@
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[10%] font-bold text-gray-700 print:text-black">부서명</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[10%] font-bold text-gray-700 print:text-black">공정명</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[6%] font-bold text-gray-700 print:text-black">교대제</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[4%] font-bold text-gray-700 print:text-black">근로자수</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[10%] font-bold text-gray-700 print:text-black leading-tight">근로자수<br>[측정건수]</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[9%] font-bold text-gray-700 print:text-black">근로자명</th>
-                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[38%] font-bold text-gray-700 print:text-black">시료 유해인자 조합 (비고 포함)</th>
+                                <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[32%] font-bold text-gray-700 print:text-black">시료 유해인자 조합 (비고 포함)</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">A</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">P</th>
                                 <th class="border border-gray-300 print:border-black px-1 py-1.5 print:py-0.5 text-center w-[5%] font-bold text-gray-700 print:text-black">L</th>
@@ -1077,7 +1101,7 @@
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
             if(currentWorkers.length === 0) return;
             
-            // 🚀 부서명, 공정명, 교대제, 근로자수가 같은 행들을 시각적으로 병합하기 위한 계산 로직
+            // 🚀 부서명, 공정명, 교대제, 근로자수(측정건수)가 같은 행들을 시각적으로 병합하기 위한 계산 로직
             const groupSpans = new Array(currentWorkers.length).fill(0);
             for (let i = 0; i < currentWorkers.length; i++) {
                 if (groupSpans[i] !== 0) continue; 
@@ -1088,7 +1112,8 @@
                         currentWorkers[i].department === currentWorkers[j].department &&
                         currentWorkers[i].process === currentWorkers[j].process &&
                         currentWorkers[i].shiftSystem === currentWorkers[j].shiftSystem &&
-                        currentWorkers[i].workerCount === currentWorkers[j].workerCount;
+                        currentWorkers[i].workerCount === currentWorkers[j].workerCount &&
+                        currentWorkers[i].measurementCount === currentWorkers[j].measurementCount; 
 
                     if (isSameGroup) {
                         totalRowSpan += currentWorkers[j]._wSpan; 
@@ -1103,14 +1128,17 @@
             currentWorkers.forEach((worker, wIdx) => {
                 let deptName = (worker.department || '').trim();
                 let procName = (worker.process || '').trim();
-                
                 let shift = (worker.shiftSystem || '').trim();
                 let wCount = (worker.workerCount || '').trim();
+                let mCount = (worker.measurementCount || '').trim();
                 let wName = (worker.name || '').trim();
 
                 const wSpan = worker._wSpan; 
                 const gSpan = groupSpans[wIdx]; 
                 
+                // 🚀 근로자수 [건수] 동일한 글자 크기로 렌더링, 건수만 파란색 굵게
+                let displayCount = mCount ? `${wCount} <span class="text-blue-600 font-bold print:text-black">[${mCount}건]</span>` : wCount;
+
                 worker._summaryCombinations.forEach((combo, comboIdx) => {
                     html += `<tr class="hover:bg-gray-50 print:hover:bg-transparent group" style="page-break-inside: avoid;">`;
                     
@@ -1133,17 +1161,24 @@
                                     <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${shift}</div>
                                  </td>`;
 
-                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-indigo-700 print:text-black text-center bg-indigo-50/30 print:bg-transparent" rowspan="${gSpan}">
-                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wCount}</textarea></div>
-                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${wCount}</div>
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-1 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center bg-indigo-50/30 print:bg-transparent" rowspan="${gSpan}">
+                                    ${displayCount}
                                  </td>`;
                     }
                     
                     // 2. 근로자명은 행(Worker) 단위로만 병합 (좌측 정렬 적용)
                     if (comboIdx === 0) {
-                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left" rowspan="${wSpan}">
-                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea></div>
-                                    <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${wName}</div>
+                        let bagBadgeMain = worker.hasBag ? `<div class="text-red-600 font-bold text-[11px] print:text-[9px] leading-tight mb-0.5 print:mb-0.5">[가방]</div>` : '';
+                        html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left relative" rowspan="${wSpan}">
+                                    <div class="print:hidden h-full flex flex-col justify-center relative pr-9">
+                                        ${bagBadgeMain}
+                                        <textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea>
+                                        <button onclick="toggleWorkerBag('${unit}', ${worker.id})" class="absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] font-bold bg-white text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-300 rounded px-1.5 py-0.5 transition-colors shadow-sm shrink-0 z-10" title="가방 표시 토글">가방</button>
+                                    </div>
+                                    <div class="hidden print:flex flex-col justify-center w-full h-full">
+                                        ${bagBadgeMain}
+                                        <div class="leading-tight break-all whitespace-pre-wrap text-left text-[9px] font-bold">${wName}</div>
+                                    </div>
                                  </td>`;
                     }
 
@@ -1434,18 +1469,23 @@
                       dayHtml += `
                         <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 align-middle print:p-0.5 relative group/remark factor-cell">
                           <div class="w-full h-full print:hidden flex items-center relative">
-                            <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full pl-1 pr-[28px] bg-transparent outline-none text-center resize-none overflow-hidden leading-tight py-0.5" placeholder="비고" rows="1">${factor.remark}</textarea>
-                            <button tabindex="-1" type="button" onclick="addBagToRemark('${unitName}', ${worker.id}, ${fIndex})" class="absolute right-0.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-1 py-0.5 rounded shadow-sm transition-colors z-10" title="최상단 '[가방]' 기입">가방</button>
+                            <textarea data-focus-id="frem-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'remark', this.value)" class="w-full px-1 bg-transparent outline-none text-center resize-none overflow-hidden leading-tight py-0.5" placeholder="비고" rows="1">${factor.remark}</textarea>
                           </div>
-                          <div id="print-frem-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${(factor.remark || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[가방\]/g, '<span class="font-bold text-red-600 print:text-red-600">[가방]</span>')}</div>
+                          <div id="print-frem-${worker.id}-${fIndex}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-center">${(factor.remark || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
                         </td>
                       `;
 
                       // 14. 근로자명 (맨 우측 배치)
                       if (isWorkerStart) {
                           dayHtml += `<td class="border-r ${bClass} px-1 py-0 align-middle print:p-0.5 print:bg-gray-100/50 worker-name-cell" rowspan="${wSpan}">
-                            <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full text-left bg-transparent outline-none resize-none overflow-hidden font-bold text-gray-800 leading-tight py-0.5" placeholder="이름" rows="1">${worker.name}</textarea></div>
-                            <div id="print-name-${worker.id}" class="hidden print:block w-full text-[9px] leading-tight break-all whitespace-pre-wrap text-left font-bold text-black">${worker.name}</div>
+                            <div class="w-full h-full print:hidden flex flex-col justify-center py-0.5">
+                                <div class="flex items-center gap-1 w-full">
+                                    <textarea data-focus-id="name-${worker.id}" oninput="smartResize(this); updateWorkerName('${unitName}', ${worker.id}, this.value);" class="w-full text-left bg-transparent outline-none resize-none overflow-hidden font-bold text-gray-800 leading-tight py-0" placeholder="이름" rows="1">${worker.name}</textarea>
+                                </div>
+                            </div>
+                            <div id="print-name-${worker.id}" class="hidden print:flex flex-col justify-center w-full h-full">
+                                <div class="leading-tight break-all whitespace-pre-wrap text-left font-bold text-black text-[9px]">${worker.name}</div>
+                            </div>
                           </td>`;
                       }
                       
@@ -1492,6 +1532,22 @@
       });
       
       updateCountsUI();
+    }
+
+    // 🖨️ 인쇄 항목 선택 체크박스 동작 함수
+    function updatePrintOptions() {
+        const showDash = document.getElementById('chkPrintDash').checked;
+        const showSum = document.getElementById('chkPrintSum').checked;
+        const showMain = document.getElementById('chkPrintMain').checked;
+
+        if (!showDash) document.body.classList.add('hide-print-dashboard');
+        else document.body.classList.remove('hide-print-dashboard');
+
+        if (!showSum) document.body.classList.add('hide-print-summary');
+        else document.body.classList.remove('hide-print-summary');
+
+        if (!showMain) document.body.classList.add('hide-print-main');
+        else document.body.classList.remove('hide-print-main');
     }
 
     function reRender() {
@@ -2382,194 +2438,59 @@
 
     // === 🏷️ 라벨지(스티커) 자동 생성 및 출력 함수 ===
     function printCurrentDayLabels() {
-        const day = appData.currentDay;
-        const unitNames = appData.currentUnit === 'ALL' ? Object.keys(appData.units) : [appData.currentUnit];
-        
-        let labels = [];
+      const day = appData.currentDay;
+      const unitNames = appData.currentUnit === 'ALL' ? Object.keys(appData.units) : [appData.currentUnit];
+      
+      let labels = [];
 
-        unitNames.forEach(unit => {
-            const workers = appData.units[unit].filter(w => (w.day || 1) === day);
-            workers.forEach(worker => {
-                worker.harmfulFactors.forEach((factor) => {
-                    if (factor.isAdjusted) return;
-                    
-                    const pTypes = ['a', 'p', 'l']; 
-                    pTypes.forEach(type => {
-                        let pVal = factor[type];
-                        if (!pVal || String(pVal).trim() === '') return;
+      unitNames.forEach(unit => {
+          const workers = appData.units[unit].filter(w => (w.day || 1) === day);
+          workers.forEach(worker => {
+              worker.harmfulFactors.forEach((factor) => {
+                  if (factor.isAdjusted) return;
+                  
+                  const pTypes = ['a', 'p', 'l']; 
+                  pTypes.forEach(type => {
+                      let pVal = factor[type];
+                      if (!pVal || String(pVal).trim() === '') return;
 
-                        let dept = (worker.department || '').trim();
-                        let rawNum = String(pVal).replace(/[^0-9]/g, '');
-                        if (!rawNum) rawNum = String(pVal).trim(); 
-                        let displayVal = `${type.toUpperCase()} ${rawNum}`;
+                      let dept = (worker.department || '').trim();
+                      let rawNum = String(pVal).replace(/[^0-9]/g, '');
+                      if (!rawNum) rawNum = String(pVal).trim(); 
+                      let displayVal = `${type.toUpperCase()} ${rawNum}`;
 
-                        labels.push({ dept, displayVal, type, rawNum });
-                    });
-                });
-            });
-        });
+                      labels.push({ dept, displayVal });
+                  });
+              });
+          });
+      });
 
-        if (labels.length === 0) {
-            return showToast('현재 선택된 일차(팀)에 출력할 A, P, L 라벨지가 없습니다.', true);
-        }
+      if (labels.length === 0) {
+          return showToast('현재 선택된 일차(팀)에 출력할 A, P, L 라벨지가 없습니다.', true);
+      }
 
-        // 🚀 인쇄 방향을 '무조건 세로(Portrait)'로 강제 고정하는 CSS 주입
-        let styleEl = document.getElementById('label-print-style');
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = 'label-print-style';
-            document.head.appendChild(styleEl);
-        }
-        
-        styleEl.innerHTML = `
-            @media print {
-                @page { size: A4 portrait !important; margin: 0 !important; }
-                html, body { 
-                    margin: 0 !important; 
-                    padding: 0 !important; 
-                    background-color: white !important;
-                    -webkit-print-color-adjust: exact !important; 
-                    print-color-adjust: exact !important; 
-                    width: 210mm !important;
-                    height: 297mm !important;
-                }
-                #mainAppContent { display: none !important; }
-                #labelPrintContainer { 
-                    display: block !important; 
-                    margin: 0 !important; 
-                    padding: 0 !important; 
-                    background: white !important;
-                }
-                .label-page {
-                    width: 210mm !important;
-                    height: 297mm !important;
-                    position: relative !important;
-                    page-break-after: always !important;
-                    page-break-inside: avoid !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    border: none !important;
-                    background: white !important;
-                    box-sizing: border-box !important;
-                }
-                .label-page:last-child {
-                    page-break-after: auto !important;
-                }
-                .label-item {
-                    position: absolute !important;
-                    width: 30mm !important;
-                    height: 9mm !important;
-                    box-sizing: border-box !important;
-                    border: none !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    overflow: hidden !important;
-                    padding: 0.5mm !important;
-                }
-            }
-            
-            .mode-label-print { background-color: #f3f4f6; }
-            .label-page-screen {
-                width: 210mm;
-                height: 297mm;
-                position: relative;
-                margin: 20px auto;
-                background: white;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            }
-            .label-item-screen {
-                position: absolute;
-                width: 30mm;
-                height: 9mm;
-                box-sizing: border-box;
-                border: 0.5px dashed #d1d5db;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
-                padding: 0.5mm;
-            }
-        `;
+      if (typeof XLSX === 'undefined') {
+          return showToast('엑셀 라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요.', true);
+      }
 
-        // 🚀 폼텍 LS-3145 (145칸) 공식 규격 좌표 하드코딩
-        const LABELS_PER_PAGE = 145;
-        let pagesHtml = '';
-        const totalPages = Math.ceil(labels.length / LABELS_PER_PAGE);
+      // 프린텍 라벨메이커 프로 145칸 업로드 전용 데이터 구조 생성
+      let excelData = [
+          ["부서명", "펌프번호"] // 헤더
+      ];
 
-        for (let p = 0; p < totalPages; p++) {
-            let chunkHtml = '';
-            
-            for (let i = 0; i < LABELS_PER_PAGE; i++) {
-                const dataIndex = p * LABELS_PER_PAGE + i;
-                if (dataIndex >= labels.length) break;
-                
-                const label = labels[dataIndex];
-                
-                const col = i % 5;
-                const row = Math.floor(i / 5);
-                
-                const leftPos = 25 + (col * 32.5); 
-                const topPos = 18 + (row * 9);     
+      labels.forEach(label => {
+          excelData.push([label.dept, label.displayVal]);
+      });
 
-                let bgClass = 'bg-white';
-                let textClass = 'text-black';
-                
-                if (label.type === 'a') { bgClass = 'bg-[#fef9c3]'; textClass = 'text-[#1e3a8a]'; }
-                else if (label.type === 'p') { bgClass = 'bg-[#dcfce7]'; textClass = 'text-black'; }
-                else if (label.type === 'l') { bgClass = 'bg-[#dbeafe]'; textClass = 'text-[#14532d]'; }
+      const ws = XLSX.utils.aoa_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "라벨데이터");
 
-                chunkHtml += `
-                    <div class="label-item label-item-screen ${bgClass}" style="left: ${leftPos}mm; top: ${topPos}mm;">
-                        <div style="font-size: 6.5px !important; font-weight: 900 !important; color: #000000 !important; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; margin-bottom: 0.5px; letter-spacing: -0.3px;">${label.dept}</div>
-                        <div style="font-size: 11px !important; font-weight: 900 !important; letter-spacing: -0.5px;" class="${textClass} leading-none truncate">${label.displayVal}</div>
-                    </div>
-                `;
-            }
-
-            pagesHtml += `
-                <div class="label-page label-page-screen">
-                    ${chunkHtml}
-                </div>
-            `;
-        }
-
-        const container = document.getElementById('labelPrintContainer');
-        container.innerHTML = `
-            <div class="w-full text-center mb-0 print:hidden py-4 bg-white border-b shadow-sm sticky top-0 z-50">
-                <h2 class="text-xl font-bold mb-1 text-indigo-900">🏷️ 145칸(LS-3145) 세로형 라벨지 인쇄 (총 ${labels.length}장)</h2>
-                <p class="text-sm font-bold text-red-600 mb-3">
-                    ※ 인쇄 설정(Ctrl+P) 시 [세로 방향]이 자동 선택되어 있는지 확인하시고, [여백: 없음], [배율: 기본설정]으로 출력하세요!
-                </p>
-                <div class="flex justify-center gap-3">
-                    <button onclick="window.print()" class="flex items-center gap-2 bg-rose-600 text-white px-6 py-2 rounded-xl font-bold shadow-md hover:bg-rose-700 transition-transform">
-                        인쇄 시작
-                    </button>
-                    <button onclick="closeLabelPrint()" class="flex items-center gap-2 bg-slate-600 text-white px-6 py-2 rounded-xl font-bold shadow-md hover:bg-slate-700 transition-transform">
-                        돌아가기
-                    </button>
-                </div>
-            </div>
-            <div class="flex flex-col items-center w-full bg-gray-100 print:bg-white" style="margin: 0; padding: 0;">
-                ${pagesHtml}
-            </div>
-        `;
-
-        document.body.classList.add('mode-label-print');
-        document.getElementById('mainAppContent').classList.add('hidden');
-        container.classList.remove('hidden');
-        window.scrollTo(0, 0);
-    }
-
-    function closeLabelPrint() {
-        const styleEl = document.getElementById('label-print-style');
-        if (styleEl) styleEl.remove();
-
-        document.body.classList.remove('mode-label-print');
-        document.getElementById('labelPrintContainer').classList.add('hidden');
-        document.getElementById('mainAppContent').classList.remove('hidden');
+      const companyName = document.getElementById('companyName').value.trim() || '작업환경측정';
+      const fileName = `${companyName}_${getDayName(day)}_라벨지데이터.xlsx`;
+      
+      XLSX.writeFile(wb, fileName);
+      showToast(`프린텍 라벨메이커용 엑셀 파일이 저장되었습니다! (총 ${labels.length}장)`);
     }
   </script>
 </body>
