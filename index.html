@@ -1132,78 +1132,78 @@
             pumps: Array.from(comboStats[name].pumps).sort()
         }));
         
-        statsArray.sort((a, b) => {
-            const aIsNoise = (a.name || '').includes('소음');
-            const bIsNoise = (b.name || '').includes('소음');
-            if (aIsNoise && !bIsNoise) return -1;
-            if (!aIsNoise && bIsNoise) return 1;
+        // 🚀 [수정 로직] 해당 일차(Day) 그룹에 대한 A, P, L, N 펌프 총 갯수 산정
+        const dayGroups = [
+            [1, 2, 3],       // 1일차
+            [4, 5, 6],       // 2일차
+            [7, 8, 9],       // 3일차
+            [10, 11, 12],    // 4일차
+            [13, 14, 15]     // 5일차
+        ];
+        let currentDayGroup = dayGroups.find(g => g.includes(day)) || [day];
+        let dayGroupIndex = dayGroups.findIndex(g => g.includes(day)) + 1;
+        let dayGroupLabel = dayGroupIndex > 0 ? `${dayGroupIndex}일차 총합` : `해당 일차 총합`;
 
-            const plusCountA = (a.name.match(/\+/g) || []).length;
-            const plusCountB = (b.name.match(/\+/g) || []).length;
-            if (plusCountB !== plusCountA) return plusCountB - plusCountA; 
-            return b.count - a.count; 
-        });
-
-        // 🚀 [추가 로직] 전체 일정(모든 일차/모든 팀)에 대한 A, P, L, N 펌프 총 갯수 산정
-        let totalUniqueA = new Set();
-        let totalUniqueP = new Set();
-        let totalUniqueL = new Set();
-        let totalCountN = 0;
+        let dailyTotalUniqueA = new Set();
+        let dailyTotalUniqueP = new Set();
+        let dailyTotalUniqueL = new Set();
+        let dailyTotalCountN = 0;
 
         Object.keys(appData.units).forEach(uName => {
             appData.units[uName].forEach(w => {
-                w.harmfulFactors.forEach(factor => {
-                    const isCountAdjustment = factor.isAdjusted || String(factor.name).includes('횟수');
-                    if (isCountAdjustment) return;
+                if (currentDayGroup.includes(w.day || 1)) {
+                    w.harmfulFactors.forEach(factor => {
+                        const isCountAdjustment = factor.isAdjusted || String(factor.name).includes('횟수');
+                        if (isCountAdjustment) return;
 
-                    if (factor.a && String(factor.a).trim() !== '') totalUniqueA.add(String(factor.a).trim());
-                    if (factor.p && String(factor.p).trim() !== '') totalUniqueP.add(String(factor.p).trim());
-                    if (factor.l && String(factor.l).trim() !== '') totalUniqueL.add(String(factor.l).trim());
-                    
-                    const isNoiseFactor = String(factor.name).trim().includes('소음');
-                    const nValue = factor.n !== undefined && factor.n !== null ? factor.n : (isNoiseFactor ? 'V' : '');
-                    if (nValue && String(nValue).trim() !== '') totalCountN++;
-                });
+                        if (factor.a && String(factor.a).trim() !== '') dailyTotalUniqueA.add(String(factor.a).trim());
+                        if (factor.p && String(factor.p).trim() !== '') dailyTotalUniqueP.add(String(factor.p).trim());
+                        if (factor.l && String(factor.l).trim() !== '') dailyTotalUniqueL.add(String(factor.l).trim());
+                        
+                        const isNoiseFactor = String(factor.name).trim().includes('소음');
+                        const nValue = factor.n !== undefined && factor.n !== null ? factor.n : (isNoiseFactor ? 'V' : '');
+                        if (nValue && String(nValue).trim() !== '') dailyTotalCountN++;
+                    });
+                }
             });
         });
 
-        // 3. 대시보드 HTML 블록 구성 (🖨️ 인쇄 시 가독성 최적화 및 전체/현재팀 분리)
-        // 편안한 크기(12~13px)로 출력되도록 폰트 및 여백 최적화
-        const dashThStyle = "font-size: 12px !important; padding: 6px !important; letter-spacing: 0px !important;";
-        const dashTdStyle = "font-size: 13px !important; padding: 6px !important; letter-spacing: 0px !important;";
+        // 3. 대시보드 HTML 블록 구성 (🖨️ 인쇄 시 가독성 및 공간 최적화 - 1페이지 오버플로우 완벽 방지)
+        const dashThStyle = "font-size: 11px !important; padding: 3px !important; letter-spacing: -0.5px !important;";
+        const dashTdStyle = "font-size: 11.5px !important; padding: 3px !important; letter-spacing: -0.5px !important;";
 
-        let statsHtml = `<div class="print-target-dashboard mb-4 p-4 bg-indigo-50/40 rounded-lg border border-indigo-200 print:bg-transparent print:border-none print:p-0 text-[14px] print:text-[13px] page-break-after-always">
-            <div class="font-bold text-indigo-900 print:text-black mb-3 print:mb-3 border-b-2 border-indigo-300 print:border-black pb-3 print:pb-3">
-                <div class="text-lg print:text-[15px] mb-3 flex items-center gap-2">
-                    <svg class="w-6 h-6 print:hidden text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+        let statsHtml = `<div class="print-target-dashboard mb-2 p-3 bg-indigo-50/40 rounded-lg border border-indigo-200 print:bg-transparent print:border-none print:p-0 text-[13px] print:text-[11px] page-break-after-always">
+            <div class="font-bold text-indigo-900 print:text-black mb-1.5 print:mb-1.5 border-b-2 border-indigo-300 print:border-black pb-1.5 print:pb-1.5">
+                <div class="text-base print:text-[14px] mb-1.5 flex items-center gap-2">
+                    <svg class="w-5 h-5 print:hidden text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     <span>[${getDayName(day)}] 시료 채취 필요 장비 통계표</span>
                 </div>
                 
-                <!-- 🚀 현재팀 / 전체일정 나란히 가로 배치 -->
-                <div class="flex flex-wrap items-center gap-6 pl-1 print:pl-0 mt-1">
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm print:text-[12px] font-bold bg-indigo-600 text-white print:bg-gray-200 print:text-black print:border print:border-black text-center px-2 py-1 rounded">전체 일정 (총합)</span>
-                        <span class="text-base print:text-[13px] font-bold text-indigo-700 print:text-black">
-                            A : ${totalUniqueA.size}개 &nbsp;|&nbsp; P : ${totalUniqueP.size}개 &nbsp;|&nbsp; L : ${totalUniqueL.size}개 &nbsp;|&nbsp; N : ${totalCountN}개
+                <!-- 🚀 현재팀 / 일차 총합 나란히 가로 배치 (크기 및 여백 대폭 축소) -->
+                <div class="flex flex-wrap items-center gap-4 pl-1 print:pl-0 mt-0.5">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs print:text-[11px] font-bold bg-indigo-600 text-white print:bg-gray-200 print:text-black print:border print:border-black text-center px-1.5 py-0.5 rounded">${dayGroupLabel}</span>
+                        <span class="text-sm print:text-[12px] font-bold text-indigo-700 print:text-black">
+                            A : ${dailyTotalUniqueA.size}개 &nbsp;|&nbsp; P : ${dailyTotalUniqueP.size}개 &nbsp;|&nbsp; L : ${dailyTotalUniqueL.size}개 &nbsp;|&nbsp; N : ${dailyTotalCountN}개
                         </span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm print:text-[12px] font-bold bg-indigo-100 print:bg-transparent print:border print:border-black text-center px-2 py-1 rounded">현재 팀 [${getDayName(day)}]</span>
-                        <span class="text-base print:text-[13px] font-bold text-indigo-900 print:text-black">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs print:text-[11px] font-bold bg-indigo-100 print:bg-transparent print:border print:border-black text-center px-1.5 py-0.5 rounded">현재 팀 [${getDayName(day)}]</span>
+                        <span class="text-sm print:text-[12px] font-bold text-indigo-900 print:text-black">
                             A : ${uniqueA.size}개 &nbsp;|&nbsp; P : ${uniqueP.size}개 &nbsp;|&nbsp; L : ${uniqueL.size}개 &nbsp;|&nbsp; N : ${countN}개
                         </span>
                     </div>
                 </div>
             </div>
             
-            <table class="w-full text-left border-collapse border border-gray-300 print:border-black print:border-2 text-[14px] print:text-[13px]">
+            <table class="w-full text-left border-collapse border border-gray-300 print:border-black print:border-2 text-[13px] print:text-[11px]">
                 <thead class="bg-indigo-50 print:bg-gray-200 text-indigo-900 print:text-black">
                     <tr>
-                        <th class="border border-gray-300 print:border-black px-3 py-2 print:py-2 text-center w-[5%] font-extrabold" style="${dashThStyle}">NO.</th>
-                        <th class="border border-gray-300 print:border-black px-3 py-2 print:py-2 text-center w-[45%] font-extrabold" style="${dashThStyle}">시료매체 (유해인자 조합)</th>
-                        <th class="border border-gray-300 print:border-black px-3 py-2 print:py-2 text-center w-[30%] font-extrabold" style="${dashThStyle}">조합</th>
-                        <th class="border border-gray-300 print:border-black px-3 py-2 print:py-2 text-center w-[10%] font-extrabold" style="${dashThStyle}">건수</th>
-                        <th class="border border-gray-300 print:border-black px-3 py-2 print:py-2 text-center w-[10%] font-extrabold" style="${dashThStyle}">펌프</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1 print:py-1 text-center w-[5%] font-extrabold" style="${dashThStyle}">NO.</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1 print:py-1 text-center w-[45%] font-extrabold" style="${dashThStyle}">시료매체 (유해인자 조합)</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1 print:py-1 text-center w-[30%] font-extrabold" style="${dashThStyle}">조합</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1 print:py-1 text-center w-[10%] font-extrabold" style="${dashThStyle}">건수</th>
+                        <th class="border border-gray-300 print:border-black px-2 py-1 print:py-1 text-center w-[10%] font-extrabold" style="${dashThStyle}">펌프</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white print:bg-transparent">`;
@@ -1214,15 +1214,15 @@
                 let simplifiedCombo = stat.name === 'WBGT' ? 'WBGT' : simplifyHazardCombination(stat.name);
                 
                 statsHtml += `<tr class="hover:bg-gray-50 print:hover:bg-transparent">
-                    <td class="border border-gray-300 print:border-black px-3 py-2 print:py-1.5 text-center font-bold text-gray-600 print:text-black text-base print:text-[13px]" style="${dashTdStyle}">${index + 1}</td>
-                    <td class="border border-gray-300 print:border-black px-3 py-2 print:py-1.5 text-gray-800 print:text-black font-bold break-all whitespace-pre-wrap text-base print:text-[13px]" style="${dashTdStyle}">${stat.name}</td>
-                    <td class="border border-gray-300 print:border-black px-3 py-2 print:py-1.5 text-center text-indigo-700 print:text-black font-extrabold break-all whitespace-pre-wrap text-base print:text-[13px]" style="${dashTdStyle}">${simplifiedCombo}</td>
-                    <td class="border border-gray-300 print:border-black px-3 py-2 print:py-1.5 text-center text-indigo-700 print:text-black font-extrabold text-base print:text-[14px]" style="${dashTdStyle}">${stat.count}건</td>
-                    <td class="border border-gray-300 print:border-black px-3 py-2 print:py-1.5 text-center text-indigo-600 print:text-black font-extrabold text-base print:text-[13px]" style="${dashTdStyle}">${pumpStr}</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 print:py-0.5 text-center font-bold text-gray-600 print:text-black text-sm print:text-[11.5px]" style="${dashTdStyle}">${index + 1}</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 print:py-0.5 text-gray-800 print:text-black font-bold break-all whitespace-pre-wrap text-sm print:text-[11.5px]" style="${dashTdStyle}">${stat.name}</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 print:py-0.5 text-center text-indigo-700 print:text-black font-extrabold break-all whitespace-pre-wrap text-sm print:text-[11.5px]" style="${dashTdStyle}">${simplifiedCombo}</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 print:py-0.5 text-center text-indigo-700 print:text-black font-extrabold text-sm print:text-[12px]" style="${dashTdStyle}">${stat.count}건</td>
+                    <td class="border border-gray-300 print:border-black px-2 py-1 print:py-0.5 text-center text-indigo-600 print:text-black font-extrabold text-sm print:text-[11.5px]" style="${dashTdStyle}">${pumpStr}</td>
                 </tr>`;
             });
         } else {
-            statsHtml += `<tr><td colspan="5" class="border border-gray-300 print:border-black px-3 py-4 text-center text-gray-500 font-bold text-base print:text-[13px]" style="${dashTdStyle}">등록된 유해인자가 없습니다.</td></tr>`;
+            statsHtml += `<tr><td colspan="5" class="border border-gray-300 print:border-black px-2 py-2 text-center text-gray-500 font-bold text-sm print:text-[11.5px]" style="${dashTdStyle}">등록된 유해인자가 없습니다.</td></tr>`;
         }
         statsHtml += `</tbody></table></div>`;
 
