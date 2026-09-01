@@ -1343,27 +1343,27 @@
                                  </td>`;
                     }
 
-                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug w-[38%]">
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug w-[33%]">
                                 <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight text-[13px]" rows="1">${combo.name}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${combo.name}</div>
                              </td>`;
                              
-                    let aStyle = combo.a ? "background-color: #fef9c3 !important; color: #1e3a8a !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
-                    let aText = combo.a ? "color: #1e3a8a !important;" : "";
+                    let aStyle = combo.a ? "background-color: #fef9c3 !important; color: #854d0e !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
+                    let aText = combo.a ? "color: #854d0e !important;" : "";
                     html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center align-middle" style="${aStyle}">
                                 <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${aText}" rows="1">${combo.a}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${aText}">${combo.a}</div>
                              </td>`;
 
-                    let pStyle = combo.p ? "background-color: #dcfce7 !important; color: #000000 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
-                    let pText = combo.p ? "color: #000000 !important;" : "";
+                    let pStyle = combo.p ? "background-color: #dcfce7 !important; color: #166534 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
+                    let pText = combo.p ? "color: #166534 !important;" : "";
                     html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center align-middle" style="${pStyle}">
                                 <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${pText}" rows="1">${combo.p}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${pText}">${combo.p}</div>
                              </td>`;
 
-                    let lStyle = combo.l ? "background-color: #dbeafe !important; color: #14532d !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
-                    let lText = combo.l ? "color: #14532d !important;" : "";
+                    let lStyle = combo.l ? "background-color: #ffedd5 !important; color: #9a3412 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
+                    let lText = combo.l ? "color: #9a3412 !important;" : "";
                     html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center align-middle" style="${lStyle}">
                                 <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${lText}" rows="1">${combo.l}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${lText}">${combo.l}</div>
@@ -1606,23 +1606,33 @@
                       </td>`;
 
                       // 9~12. A, P, L, N (여백 최소화 py-0)
-                      // 🚀 메인표 A, P, L, N 펌프 번호 시각화 극대화 (크기 두배, 제일 굵게)
+                      let aBgStyle = factor.a ? "background-color: #fef9c3 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
+                      let aTextColor = factor.a ? "color: #1d4ed8 !important;" : "";
+
+                      let pBgStyle = factor.p ? "background-color: #dcfce7 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
+                      let pTextColor = factor.p ? "color: #b91c1c !important;" : "";
+
+                      let lBgStyle = factor.l ? "background-color: #ffedd5 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
+                      let lTextColor = factor.l ? "color: #000000 !important;" : "";
+                      
+                      let nTextColor = factor.n ? "color: #1d4ed8 !important;" : "";
+
                       dayHtml += `
-                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell">
-                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0 font-black text-[15px] text-blue-700" rows="1">${factor.a}</textarea></div>
-                          <div id="print-fa-${worker.id}-${fIndex}" class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important;">${factor.a}</div>
+                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell" style="${aBgStyle}">
+                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fa-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'a', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0 font-black text-[15px]" style="${aTextColor}" rows="1">${factor.a}</textarea></div>
+                          <div id="print-fa-${worker.id}-${fIndex}" class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${aTextColor}">${factor.a}</div>
+                        </td>
+                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell" style="${pBgStyle}">
+                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0 font-black text-[15px]" style="${pTextColor}" rows="1">${factor.p}</textarea></div>
+                          <div id="print-fp-${worker.id}-${fIndex}" class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${pTextColor}">${factor.p}</div>
+                        </td>
+                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell" style="${lBgStyle}">
+                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0 font-black text-[15px]" style="${lTextColor}" rows="1">${factor.l}</textarea></div>
+                          <div id="print-fl-${worker.id}-${fIndex}" class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${lTextColor}">${factor.l}</div>
                         </td>
                         <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell">
-                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fp-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'p', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0 font-black text-[15px] text-blue-700" rows="1">${factor.p}</textarea></div>
-                          <div id="print-fp-${worker.id}-${fIndex}" class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important;">${factor.p}</div>
-                        </td>
-                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell">
-                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fl-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'l', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0 font-black text-[15px] text-blue-700" rows="1">${factor.l}</textarea></div>
-                          <div id="print-fl-${worker.id}-${fIndex}" class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important;">${factor.l}</div>
-                        </td>
-                        <td class="border-r ${bClass} ${factorBgClass} px-1 py-0 text-center align-middle print:p-0.5 factor-cell">
-                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0 font-black text-[15px] text-blue-700" rows="1">${factor.n}</textarea></div>
-                          <div id="print-fn-${worker.id}-${fIndex}" class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important;">${factor.n}</div>
+                          <div class="w-full h-full print:hidden flex items-center"><textarea data-focus-id="fn-${worker.id}-${fIndex}" oninput="smartResize(this); updateFactorField('${unitName}', ${worker.id}, ${fIndex}, 'n', this.value)" class="w-full bg-transparent outline-none uppercase resize-none overflow-hidden text-center leading-tight py-0 font-black text-[15px]" style="${nTextColor}" rows="1">${factor.n}</textarea></div>
+                          <div id="print-fn-${worker.id}-${fIndex}" class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${nTextColor}">${factor.n}</div>
                         </td>
                       `;
 
