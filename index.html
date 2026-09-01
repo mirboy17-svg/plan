@@ -1329,16 +1329,19 @@
                     }
                     
                     if (comboIdx === 0) {
-                        let bagBadgeMain = worker.hasBag ? `<div class="text-red-600 font-bold text-[11px] print:text-[9px] leading-tight mb-0.5 print:mb-0.5">[가방]</div>` : '';
+                        let bagBadgeHidden = worker.hasBag ? '' : 'hidden';
+                        let bagBadgeScreen = `<div id="bag-badge-${worker.id}" class="text-red-600 font-bold text-[11px] print:text-[9px] leading-tight mb-0.5 print:mb-0.5 ${bagBadgeHidden}">[가방]</div>`;
+                        let bagBadgePrint = `<div id="print-bag-badge-${worker.id}" class="text-red-600 font-bold text-[11px] print:text-[9px] leading-tight mb-0.5 print:mb-0.5 ${bagBadgeHidden}">[가방]</div>`;
+                        
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left relative" rowspan="${wSpan}">
                                     <div class="print:hidden h-full flex flex-col justify-center relative pr-9">
-                                        ${bagBadgeMain}
-                                        <textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea>
+                                        ${bagBadgeScreen}
+                                        <textarea oninput="smartResize(this); updateWorkerName('${unit}', ${worker.id}, this.value);" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea>
                                         <button onclick="toggleWorkerBag('${unit}', ${worker.id})" class="absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] font-bold bg-white text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-300 rounded px-1.5 py-0.5 transition-colors shadow-sm shrink-0 z-10" title="가방 표시 토글">가방</button>
                                     </div>
                                     <div class="hidden print:flex flex-col justify-center w-full h-full">
-                                        ${bagBadgeMain}
-                                        <div class="leading-tight break-all whitespace-pre-wrap text-left text-[9px] font-bold">${wName}</div>
+                                        ${bagBadgePrint}
+                                        <div id="summary-print-name-${worker.id}" class="leading-tight break-all whitespace-pre-wrap text-left text-[9px] font-bold">${wName}</div>
                                     </div>
                                  </td>`;
                     }
