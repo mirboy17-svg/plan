@@ -1,45 +1,54 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 페이지 기본 설정 (와이드 모드)
-st.set_page_config(layout="wide", page_title="작업환경측정 계획서", initial_sidebar_state="collapsed")
+# 1. Streamlit 페이지 설정 (전체 화면 넓게 사용)
+st.set_page_config(
+    page_title="작업환경측정 계획서",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# 1. index.html 파일 읽기
-with open("index.html", "r", encoding="utf-8") as f:
-    html_content = f.read()
+# Streamlit 기본 여백(위, 좌, 우, 아래) 및 상단 빈 헤더 영역 완벽 제거
+st.markdown("""
+    <style>
+        .block-container {
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 0rem !important;
+            padding-right: 0rem !important;
+            max-width: 100% !important;
+        }
+        header {visibility: hidden !important;}
+        #MainMenu {visibility: hidden !important;}
+        footer {visibility: hidden !important;}
+        
+        /* iframe의 높이를 화면 전체(100vh)로 꽉 채우도록 설정 */
+        iframe { 
+            width: 100% !important; 
+            height: 100vh !important; /* viewport 높이에 맞춤 */
+            border: none !important; 
+            display: block; /* 기본 여백 제거 */
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# 2. 🚀 핵심! 내부 HTML의 높이를 계산해서 바깥 Streamlit(iframe)으로 쏴주는 자바스크립트 주입
-# 이 코드가 HTML 렌더링이 끝난 직후 높이를 재서 iframe 크기를 딱 맞게 맞춰줍니다.
-auto_resize_script = """
-<script>
-    function sendHeight() {
-        // 메인 컨텐츠 영역의 높이 계산
-        const height = Math.max(
-            document.body.scrollHeight, 
-            document.documentElement.scrollHeight,
-            document.getElementById('mainAppContent') ? document.getElementById('mainAppContent').scrollHeight : 0
-        );
-        // 부모 창(Streamlit)으로 높이 값 전송
-        window.parent.postMessage({
-            isStreamlitMessage: true,
-            type: "setFrameHeight",
-            height: height + 50 // 약간의 여유 공간 추가
-        }, "*");
-    }
+# 2. index.html 파일을 읽어오기
+try:
+    with open("index.html", "r", encoding="utf-8") as f:
+        html_data = f.read()
+        
+    # 3. 읽어온 HTML을 Streamlit 화면에 렌더링
+    # 고정된 height 값(1200)을 제거하고, CSS에서 height: 100vh를 적용받도록 합니다.
+    # 추가로 자바스크립트를 통해 부모 창의 크기에 맞게 조정하는 꼼수를 쓸 수 있지만, 
+    # Streamlit 컴포넌트 특성상 height 파라미터가 없으면 기본값(150px)이 적용되므로
+    # 충분히 큰 값을 주고 CSS로 제한하거나, 자바스크립트 기반 컴포넌트를 사용해야 합니다.
+    # 여기서는 좀 더 확실한 방법으로, Streamlit의 컴포넌트 컨테이너 자체를 100vh로 만듭니다.
+    components.html(html_data, height=1000, scrolling=False) 
     
-    // 화면 크기가 변하거나, 클릭(요약표 생성 등) 이벤트가 있을 때마다 높이 다시 계산
-    window.onload = sendHeight;
-    window.addEventListener("resize", sendHeight);
-    document.addEventListener("click", () => setTimeout(sendHeight, 100));
-</script>
-"""
+    # 참고: height 파라미터는 iframe의 높이를 지정합니다. 
+    # CSS에서 height: 100vh !important 를 주었으므로 이 값은 무시되거나 보완적으로 작용합니다.
+    # 만약 위 방법으로도 안된다면 아래 자바스크립트 코드를 index.html 내부에 삽입하여 
+    # 동적으로 높이를 맞추는 방법이 필요할 수 있습니다.
 
-# HTML 닫는 태그 직전에 스크립트를 끼워넣음
-final_html = html_content.replace('</body>', auto_resize_script + '</body>')
-
-# 3. HTML 렌더링 (scrolling=True 를 줘야 버그가 안생김)
-components.html(final_html, height=1200, scrolling=True) 
-
-# 주의: 
-# 처음 로딩 시에는 height=1200(임시 높이)으로 열렸다가, 
-# 방금 주입한 자바스크립트가 돌아가면서 내용물에 딱 맞는 높이로 Iframe이 자동 조절됩니다!
+except FileNotFoundError:
+    st.error("index.html 파일을 찾을 수 없습니다. app.py와 같은 폴더에 있는지 확인해주세요.")
