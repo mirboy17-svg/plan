@@ -1345,7 +1345,8 @@
                     if (comboIdx === 0) {
                         let bagBadgeHidden = worker.hasBag ? '' : 'hidden';
                         let bagBadgeScreen = `<div id="bag-badge-${worker.id}" class="text-red-600 font-bold text-[11px] print:text-[9px] leading-tight mb-0.5 print:mb-0.5 ${bagBadgeHidden}">[가방]</div>`;
-                        let bagBadgePrint = `<div id="print-bag-badge-${worker.id}" class="text-red-600 font-bold text-[11px] print:text-[9px] leading-tight mb-0.5 print:mb-0.5 ${bagBadgeHidden}">[가방]</div>`;
+                        // 🚀 수정: ID를 summary-bag-badge 로 변경하여 숨김(hidden) 속성이 인쇄 시에도 정상 작동하도록 수정
+                        let bagBadgePrint = `<div id="summary-bag-badge-${worker.id}" class="text-red-600 font-bold text-[11px] print:text-[9px] leading-tight mb-0.5 print:mb-0.5 ${bagBadgeHidden}">[가방]</div>`;
                         
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left relative" rowspan="${wSpan}">
                                     <div class="print:hidden h-full flex flex-col justify-center relative pr-9">
