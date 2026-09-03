@@ -662,10 +662,10 @@
           // 1. 데이터 업데이트 (저장용)
           target.hasBag = !target.hasBag;
           
-          // 2. ⚡ 표 전체 렌더링(reRender) 무거운 작업 완전 제거 ⚡
-          // DOM(화면 요소) 직접 제어를 통해 0.001초만에 즉시 뱃지만 껐다 켭니다.
+          // 2. DOM(화면 요소) 직접 제어를 통해 0.001초만에 즉시 뱃지만 껐다 켭니다.
           const screenBadge = document.getElementById(`bag-badge-${workerId}`);
-          const printBadge = document.getElementById(`print-bag-badge-${workerId}`);
+          // 🚀 인쇄용 뱃지의 ID를 요약표의 ID(summary-bag-badge)와 정확하게 일치시킵니다.
+          const printBadge = document.getElementById(`summary-bag-badge-${workerId}`);
           
           if (screenBadge) {
               if (target.hasBag) screenBadge.classList.remove('hidden');
