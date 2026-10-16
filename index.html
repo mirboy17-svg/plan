@@ -136,7 +136,7 @@
 </head>
 <body class="bg-[#FAFAFA] font-sans min-h-screen p-0 m-0">
 
-  <div id="loginScreen" class="fixed inset-0 bg-[#F8FAFC] flex flex-col items-center justify-center z-50 overflow-hidden px-4">
+  <div id="loginScreen" class="fixed inset-0 bg-[#F8FAFC] flex flex-col items-center justify-start pt-32 z-50 overflow-hidden px-4">
     <div class="absolute top-[-5%] left-[-5%] w-[30%] h-[30%] rounded-full bg-emerald-400/20 blur-[80px] pointer-events-none"></div>
     <div class="absolute bottom-[-5%] right-[-5%] w-[30%] h-[30%] rounded-full bg-blue-400/20 blur-[80px] pointer-events-none"></div>
 
@@ -396,6 +396,7 @@
     let appData = {
       currentDay: 1,
       currentUnit: 'ALL',
+      showAdjustedInSummary: false,
       units: {
         '기본 사업체': [
           {
@@ -925,6 +926,11 @@
         });
     }
 
+    function toggleShowAdjustedInSummary() {
+      appData.showAdjustedInSummary = !appData.showAdjustedInSummary;
+      reRender();
+    }
+
     function generateSampleSummaryForDay(day, unitNames) {
         let hasData = false;
         
@@ -934,15 +940,11 @@
         let uniqueL = new Set();
         let countN = 0;
 
-        let heatCountTracker = new Set(); // 🚀 부서별 고열 중복 건수 표기 방지용 트래커
-
-        // 🚀 [핵심 추가] 대시보드(전체 통계)용 고열(HEAT) 건수 완벽 사전 집계 로직
-        // 오직 "단위사업체 + 부서명" 기준으로 가장 높은 측정건수(Max)를 찾아 1회만 합산합니다.
-        // 일괄 행복사로 행이 100개가 되더라도 부서가 같으면 건수는 절대 뻥튀기되지 않습니다.
         let dashboardHeatCount = 0;
         let heatCountByDept = {};
 
         unitNames.forEach(unit => {
+            if (appData.currentUnit !== 'ALL' && appData.currentUnit !== unit) return;
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
             currentWorkers.forEach(worker => {
                 worker.harmfulFactors.forEach(factor => {
@@ -953,18 +955,15 @@
                         let deptKey = `${unit}|${(worker.department || '').trim()}`;
                         
                         let remark = String(factor.remark || '');
-                        // 대괄호 안의 숫자(건수) 추출 (공백 허용)
                         let match = remark.match(/\[\s*(\d+)\s*건\s*\]/);
                         let count = 0;
                         
                         if (match) {
                             count = parseInt(match[1], 10);
                         } else {
-                            // 명시적 건수가 없으면 기본 1건
                             count = 1;
                         }
                         
-                        // 부서명 기준으로 가장 큰 건수(Max)만 추출하여 덮어쓰기
                         if (!heatCountByDept[deptKey]) {
                             heatCountByDept[deptKey] = count;
                         } else {
@@ -977,19 +976,17 @@
             });
         });
 
-        // 추출된 부서별 최대 건수들을 모두 더하여 최종 대시보드 고열 통계 확정!
         Object.values(heatCountByDept).forEach(count => {
             dashboardHeatCount += count;
         });
 
-        // 1. 각 근로자(행)별 조합 계산 및 대시보드 통계 수집
         unitNames.forEach(unit => {
+            if (appData.currentUnit !== 'ALL' && appData.currentUnit !== unit) return;
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
             
             currentWorkers.forEach(worker => {
                 let factorsByPump = {};
                 let pumpToAPLN = {};
-                let strippedHeatPumps = new Set(); 
                 
                 worker.harmfulFactors.forEach(factor => {
                     const isCountAdjustment = factor.isAdjusted || String(factor.name).includes('횟수');
@@ -1004,9 +1001,9 @@
                     if (nValue && String(nValue).trim() !== '') countN++;
                 });
 
-                worker.harmfulFactors.forEach(factor => {
+                worker.harmfulFactors.forEach((factor, fIdx) => {
                     const isCountAdjustment = factor.isAdjusted || String(factor.name).includes('횟수');
-                    if (isCountAdjustment) return;
+                    if (isCountAdjustment && !appData.showAdjustedInSummary) return;
 
                     let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
                     if (!rawName) return;
@@ -1015,17 +1012,20 @@
                     let nameTokens = safeName.split(',').map(s => s.replace(/_COMMA_/g, ',').trim()).filter(Boolean);
                     
                     let pNum = String(factor.a || factor.p || factor.l || factor.n || '').replace(/[^0-9Vv]/g, '');
-                    let nValue = factor.n !== undefined && factor.n !== null ? factor.n : (rawName.includes('소음') ? 'V' : '');
+                    let nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!isCountAdjustment && rawName.includes('소음')) ? 'V' : '');
                     
-                    if (!pNum && (rawName.includes('소음') || nValue)) pNum = 'NOISE';
-                    if (!pNum && rawName.includes('고열')) pNum = 'HEAT';
-                    
-                    if (!pNum) pNum = 'NONE_' + Math.random();
-                    if (pNum.toUpperCase() === 'V') pNum = 'NOISE';
+                    if (isCountAdjustment) {
+                        pNum = 'ADJ_' + fIdx;
+                    } else {
+                        if (!pNum && (rawName.includes('소음') || nValue)) pNum = 'NOISE';
+                        if (!pNum && rawName.includes('고열')) pNum = 'HEAT';
+                        if (!pNum) pNum = 'NONE_' + fIdx;
+                        if (pNum.toUpperCase() === 'V') pNum = 'NOISE';
+                    }
 
                     if (!factorsByPump[pNum]) {
                         factorsByPump[pNum] = [];
-                        pumpToAPLN[pNum] = { a: '', p: '', l: '', n: '' };
+                        pumpToAPLN[pNum] = { a: '', p: '', l: '', n: '', isAdjusted: isCountAdjustment };
                     }
                     
                     let cellName = '';
@@ -1036,21 +1036,10 @@
                     }
 
                     let remarkStr = String(factor.remark || '').replace(/\[가방\]/g, '').trim();
-                    let hasStrippedHeat = false; 
 
-                    // 🚀 고열 건수 "오직 부서명 기준"으로 최초 1회만 표기하는 로직 (요약표 전용)
+                    // 3번 업데이트: 고열 옆의 [2건] 등 건수 카운터를 제거하고 고열[~~]만 표시
                     if (rawName.includes('고열')) {
-                        let deptTrackerKey = `${unit}|${(worker.department || '').trim()}`;
-                        let match = remarkStr.match(/\[\s*(\d+)\s*건\s*\]/);
-                        if (match) {
-                            if (heatCountTracker.has(deptTrackerKey)) {
-                                // 이미 해당 부서의 첫 번째 근로자에서 [N건]을 표기했으므로 건수 텍스트를 제거
-                                remarkStr = remarkStr.replace(/\[\s*\d+\s*건\s*\]/g, '').trim(); 
-                                hasStrippedHeat = true;
-                            } else {
-                                heatCountTracker.add(deptTrackerKey); 
-                            }
-                        }
+                        remarkStr = remarkStr.replace(/\[\s*\d+\s*건\s*\]/g, '').replace(/^\d+\s*건$/g, '').trim();
                     }
 
                     if (remarkStr) {
@@ -1058,22 +1047,27 @@
                         cellName += `[${remarkStr}]`;
                     }
 
-                    if (cellName) {
-                        factorsByPump[pNum].push(cellName);
-                        if (hasStrippedHeat) strippedHeatPumps.add(pNum); 
+                    if (isCountAdjustment) {
+                        cellName = `[조정] ${cellName}`;
                     }
 
-                    if(factor.a) pumpToAPLN[pNum].a = factor.a;
-                    if(factor.p) pumpToAPLN[pNum].p = factor.p;
-                    if(factor.l) pumpToAPLN[pNum].l = factor.l;
-                    if(factor.n || nValue) pumpToAPLN[pNum].n = factor.n || nValue;
+                    if (cellName) {
+                        factorsByPump[pNum].push(cellName);
+                    }
+
+                    if (!isCountAdjustment) {
+                        if(factor.a) pumpToAPLN[pNum].a = factor.a;
+                        if(factor.p) pumpToAPLN[pNum].p = factor.p;
+                        if(factor.l) pumpToAPLN[pNum].l = factor.l;
+                        if(factor.n || nValue) pumpToAPLN[pNum].n = factor.n || nValue;
+                    }
                 });
 
                 let combinations = [];
                 Object.keys(factorsByPump).forEach(pNum => {
-                    if (pNum.startsWith('NONE_')) return;
                     let uniqueCellNames = Array.from(new Set(factorsByPump[pNum]));
                     let combinedName = uniqueCellNames.join(' + ');
+                    if (!combinedName) return;
                     
                     combinations.push({
                         name: combinedName,
@@ -1081,11 +1075,13 @@
                         p: pumpToAPLN[pNum].p,
                         l: pumpToAPLN[pNum].l,
                         n: pumpToAPLN[pNum].n,
-                        isStrippedHeat: strippedHeatPumps.has(pNum) 
+                        isAdjusted: pumpToAPLN[pNum].isAdjusted
                     });
                 });
 
                 combinations.sort((a, b) => {
+                    if (a.isAdjusted && !b.isAdjusted) return 1;
+                    if (!a.isAdjusted && b.isAdjusted) return -1;
                     const aIsNoise = (a.name || '').includes('소음');
                     const bIsNoise = (b.name || '').includes('소음');
                     if (aIsNoise && !bIsNoise) return -1;
@@ -1093,8 +1089,8 @@
                     return 0; 
                 });
 
-                // 대시보드 통계를 위해 펌프 기호(A/P/L/N) 및 정확한 건수 수집
                 combinations.forEach(combo => {
+                    if (combo.isAdjusted) return;
                     if (combo.name && combo.name.trim() !== '') {
                         let statKey = combo.name;
                         
@@ -1102,11 +1098,8 @@
                             statKey = '고열';
                         }
                         
-                        // 건수 추출 로직
                         let addedCount = 1;
                         if (statKey === '고열') {
-                            // 🚀 고열 건수는 상단의 heatCountByDept에서 부서명 기준으로 
-                            // 완벽하게 사전 집계했으므로, 근로자 수(행)만큼 뻥튀기되는 것을 철저히 차단(0)합니다!
                             addedCount = 0; 
                         } else {
                             let match = combo.name.match(/\[(\d+)건\]/);
@@ -1131,12 +1124,10 @@
             });
         });
 
-        // 🚀 최종적으로 고열 통계 항목이 존재한다면, 부서별 합산된 완벽한 총합(Max의 합)을 강제로 덮어씌움
         if (comboStats['고열']) {
             comboStats['고열'].count = dashboardHeatCount;
         }
 
-        // 🚀 만약 모든 근로자가 '횟수' 항목만 가지고 있어 출력할 데이터가 0건이라면 여기서 종료
         if (!hasData) return '';
 
         // 2. 대시보드 통계 배열 생성
@@ -1243,11 +1234,16 @@
         // 4. 요약표 컨테이너 및 엑셀 스타일 표 렌더링
         let html = `<div class="print-target-summary bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:border-none print:shadow-none break-inside-avoid print:mb-0 mb-4 w-full page-break-after-always summary-section print:p-0">`;
         html += `<h3 class="font-bold text-lg text-indigo-700 mb-3 border-b border-indigo-100 pb-2 print:text-black print:border-black print:text-[14px] print:mb-1 print:pb-1 flex flex-wrap items-center justify-between">
-                    <div class="flex items-center">
-                        <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-sm font-bold border border-indigo-300 print:hidden mr-2">STEP 3</span>
-                        [${getDayName(day)}] 부서/공정별 시료 준비 요약표
+                    <div class="flex items-center gap-2">
+                        <span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-sm font-bold border border-indigo-300 print:hidden">STEP 3</span>
+                        <span>[${getDayName(day)}] 부서/공정별 시료 준비 요약표</span>
                     </div>
-                    <span class="text-xs font-normal text-amber-600 print:hidden bg-amber-50 px-2 py-1 rounded border border-amber-200 mt-1 sm:mt-0 shadow-sm">※ 인쇄 직전 표 안의 글자를 클릭해 수기로 수정할 수 있습니다.</span>
+                    <div class="flex items-center gap-2 print:hidden mt-1 sm:mt-0">
+                        <button onclick="toggleShowAdjustedInSummary()" class="text-xs font-bold px-2.5 py-1 rounded border transition-colors shadow-sm flex items-center gap-1 ${appData.showAdjustedInSummary ? 'bg-red-600 text-white border-red-700' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}">
+                            <span>${appData.showAdjustedInSummary ? '✓ [조정] 표시 중' : '[조정 표시]'}</span>
+                        </button>
+                        <span class="text-xs font-normal text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200 shadow-sm">※ 인쇄 직전 표 안의 글자를 클릭해 수기로 수정할 수 있습니다.</span>
+                    </div>
                  </h3>`;
         
         // 🚀 대시보드를 요약표 상단에 안전하게 결합
@@ -1275,8 +1271,17 @@
         let noIndex = 1;
 
         unitNames.forEach(unit => {
+            if (appData.currentUnit !== 'ALL' && appData.currentUnit !== unit) return;
             const currentWorkers = appData.units[unit].filter(w => (w.day || 1) === day);
-            if(currentWorkers.length === 0) return;
+            const hasValidWorkers = currentWorkers.some(w => w._wSpan > 0);
+            if (!hasValidWorkers) return;
+
+            // 1번 업데이트: 시료준비요약표에도 [단위사업체] 구분 행 추가
+            html += `<tr class="bg-indigo-50 print:bg-gray-100" style="page-break-inside: avoid;">
+                        <td colspan="11" class="border border-gray-300 print:border-black py-1.5 px-3 text-sm font-bold text-indigo-800 print:text-[10px] print:text-black text-left">
+                            🏢 [단위사업체] : ${unit}
+                        </td>
+                     </tr>`;
             
             // 병합(Span) 계산 시, 횟수조정(제외 대상) 근로자는 무시하고 계산
             const groupSpans = new Array(currentWorkers.length).fill(0);
@@ -1326,15 +1331,15 @@
                     if (gSpan > 0 && comboIdx === 0) {
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center font-bold align-middle text-gray-600 print:text-black" rowspan="${gSpan}">${noIndex++}</td>`;
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center" rowspan="${gSpan}">
-                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${deptName}</textarea></div>
+                                    <div class="print:hidden h-full flex items-center"><textarea data-focus-id="sum-dept-${worker.id}-${comboIdx}" oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${deptName}</textarea></div>
                                     <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${deptName}</div>
                                  </td>`;
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center" rowspan="${gSpan}">
-                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${procName}</textarea></div>
+                                    <div class="print:hidden h-full flex items-center"><textarea data-focus-id="sum-proc-${worker.id}-${comboIdx}" oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${procName}</textarea></div>
                                     <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${procName}</div>
                                  </td>`;
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-center" rowspan="${gSpan}">
-                                    <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${shift}</textarea></div>
+                                    <div class="print:hidden h-full flex items-center"><textarea data-focus-id="sum-shift-${worker.id}-${comboIdx}" oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-center resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${shift}</textarea></div>
                                     <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-center text-[9px]">${shift}</div>
                                  </td>`;
                         html += `<td class="border border-gray-300 print:border-black px-1 py-1 print:py-0.5 align-middle font-bold text-gray-800 print:text-black text-center bg-indigo-50/30 print:bg-transparent" rowspan="${gSpan}">
@@ -1350,7 +1355,7 @@
                         html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 align-middle font-bold text-gray-700 print:text-black text-left relative" rowspan="${wSpan}">
                                     <div class="print:hidden h-full flex flex-col justify-center relative pr-9">
                                         ${bagBadgeScreen}
-                                        <textarea oninput="smartResize(this); updateWorkerName('${unit}', ${worker.id}, this.value);" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea>
+                                        <textarea data-focus-id="sum-wname-${worker.id}-${comboIdx}" oninput="smartResize(this); updateWorkerName('${unit}', ${worker.id}, this.value);" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight font-bold text-[13px]" rows="1">${wName}</textarea>
                                         <button onclick="toggleWorkerBag('${unit}', ${worker.id})" class="absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] font-bold bg-white text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-300 rounded px-1.5 py-0.5 transition-colors shadow-sm shrink-0 z-10" title="가방 표시 토글">가방</button>
                                     </div>
                                     <div class="hidden print:flex flex-col justify-center w-full h-full">
@@ -1359,36 +1364,36 @@
                                     </div>
                                  </td>`;
                     }
-
-                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-gray-700 print:text-black break-words leading-snug w-[38%]">
-                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight text-[13px]" rows="1">${combo.name}</textarea></div>
-                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px]">${combo.name}</div>
+                    let comboTextClass = combo.isAdjusted ? "text-gray-400 line-through" : "text-gray-700 print:text-black";
+                    html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 ${comboTextClass} break-words leading-snug w-[38%]">
+                                <div class="print:hidden h-full flex items-center"><textarea data-focus-id="sum-combo-${worker.id}-${comboIdx}" oninput="smartResize(this)" class="w-full bg-transparent border-transparent focus:border-blue-500 outline-none p-1 text-left resize-none overflow-hidden leading-tight text-[13px] ${combo.isAdjusted ? 'text-gray-400 line-through' : ''}" rows="1">${combo.name}</textarea></div>
+                                <div class="hidden print:block w-full leading-tight break-all whitespace-pre-wrap text-left text-[9px] ${combo.isAdjusted ? 'text-gray-400 line-through' : ''}">${combo.name}</div>
                              </td>`;
                              
                     let aStyle = combo.a ? "background-color: #fef9c3 !important; color: #1e3a8a !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
                     let aText = combo.a ? "color: #1e3a8a !important;" : "";
                     html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center align-middle" style="${aStyle}">
-                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${aText}" rows="1">${combo.a}</textarea></div>
+                                <div class="print:hidden h-full flex items-center"><textarea data-focus-id="sum-a-${worker.id}-${comboIdx}" oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${aText}" rows="1">${combo.a}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${aText}">${combo.a}</div>
                              </td>`;
 
                     let pStyle = combo.p ? "background-color: #dcfce7 !important; color: #991b1b !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
                     let pText = combo.p ? "color: #991b1b !important;" : "";
                     html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center align-middle" style="${pStyle}">
-                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${pText}" rows="1">${combo.p}</textarea></div>
+                                <div class="print:hidden h-full flex items-center"><textarea data-focus-id="sum-p-${worker.id}-${comboIdx}" oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${pText}" rows="1">${combo.p}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${pText}">${combo.p}</div>
                              </td>`;
 
                     let lStyle = combo.l ? "background-color: #ffedd5 !important; color: #000000 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact;" : "";
                     let lText = combo.l ? "color: #000000 !important;" : "";
                     html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center align-middle" style="${lStyle}">
-                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${lText}" rows="1">${combo.l}</textarea></div>
+                                <div class="print:hidden h-full flex items-center"><textarea data-focus-id="sum-l-${worker.id}-${comboIdx}" oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${lText}" rows="1">${combo.l}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${lText}">${combo.l}</div>
                              </td>`;
 
                     let nText = combo.n ? "color: #1d4ed8 !important;" : "";
                     html += `<td class="border border-gray-300 print:border-black px-1 py-0 print:py-0.5 text-center align-middle">
-                                <div class="print:hidden h-full flex items-center"><textarea oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${nText}" rows="1">${combo.n}</textarea></div>
+                                <div class="print:hidden h-full flex items-center"><textarea data-focus-id="sum-n-${worker.id}-${comboIdx}" oninput="smartResize(this)" class="w-full bg-transparent border-transparent outline-none p-1 text-center resize-none overflow-hidden leading-tight font-black text-[15px]" style="${nText}" rows="1">${combo.n}</textarea></div>
                                 <div class="hidden print:block w-full leading-tight text-center font-black" style="font-size: 14px !important; font-weight: 900 !important; letter-spacing: 0.5px !important; ${nText}">${combo.n}</div>
                              </td>`;
                     html += `</tr>`;
@@ -1403,6 +1408,115 @@
               
         // 🚀 정상적으로 결합된 단일 문자열 html을 반환하여 렌더링 에러 차단
         return html;
+    }
+
+    // 🚀 레이아웃(도면) URL 연동 및 자동 매칭 변환 로직 추가
+    async function processLayoutUrl() {
+        const layoutUrl = document.getElementById('layoutUrl').value;
+        const btn = document.getElementById('matchLayoutBtn');
+        const msg = document.getElementById('layoutMatchMessage');
+
+        if (!layoutUrl.trim()) {
+            msg.className = 'text-sm font-medium text-red-600';
+            msg.innerText = '레이아웃 엑셀 URL을 입력해주세요.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '도면 변환 중...';
+        msg.innerText = '';
+
+        try {
+            // 1) 펌프 매칭 맵 만들기 (*1 -> *1 [A:201 P:1 L:1])
+            const pumpMap = new Map();
+            Object.keys(appData.units).forEach(unitName => {
+                appData.units[unitName].forEach(worker => {
+                    const wName = (worker.name || '').trim();
+                    if (!wName || !wName.startsWith('*')) return;
+
+                    let aList = new Set(), pList = new Set(), lList = new Set(), nList = new Set();
+                    worker.harmfulFactors.forEach(factor => {
+                        if (factor.isAdjusted) return;
+                        if (factor.a) aList.add(factor.a);
+                        if (factor.p) pList.add(factor.p);
+                        if (factor.l) lList.add(factor.l);
+                        if (factor.n) nList.add(factor.n);
+                    });
+
+                    let info = [];
+                    if (aList.size > 0) info.push(`A:${Array.from(aList).join(',')}`);
+                    if (pList.size > 0) info.push(`P:${Array.from(pList).join(',')}`);
+                    if (lList.size > 0) info.push(`L:${Array.from(lList).join(',')}`);
+                    if (nList.size > 0) info.push(`N:${Array.from(nList).join(',')}`);
+
+                    if (info.length > 0) {
+                        pumpMap.set(wName, `${wName} [${info.join(' ')}]`);
+                    }
+                });
+            });
+
+            if (pumpMap.size === 0) {
+                throw new Error("현재 데이터에 *1, *2 등의 펌프 정보가 없습니다.");
+            }
+
+            // 2) URL 파싱 및 엑셀 다운로드 (Blob)
+            const match = layoutUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            if (!match) throw new Error("유효한 구글 스프레드시트 주소가 아닙니다.");
+            
+            const exportUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=xlsx`;
+            const response = await fetch(exportUrl);
+            if (!response.ok) throw new Error("도면 시트에 접근할 수 없습니다. 공유 권한을 '링크가 있는 모든 사용자'로 설정해주세요.");
+
+            const arrayBuffer = await response.arrayBuffer();
+            const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+            
+            let replacedCount = 0;
+
+            // 3) 엑셀 내 모든 시트, 셀 스캔 후 교체
+            workbook.SheetNames.forEach(sheetName => {
+                const worksheet = workbook.Sheets[sheetName];
+                for (let cellAddress in worksheet) {
+                    if (cellAddress[0] === '!') continue; 
+                    
+                    const cell = worksheet[cellAddress];
+                    if (cell && (cell.t === 's' || cell.t === 'n') && cell.v !== undefined) {
+                        let originalText = String(cell.v);
+                        
+                        // 텍스트 내의 *숫자 패턴을 찾아 치환
+                        const regex = /\*\d+/g;
+                        let newText = originalText.replace(regex, (m) => {
+                            if (pumpMap.has(m)) {
+                                replacedCount++;
+                                return pumpMap.get(m);
+                            }
+                            return m;
+                        });
+
+                        if (originalText !== newText) {
+                            cell.v = newText;
+                            cell.t = 's'; // 강제로 텍스트 포맷으로 변경
+                        }
+                    }
+                }
+            });
+
+            if (replacedCount > 0) {
+                const companyName = document.getElementById('companyName').value.trim() || '작업환경측정';
+                XLSX.writeFile(workbook, `${companyName}_도면매칭완료.xlsx`);
+                msg.className = 'text-sm font-medium text-purple-600';
+                msg.innerText = `성공! 총 ${replacedCount}곳에 펌프 번호가 융합되었습니다.`;
+            } else {
+                msg.className = 'text-sm font-medium text-amber-600';
+                msg.innerText = "도면 내에서 매칭 대상(*1, *2 등)을 찾을 수 없습니다.";
+            }
+
+        } catch (error) {
+            msg.className = 'text-sm font-medium text-red-600';
+            msg.innerText = error.message;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> 레이아웃 매칭 다운로드`;
+        }
     }
 
     function renderTables() {
@@ -1982,7 +2096,6 @@
 
             const key = `${unitName}|${dept}|${process}`;
             if (!mergedGroupsByUnit[unitName]) mergedGroupsByUnit[unitName] = {};
-            if (!isNoiseSheet) excludeKeys.add(key);
 
             if (!mergedGroupsByUnit[unitName][key]) {
               mergedGroupsByUnit[unitName][key] = { 
@@ -2011,11 +2124,15 @@
                       mergedGroup.rawFactorCounts[cleanFactor] = (mergedGroup.rawFactorCounts[cleanFactor] || 0) + 1;
                   }
 
-                  if (mergedGroup.firstFactor === null) {
-                      mergedGroup.firstFactor = factor;
-                      mergedGroup.autoCount = 1;
-                  } else if (mergedGroup.firstFactor === factor) {
-                      mergedGroup.autoCount++;
+                  // 4번 업데이트: 고열은 측정건수(autoCount) 산정에서 제외하여 고열과 소음만 있을 때 소음의 정상 건수를 따르도록 처리
+                  if (!factor.includes('고열')) {
+                      excludeKeys.add(key);
+                      if (mergedGroup.firstFactor === null) {
+                          mergedGroup.firstFactor = factor;
+                          mergedGroup.autoCount = 1;
+                      } else if (mergedGroup.firstFactor === factor) {
+                          mergedGroup.autoCount++;
+                      }
                   }
               }
 
@@ -2059,6 +2176,9 @@
 
         for (const unitName in mergedGroupsByUnit) {
             const newWorkers = Object.values(mergedGroupsByUnit[unitName]).filter(group => group.hasPValue).map((group) => {
+                if (group.autoCount === 0) {
+                    group.autoCount = 1;
+                }
                 let uniqueFactorsMap = new Map();
                 group.factorGroups.forEach(fg => {
                   let str = Array.from(fg.factors).join(', ').trim();
@@ -2079,8 +2199,9 @@
                   }
 
                   let needsCountDisplay = false;
+                  // 🚀 UPDATE 3: 고열은 옆에 [2건] 등 카운터 숫자가 붙지 않도록 강제로 막음
                   if (name.includes('고열')) {
-                      needsCountDisplay = true;
+                      needsCountDisplay = false;
                   } else if (maxCount > 0 && group.autoCount > 0 && maxCount !== group.autoCount) {
                       needsCountDisplay = true;
                   }
@@ -2088,6 +2209,11 @@
                   if (needsCountDisplay && maxCount > 0) {
                       let diffStr = `${maxCount}건`;
                       autoRemark = autoRemark ? `${autoRemark}[${diffStr}]` : diffStr;
+                  }
+
+                  // 3번 업데이트: 매핑 시트 등에서 고열 비고에 [2건] 등이 포함되어 있어도 제거하고 고열[~~]만 남김
+                  if (name.includes('고열')) {
+                      autoRemark = autoRemark.replace(/\[\s*\d+\s*건\s*\]/g, '').replace(/^\d+\s*건$/g, '').trim();
                   }
 
                   let initialN = (name.includes('소음') && !isAdjusted) ? 'V' : '';
@@ -2684,6 +2810,102 @@
       
       XLSX.writeFile(wb, fileName);
       showToast(`프린텍 라벨메이커용 엑셀 파일이 저장되었습니다! (총 ${labels.length}장)`);
+    }
+
+    // 🚀 2. 레이아웃(도면) 엑셀 변환 핵심 로직
+    async function processLayoutExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // 1) 현재 시스템 데이터에서 *1, *2 근로자의 매칭 펌프 정보 추출
+      const pumpMap = new Map();
+      Object.keys(appData.units).forEach(unitName => {
+          appData.units[unitName].forEach(worker => {
+              const wName = (worker.name || '').trim();
+              if (!wName || !wName.startsWith('*')) return; // *1 형태만 추출
+
+              let aList = new Set(), pList = new Set(), lList = new Set(), nList = new Set();
+
+              worker.harmfulFactors.forEach(factor => {
+                  if (factor.isAdjusted) return;
+                  if (factor.a) aList.add(factor.a);
+                  if (factor.p) pList.add(factor.p);
+                  if (factor.l) lList.add(factor.l);
+                  if (factor.n) nList.add(factor.n);
+              });
+
+              let info = [];
+              if (aList.size > 0) info.push(`A:${Array.from(aList).join(',')}`);
+              if (pList.size > 0) info.push(`P:${Array.from(pList).join(',')}`);
+              if (lList.size > 0) info.push(`L:${Array.from(lList).join(',')}`);
+              if (nList.size > 0) info.push(`N:${Array.from(nList).join(',')}`);
+
+              // 매칭된 펌프가 있으면 맵에 저장 (예: *1 -> *1 [A:201 P:1 L:1])
+              if (info.length > 0) {
+                  pumpMap.set(wName, `${wName} [${info.join(' ')}]`);
+              }
+          });
+      });
+
+      if (pumpMap.size === 0) {
+          showToast("현재 데이터에 *1, *2 등의 펌프 매칭 정보가 존재하지 않습니다.", true);
+          event.target.value = '';
+          return;
+      }
+
+      // 2) 사용자가 올린 엑셀 파일 스캔 및 변환
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          try {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, {type: 'array'});
+              let replacedCount = 0;
+
+              // 엑셀 내의 모든 시트, 모든 셀을 뒤져서 *숫자 찾기
+              workbook.SheetNames.forEach(sheetName => {
+                  const worksheet = workbook.Sheets[sheetName];
+                  for (let cellAddress in worksheet) {
+                      if (cellAddress[0] === '!') continue; 
+                      
+                      const cell = worksheet[cellAddress];
+                      if (cell && (cell.t === 's' || cell.t === 'n') && cell.v !== undefined) {
+                          let originalText = String(cell.v);
+                          let newText = originalText;
+
+                          // 셀 텍스트에서 *숫자(예: *1, *22) 패턴 감지
+                          const regex = /\*\d+/g;
+                          newText = originalText.replace(regex, (match) => {
+                              if (pumpMap.has(match)) return pumpMap.get(match);
+                              return match;
+                          });
+
+                          // 내용이 바뀌었다면 셀 데이터 교체
+                          if (originalText !== newText) {
+                              cell.v = newText;
+                              cell.t = 's'; // 문자타입 강제
+                              replacedCount++;
+                          }
+                      }
+                  }
+              });
+
+              // 3) 변환이 완료된 엑셀 즉시 다운로드
+              if (replacedCount > 0) {
+                  const originalName = file.name.replace(/\.[^/.]+$/, "");
+                  const ext = file.name.split('.').pop();
+                  XLSX.writeFile(workbook, `${originalName}_펌프매칭완료.${ext}`);
+                  showToast(`완료! 엑셀 도면 내 총 ${replacedCount}곳에 펌프 번호가 융합되었습니다.`);
+              } else {
+                  showToast("엑셀 파일 안에서 매칭 대상(*1, *2 등)을 찾을 수 없습니다.", true);
+              }
+
+          } catch(error) {
+              showToast("엑셀 변환 중 오류가 발생했습니다.", true);
+              console.error(error);
+          }
+      };
+      reader.readAsArrayBuffer(file);
+      event.target.value = ''; // 초기화
     }
   </script>
 </body>
