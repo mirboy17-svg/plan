@@ -492,10 +492,27 @@
               unitNames.forEach(unitName => {
                   const currentWorkers = appData.units[unitName].filter(w => (w.day || 1) === day);
                   currentWorkers.forEach(worker => {
+                      // 시료준비요약표에 표시될 유효 유해인자가 있는지 확인 (횟수조정만 있는 행은 번호 건너뛰기 방지)
+                      const hasVisibleSummaryFactor = (worker.harmfulFactors || []).some(factor => {
+                          const isCountAdjustment = factor.isAdjusted || String(factor.name || '').includes('횟수');
+                          if (isCountAdjustment && !appData.showAdjustedInSummary) return false;
+                          let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
+                          return rawName !== '';
+                      });
+
+                      // 요약표에 나타나지 않는(횟수조정만 있는) 근로자이고 빈 유해인자 행도 아니라면 연번 증가에서 제외
+                      const isAllEmptyFactors = (worker.harmfulFactors || []).every(f => !String(f.name || '').trim());
+                      if (!hasVisibleSummaryFactor && !isAllEmptyFactors) {
+                          if (!worker.isManual) worker.name = '';
+                          return;
+                      }
+
                       let val = (worker.name || '').trim();
                       
-                      if (worker.isManual && val.match(/^\*\d+$/)) {
-                          currentSeq = parseInt(val.substring(1), 10) + 1;
+                      // *1 또는 *1 홍길동 처럼 앞에 *숫자가 수동 입력된 경우 해당 숫자를 기준으로 다음 번호 이어서 부여
+                      const manualMatch = val.match(/^\*(\d+)(.*)$/);
+                      if (worker.isManual && manualMatch) {
+                          currentSeq = parseInt(manualMatch[1], 10) + 1;
                       } else {
                           if (!worker.isManual || val === '') {
                               worker.name = '*' + currentSeq;
@@ -513,7 +530,7 @@
       const target = appData.units[unitName].find(w => w.id === id);
       if(target) {
           target.name = value;
-          target.isManual = true;
+          target.isManual = value.trim() !== '';
       }
       
       clearTimeout(window.nameDebounce);
@@ -521,13 +538,23 @@
           recalculateNames();
           Object.keys(appData.units).forEach(uName => {
               appData.units[uName].forEach(w => {
+                  // 메인표 근로자명 입력창 및 인쇄 영역 실시간 갱신
                   const ta = document.querySelector(`textarea[data-focus-id="name-${w.id}"]`);
                   if (ta && ta !== document.activeElement) {
                       ta.value = w.name;
                   }
                   const printDiv = document.getElementById(`print-name-${w.id}`);
                   if (printDiv) {
-                      printDiv.innerText = w.name;
+                      printDiv.innerHTML = `<div class="leading-tight break-all whitespace-pre-wrap text-left font-bold text-black text-[9px]">${w.name}</div>`;
+                  }
+                  // 2. 시료준비요약표 근로자명 입력창 및 인쇄 영역 실시간 갱신
+                  const sumTa = document.querySelector(`textarea[data-focus-id="sum-wname-${w.id}-0"]`);
+                  if (sumTa && sumTa !== document.activeElement) {
+                      sumTa.value = w.name;
+                  }
+                  const sumPrintDiv = document.getElementById(`summary-print-name-${w.id}`);
+                  if (sumPrintDiv) {
+                      sumPrintDiv.innerText = w.name;
                   }
               });
           });
@@ -928,7 +955,29 @@
 
     function toggleShowAdjustedInSummary() {
       appData.showAdjustedInSummary = !appData.showAdjustedInSummary;
+      recalculateNames();
       reRender();
+    }
+
+    function splitHazardsSmart(str) {
+      let result = [];
+      let current = '';
+      let parenDepth = 0;
+      const s = String(str || '');
+      for (let idx = 0; idx < s.length; idx++) {
+        const ch = s[idx];
+        if (ch === '(' || ch === '[') parenDepth++;
+        else if (ch === ')' || ch === ']') parenDepth = Math.max(0, parenDepth - 1);
+        
+        if (ch === ',' && parenDepth === 0) {
+          if (current.trim()) result.push(current.trim());
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      if (current.trim()) result.push(current.trim());
+      return result;
     }
 
     function generateSampleSummaryForDay(day, unitNames) {
@@ -1008,8 +1057,7 @@
                     let rawName = String(factor.name || '').replace(/\(혼합물질평가\)/g, '').replace(/혼합물질평가/g, '').trim();
                     if (!rawName) return;
 
-                    let safeName = rawName.replace(/(\d),(\d)/g, '$1_COMMA_$2');
-                    let nameTokens = safeName.split(',').map(s => s.replace(/_COMMA_/g, ',').trim()).filter(Boolean);
+                    let nameTokens = splitHazardsSmart(rawName);
                     
                     let pNum = String(factor.a || factor.p || factor.l || factor.n || '').replace(/[^0-9Vv]/g, '');
                     let nValue = factor.n !== undefined && factor.n !== null ? factor.n : ((!isCountAdjustment && rawName.includes('소음')) ? 'V' : '');
@@ -2291,7 +2339,7 @@
 
           let matchCount = 0;
           
-          const cleanToken = (str) => String(str || '').replace(/[\s\(\)\[\]\-\/]/g, '').toLowerCase();
+          const cleanToken = (str) => String(str || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase();
           const removeStel = (str) => str.replace(/stel/g, ''); 
 
           const matchedSlots = new Set();
@@ -2302,8 +2350,13 @@
               const targetColD = row[3] || '';
               const refColE = String(row[4] || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase(); 
               
-              const refColK_tokens = String(row[10] || '').split(',').map(cleanToken).filter(Boolean);
-              const refColL_tokens = String(row[11] || '').split(',').map(cleanToken).filter(Boolean);
+              // 시료채취대장의 근로자 컬럼에서 *1, *2 번호 추출
+              const workerColText = String((row[5] || '') + ' ' + (row[4] || '') + ' ' + (row[6] || ''));
+              const workerTagMatch = workerColText.match(/[*＊]\s*(\d+)/);
+              const rowWorkerTag = workerTagMatch ? `*${workerTagMatch[1]}` : null;
+
+              const refColK_tokens = splitHazardsSmart(row[10] || '').map(cleanToken).filter(Boolean);
+              const refColL_tokens = splitHazardsSmart(row[11] || '').map(cleanToken).filter(Boolean);
 
               const combinedCD = (targetColC + ' ' + targetColD).toUpperCase();
               
@@ -2319,83 +2372,99 @@
 
               if (extractedPumps.length === 0) continue; 
 
-              let isMatchedForThisRow = false; 
-
+              // 해당 부서/공정에 속하는 후보 근로자들 수집
+              let candidateWorkers = [];
               for (const unitName of Object.keys(appData.units)) {
-                  if (isMatchedForThisRow) break;
-
                   const workers = appData.units[unitName];
                   for (let wIndex = 0; wIndex < workers.length; wIndex++) {
-                      if (isMatchedForThisRow) break;
-
                       const worker = workers[wIndex];
-                      
                       if ((worker.day || 1) !== appData.currentDay) continue;
 
                       const wDept = String(worker.department || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase();
                       const wProc = String(worker.process || '').replace(/[\s\(\)\[\]\-\/\,]/g, '').toLowerCase();
-                      
                       const isEColumnMatch = (wDept !== '' && refColE.includes(wDept)) || (wProc !== '' && refColE.includes(wProc));
-
+                      
                       if (isEColumnMatch) {
-                          let matchedFactorIndex = -1;
-
-                          for (let fIndex = 0; fIndex < worker.harmfulFactors.length; fIndex++) {
-                              const factor = worker.harmfulFactors[fIndex];
-                              if (factor.isAdjusted) continue; 
-                              
-                              const slotId = `${worker.id}-${fIndex}`;
-                              if (matchedSlots.has(slotId)) continue; 
-
-                              const fName_tokens = String(factor.name || '').split(',').map(cleanToken).filter(Boolean);
-                              
-                              let isStrictMatch = fName_tokens.some(token => refColK_tokens.includes(token) || refColL_tokens.includes(token));
-
-                              if (isStrictMatch) {
-                                  matchedFactorIndex = fIndex;
-                                  break;
-                              }
-                          }
-
-                          if (matchedFactorIndex === -1) {
-                              for (let fIndex = 0; fIndex < worker.harmfulFactors.length; fIndex++) {
-                                  const factor = worker.harmfulFactors[fIndex];
-                                  if (factor.isAdjusted) continue;
-                                  
-                                  const slotId = `${worker.id}-${fIndex}`;
-                                  if (matchedSlots.has(slotId)) continue;
-
-                                  const fName_tokens = String(factor.name || '').split(',').map(cleanToken).filter(Boolean);
-                                  
-                                  const hasLooseMatch = fName_tokens.some(token => {
-                                      const looseToken = removeStel(token);
-                                      const looseK = refColK_tokens.map(removeStel);
-                                      const looseL = refColL_tokens.map(removeStel);
-                                      return looseK.includes(looseToken) || looseL.includes(looseToken);
-                                  });
-                                  
-                                  if (hasLooseMatch) {
-                                      matchedFactorIndex = fIndex;
-                                      break;
-                                  }
-                              }
-                          }
-
-                          if (matchedFactorIndex !== -1) {
-                              const factor = worker.harmfulFactors[matchedFactorIndex];
-                              const slotId = `${worker.id}-${matchedFactorIndex}`;
-                              
-                              extractedPumps.forEach(pump => {
-                                  factor[pump.type] = pump.num; 
-                              });
-                              
-                              matchedSlots.add(slotId);
-                              isMatchedForThisRow = true;
-                              matchCount++;
-                              break; 
-                          }
+                          candidateWorkers.push(worker);
                       }
                   }
+              }
+
+              if (candidateWorkers.length === 0) continue;
+
+              // 시료채취대장에 *1, *2 등 근로자 번호가 명시되어 있으면 해당 근로자를 최우선 탐색하도록 정렬
+              let targetWorkers = candidateWorkers;
+              if (rowWorkerTag) {
+                  const tagMatchedWorkers = candidateWorkers.filter(w => String(w.name || '').trim() === rowWorkerTag);
+                  const otherWorkers = candidateWorkers.filter(w => String(w.name || '').trim() !== rowWorkerTag);
+                  if (tagMatchedWorkers.length > 0) {
+                      targetWorkers = [...tagMatchedWorkers, ...otherWorkers];
+                  }
+              }
+
+              // 한 근로자 안에서 시료채취대장의 유해인자(예: 활석, 산화규소, 흑연 3종)에 해당하는 모든 행을 찾아 동시에 같은 펌프번호(P51)를 부여하는 함수
+              const findMatchingIndicesForWorker = (worker, isLoose = false) => {
+                  let matchedIndices = [];
+                  const rK = isLoose ? refColK_tokens.map(removeStel) : refColK_tokens;
+                  const rL = isLoose ? refColL_tokens.map(removeStel) : refColL_tokens;
+
+                  for (let fIndex = 0; fIndex < worker.harmfulFactors.length; fIndex++) {
+                      const factor = worker.harmfulFactors[fIndex];
+                      if (factor.isAdjusted) continue;
+
+                      const slotId = `${worker.id}-${fIndex}`;
+                      if (matchedSlots.has(slotId)) continue;
+
+                      const rawTokens = splitHazardsSmart(factor.name || '').map(cleanToken).filter(Boolean);
+                      if (rawTokens.length === 0) continue;
+                      const fTokens = isLoose ? rawTokens.map(removeStel) : rawTokens;
+
+                      const matchK = rK.length > 0 && fTokens.some(t => rK.includes(t));
+                      const matchL = rL.length > 0 && fTokens.some(t => rL.includes(t));
+
+                      if (matchK || matchL) {
+                          matchedIndices.push(fIndex);
+                      }
+                  }
+                  return matchedIndices;
+              };
+
+              let selectedWorker = null;
+              let selectedIndices = [];
+
+              // 1차: Strict 매칭 시도
+              for (const worker of targetWorkers) {
+                  const indices = findMatchingIndicesForWorker(worker, false);
+                  if (indices.length > 0) {
+                      selectedWorker = worker;
+                      selectedIndices = indices;
+                      break;
+                  }
+              }
+
+              // 2차: Loose 매칭 시도 (STEL 제외 등)
+              if (!selectedWorker) {
+                  for (const worker of targetWorkers) {
+                      const indices = findMatchingIndicesForWorker(worker, true);
+                      if (indices.length > 0) {
+                          selectedWorker = worker;
+                          selectedIndices = indices;
+                          break;
+                      }
+                  }
+              }
+
+              // 매칭된 근로자의 모든 해당 유해인자 행(예: 활석, 산화규소, 흑연 3개 행 모두)에 동일하게 P51 부여!
+              if (selectedWorker && selectedIndices.length > 0) {
+                  selectedIndices.forEach(fIndex => {
+                      const factor = selectedWorker.harmfulFactors[fIndex];
+                      const slotId = `${selectedWorker.id}-${fIndex}`;
+                      extractedPumps.forEach(pump => {
+                          factor[pump.type] = pump.num;
+                      });
+                      matchedSlots.add(slotId);
+                      matchCount++;
+                  });
               }
           }
 
